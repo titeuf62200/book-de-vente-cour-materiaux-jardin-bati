@@ -80,3 +80,9 @@
   .p-cover .p-bottom{margin-top:9mm}
   .p-cover>small{display:block;margin-top:4mm;opacity:.8}
 }
+
+/* Connexion et inscription volontairement séparées : jamais d'inscription par défaut. */
+.auth-card .auth-alt{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.auth-card .auth-alt button{padding:10px 12px;font-size:12px}
+.auth-card .auth-help{font-size:12px;color:#587466;margin:14px 0 4px}
+.auth-card #authLoginBtn:disabled,.auth-card #authSignupBtn:disabled{opacity:.58;cursor:wait}
