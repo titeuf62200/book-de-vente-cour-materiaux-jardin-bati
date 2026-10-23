@@ -48,7 +48,7 @@ async function bookGetRole(){
  // Cette fonction ne peut jamais créer un compte administrateur.
  const {error:registerError}=await bookClient.rpc('book_catalog_register_reader');
  if(registerError)throw registerError;
- const {data:role,error}=await bookClient.rpc('book_catalog_register_reader');
+ const {data:role,error}=await bookClient.rpc('book_catalog_role');
  if(error)throw error;
  if(!['admin','lecteur'].includes(role))return {role:null,email};
  if(role==='admin'&&!BOOK_ADMIN_EMAILS.has(email))throw new Error('Rôle administrateur incohérent, accès bloqué.');
