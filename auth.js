@@ -113,12 +113,6 @@ async function bookLogin(ev){
  if(bookAuthMode==='signup'){
   const check=$('authConfirmPassword').value;
   if(check!==password)return uiAuthStatus('Les deux mots de passe ne correspondent pas.',true);
-  if(BOOK_ADMIN_EMAILS.has(email)){
-   // Un profil existant ne peut pas être recréé : l'inscription ne change jamais son mot de passe.
-   // Aucune demande d'e-mail automatique, pour ne pas épuiser le quota Supabase.
-   uiAuthStatus('Ce profil administrateur existe déjà. Aucun mot de passe n’a été modifié et aucun e-mail n’a été envoyé. Utilisez « Déjà inscrit ? Se connecter » avec votre mot de passe existant, ou « Mot de passe oublié ? » pour en définir un autre.',true);
-   return;
-  }
  }
  const btn=$('authLoginBtn');if(btn.disabled)return;
  btn.disabled=true;btn.textContent=bookAuthMode==='signup'?'Création du profil…':'Connexion…';
@@ -129,7 +123,7 @@ async function bookLogin(ev){
    });
    if(error)throw error;
    if(data?.session){await bookActivate();}
-   else uiAuthStatus('Si cette adresse est nouvelle, ouvrez le lien de confirmation reçu dans votre messagerie. Après confirmation, votre profil sera en lecture seule.');
+   else uiAuthStatus('Profil en cours de création. Consultez votre messagerie et confirmez votre adresse ; vous pourrez ensuite vous connecter. '+(BOOK_ADMIN_EMAILS.has(email)?'Droits administrateur après confirmation.':'Accès lecture seule après confirmation.'));
   }else{
    const {error}=await bookClient.auth.signInWithPassword({email,password});
    if(error)throw error;
