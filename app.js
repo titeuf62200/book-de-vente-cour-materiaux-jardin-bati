@@ -45,7 +45,7 @@ function getShown(){return products.filter(p=>(!p.archived||state.showArchived)&
 function groupsFor(rayon,collection=products){let map=new Map();for(const p of collection){if(p.rayon!==rayon||(!state.showArchived&&p.archived))continue;if(!map.has(p.sousRayon))map.set(p.sousRayon,0);map.set(p.sousRayon,map.get(p.sousRayon)+1);}return [...map.entries()].sort((a,b)=>MASTER_GROUPS[rayon].indexOf(a[0])-MASTER_GROUPS[rayon].indexOf(b[0]));}
 function productMarkup(p){let isArchived=p.archived?' archived':'';let barcode=barcodeDataURL(p.ean);
 return `<article class="product-card${isArchived}">
- <div class="product-top"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4></div>
+ <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4></div>
  <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain">${imageMarkup(p.photo,p.designation)}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain">${imageMarkup(p.croquis,'Croquis coté '+p.designation)}</div></figure></div>
  <figure class="barcode-box"><figcaption>EAN-13${!p.ean?' non renseigné':''}</figcaption>${barcode?`<img src="${escapeHtml(barcode)}" loading="lazy" alt="Code-barres ${escapeHtml(p.ean)}">`:`<span class="ean-numeric">EAN à saisir</span>`}</figure>
  ${p.notes?`<div class="product-notes">⚠ ${escapeHtml(p.notes)}</div>`:''}
@@ -80,13 +80,13 @@ function renderManageTable(){
  <div class="manager-scroll"><table><thead><tr><th>Référence</th><th>Désignation</th><th>Rayon</th><th>Sous-rayon</th><th>EAN</th><th>Actions</th></tr></thead><tbody>${matched.map(p=>`<tr class="${p.archived?'manager-archived':''}"><td>${escapeHtml(p.reference)}</td><td>${escapeHtml(p.designation)}</td><td>${escapeHtml(p.rayon)}</td><td><span class="group-color-dot" style="background:${groupColor(p.rayon,p.sousRayon)}"></span>${escapeHtml(p.sousRayon)}</td><td>${escapeHtml(p.ean)}</td><td><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}" aria-label="Modifier ${escapeHtml(p.reference)}">✎</button> <button class="btn btn-danger" data-archive="${escapeHtml(p.reference)}" aria-label="${p.archived?'Restaurer':'Supprimer'} ${escapeHtml(p.reference)}">${p.archived?'↺':'🗑'}</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 function selectFilter(rayon,group=''){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
-function toggleAdmin(){if(typeof bookRemoteEnabled!=='undefined'&&bookRemoteEnabled&&bookRole!=='admin'){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',state.admin);$('editToggle').textContent=state.admin?'✓ Quitter le mode contributeur':'✎ Mode contributeur';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;render();toast(state.admin?'Mode administrateur activé':'Mode consultation activé');}
+function toggleAdmin(){if(typeof bookCanEdit==='function'&&!bookCanEdit()){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',String(state.admin));$('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;render();toast(state.admin?'Modification des références activée':'Consultation activée');}
 function updateDatalist(rayon){const sel=$('inputSousRayon');const current=sel.value;sel.innerHTML=MASTER_GROUPS[rayon].map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');if(MASTER_GROUPS[rayon].includes(current))sel.value=current;}
-function showForm(ref=null){originalEditReference=ref;const p=ref?products.find(x=>x.reference===ref):null;
+function showForm(ref=null){if(!state.admin||typeof bookCanEdit==='function'&&!bookCanEdit())return toast('Accès administrateur requis');originalEditReference=ref;const p=ref?products.find(x=>x.reference===ref):null;
  if(ref&&!p){toast('Référence introuvable');return;}
  const form=$('productForm');form.reset();$('dialogTitle').textContent=p?'Modifier la référence '+p.reference:'Ajouter une référence';
  for(const field of ['reference','designation','ean','rayon','sousRayon','notes'])form.elements[field].value=p?.[field]??(field==='rayon'?(state.rayon==='all'?'Matériaux':state.rayon):'');
- updateDatalist(form.elements.rayon.value);if(p&&MASTER_GROUPS[p.rayon].includes(p.sousRayon))form.elements.sousRayon.value=p.sousRayon;$('editDialog').showModal();
+ updateDatalist(form.elements.rayon.value);if(p&&MASTER_GROUPS[p.rayon].includes(p.sousRayon))form.elements.sousRayon.value=p.sousRayon;if(window.BookSketchEditor)window.BookSketchEditor.open(p);$('inputPhotoPreview').hidden=true;$('inputPhotoPreview').removeAttribute('src');$('editDialog').showModal();
 }
 async function asDataUrl(file,isDrawing=false){if(!file)return '';
  if(!file.type.startsWith('image/'))throw new Error('Le fichier doit être une image');
@@ -96,17 +96,18 @@ async function asDataUrl(file,isDrawing=false){if(!file)return '';
  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
  if(image.close)image.close();return canvas.toDataURL(isDrawing?'image/png':'image/jpeg',isDrawing?1:.77);
 }
-async function submitProduct(event){event.preventDefault();if(!state.admin)return;const form=$('productForm');const data=new FormData(form);
+async function submitProduct(event){event.preventDefault();if(!state.admin)return;const form=$('productForm');const data=new FormData(form);const saveBtn=$('saveProductBtn');if(saveBtn.disabled)return;saveBtn.disabled=true;saveBtn.textContent='Enregistrement…';try{
  let ref=String(data.get('reference')||'').trim();let des=String(data.get('designation')||'').trim();let ean=String(data.get('ean')||'').trim();let rayon=String(data.get('rayon')||'');let group=String(data.get('sousRayon')||'').trim();
  if(!ref||!des||!group||!UNIVERSES.includes(rayon)){toast('Renseignez les champs obligatoires');return;}
  if(ean&&!validEan(ean)){toast('Code EAN-13 invalide : vérifiez les 13 chiffres et la clé de contrôle');return;}
  if(products.some(p=>p.reference===ref&&p.reference!==originalEditReference)){toast('Cette référence existe déjà');return;}
  let existing=originalEditReference?products.find(p=>p.reference===originalEditReference):null;
  const item={...(existing||{}),reference:ref,designation:des,ean,rayon,sousRayon:group,notes:String(data.get('notes')||'').trim(),archived:!!existing?.archived,photo:existing?.photo||'',croquis:existing?.croquis||'',barcode:existing?.ean===ean?(existing?.barcode||''):''};
- try{if($('inputPhoto').files[0])item.photo=await asDataUrl($('inputPhoto').files[0]);if($('inputCroquis').files[0])item.croquis=await asDataUrl($('inputCroquis').files[0],true);}catch(e){toast('Impossible de lire cette image');return;}
+ try{if($('inputPhoto').files[0])item.photo=await asDataUrl($('inputPhoto').files[0]);if(window.BookSketchEditor)item.croquis=await window.BookSketchEditor.resolveCroquis();}catch(e){toast('Impossible de préparer les images : '+e.message);return;}
  try{await bookSaveItem(item,originalEditReference);}catch(err){toast('Erreur : '+err.message);return;}
  if(existing){products[products.indexOf(existing)]=cleanItem(item);}else{products.push(cleanItem(item));}
- $('editDialog').close();render();toast(existing?'Référence mise à jour et synchronisée':'Nouvelle référence ajoutée et synchronisée');
+ $('editDialog').close();if(!existing){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';}render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});toast(existing?'Référence mise à jour et synchronisée':'Référence ajoutée au rayon '+rayon+' et aux prochains PDF');
+ }finally{saveBtn.disabled=false;saveBtn.textContent='Enregistrer le produit';}
 }
 async function setArchive(ref){if(!state.admin)return;const p=products.find(x=>x.reference===ref);if(!p)return;if(!p.archived&&!confirm(`Retirer la référence ${ref} des futurs PDF et exports Excel ? Elle pourra être restaurée.`))return;
  try{await bookSaveItem({...p,archived:!p.archived},ref);p.archived=!p.archived;render();toast(p.archived?'Référence retirée des éditions futures (récupérable)':'Référence restaurée');}catch(e){toast('Modification non enregistrée : '+e.message);}
@@ -198,6 +199,8 @@ document.querySelector('.nav-home').addEventListener('click',()=>selectFilter('a
 $('sidebarChapters').addEventListener('click',e=>{const b=e.target.closest('button[data-rayon]');if(b)selectFilter(b.dataset.rayon,b.dataset.group||'');});
 $('editToggle').addEventListener('click',toggleAdmin);
 $('addBtn').addEventListener('click',()=>showForm());
+$('addTopBtn').addEventListener('click',()=>showForm());
+$('inputPhoto').addEventListener('change',()=>{const file=$('inputPhoto').files[0],preview=$('inputPhotoPreview');if(preview.dataset.url){URL.revokeObjectURL(preview.dataset.url);delete preview.dataset.url;}if(file&&file.type.startsWith('image/')){const url=URL.createObjectURL(file);preview.dataset.url=url;preview.src=url;preview.hidden=false;}else{preview.removeAttribute('src');preview.hidden=true;}});
 $('managerListing').before($('adminPanel'));
 $('managerListing').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive)setArchive(archive.dataset.archive);});
 $('catalogue').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
