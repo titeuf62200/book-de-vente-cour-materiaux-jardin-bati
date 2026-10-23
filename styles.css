@@ -69,3 +69,14 @@
 .admin-panel{position:relative!important;left:auto!important;bottom:auto!important;right:auto!important;width:100%;padding:17px;margin:0 0 20px;border:1px solid #ebdb80;border-radius:14px;box-shadow:0 4px 15px #0001}
 #app.admin-on{padding-bottom:0!important}
 .subcategory-header{background:color-mix(in srgb,var(--group-color,#ffe87b) 22%,white)}
+/* Couvertures PDF indépendantes : visuels produits réels du book, jamais de liens externes. */
+@media print {
+  .p-cover-bati{background:linear-gradient(135deg,#1b3d35,#645541)!important}
+  .p-cover-jardin{background:linear-gradient(135deg,#0a4c37,#357b53)!important}
+  .p-cover .cover-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5mm;width:100%;margin:10mm 0 5mm}
+  .p-cover .cover-tile{height:91mm;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;margin:0;padding:4mm;background:#fff!important;border-radius:3mm;overflow:hidden;box-shadow:0 1mm 5mm #0003;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .p-cover .cover-tile img{display:block;width:100%;height:71mm;object-fit:contain}
+  .p-cover .cover-tile figcaption{font-size:8pt;line-height:1.12;font-weight:bold;color:#294b3c;max-height:12mm;overflow:hidden}
+  .p-cover .p-bottom{margin-top:9mm}
+  .p-cover>small{display:block;margin-top:4mm;opacity:.8}
+}
