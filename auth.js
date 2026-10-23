@@ -84,7 +84,7 @@ function bookSwitchAuthMode(mode){
  $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
  $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
  $('authIntro').textContent=signup?
-   'Nouveau collaborateur : créez votre compte avec votre mot de passe (lecture seule). Les deux profils administrateurs existent déjà : utilisez la connexion ou la récupération du mot de passe.':
+   'Créez votre profil Book de vente avec un mot de passe. Les deux adresses administratrices définies auront le droit de modifier le catalogue. Les autres profils seront en lecture seule.':
    'Connectez-vous avec votre adresse professionnelle et votre mot de passe.';
  uiAuthStatus(signup?'Un e-mail de confirmation peut être nécessaire pour activer votre profil.':'');
 }
