@@ -26,7 +26,7 @@ async function bookRefresh(){
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
  const row=toRemote(item);
- if(!validEan(row.ean))throw new Error('EAN-13 incorrect : les barres doivent correspondre au numéro.');
+ if(row.ean&&!validEan(row.ean))throw new Error('EAN-13 incorrect : les barres doivent correspondre au numéro.');
  const {error}=await bookClient.from('book_catalog_products').upsert(row,{onConflict:'reference'});
  if(error)throw error;
  if(originalRef&&originalRef!==row.reference){
@@ -73,7 +73,9 @@ async function bookActivate(){
    $('authBadge').textContent=email+' · '+roleLabel(role);
    $('editToggle').hidden=!bookCanEdit();
    $('memberTools').hidden=!bookCanEdit();
-   state.admin=false;$('app').classList.remove('admin-on');$('adminPanel').hidden=true;$('addBtn').hidden=true;
+   state.admin=bookCanEdit();$('app').classList.toggle('admin-on',state.admin);$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;
+   $('editToggle').setAttribute('aria-pressed',String(state.admin));
+   $('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';
    bookShowGate(false);await bookRefresh();
    if(bookCanEdit())await bookRenderMembers();
  }catch(e){bookShowGate(true);uiAuthStatus('Impossible d’ouvrir le book : '+e.message,true);}
@@ -118,7 +120,7 @@ async function bookForgotPassword(){
  uiAuthStatus(error?'Envoi impossible : '+error.message:'Si l’adresse possède un compte, un lien de réinitialisation vient de lui être envoyé.',!!error);
 }
 async function bookLogout(){
- await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
+ await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
 }
 async function bookInit(){
  bookShowGate(true);uiAuthStatus('Connexion au catalogue sécurisé…');
@@ -129,7 +131,7 @@ async function bookInit(){
   }
   bookClient=window.supabase.createClient(BOOK_CFG.url,BOOK_CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   bookClient.auth.onAuthStateChange((event,session)=>{
-   if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
+   if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
    if(event==='PASSWORD_RECOVERY'){setTimeout(()=>{const p=prompt('Définissez votre nouveau mot de passe (8 caractères minimum) :');if(p&&p.length>=8)bookClient.auth.updateUser({password:p}).then(({error})=>uiAuthStatus(error?'Réinitialisation impossible : '+error.message:'Mot de passe mis à jour. Vous pouvez vous connecter.',!!error));},0);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
