@@ -101,13 +101,14 @@ function paintBase(){
 function drawDimensions(){
  const unit=field('dimensionUnit')||'cm';
  const len=field('dimensionLong'),wide=field('dimensionWide'),high=field('dimensionHigh');
+ const unitValue=s=>/\b(?:mm|cm|m)$/i.test(s)?s:(s+' '+unit);
  ctx.fillStyle='#086f50';ctx.textAlign='center';ctx.font='bold 21px Arial';
- if(wide){arrow(165,468,390,468);ctx.fillText('Largeur : '+wide.slice(0,28)+' '+unit,276,508);}
- if(len){arrow(559,468,820,468);ctx.fillText('Longueur : '+len.slice(0,28)+' '+unit,690,508);}
+ if(wide){arrow(165,468,390,468);ctx.fillText('Largeur : '+unitValue(wide.slice(0,28)),276,508);}
+ if(len){arrow(559,468,820,468);ctx.fillText('Longueur : '+unitValue(len.slice(0,28)),690,508);}
  if(high){
   arrow(885,193,885,375);
   ctx.save();ctx.translate(916,287);ctx.rotate(-Math.PI/2);
-  ctx.fillText('Hauteur / ép. : '+high.slice(0,28)+' '+unit,0,0);ctx.restore();
+  ctx.fillText('Hauteur / ép. : '+unitValue(high.slice(0,28)),0,0);ctx.restore();
  }
  ctx.textAlign='center';ctx.font='18px Arial';ctx.fillStyle='#5c7080';
  ctx.fillText('Croquis schématique — hors échelle • dimensions saisies manuellement',480,632);
