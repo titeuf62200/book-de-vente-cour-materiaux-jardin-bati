@@ -199,7 +199,7 @@ $('catalogue').before($('adminPanel'));
 $('catalogue').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
 $('dialogClose').addEventListener('click',()=>$('editDialog').close());
 $('dialogCancel').addEventListener('click',()=>$('editDialog').close());
-$('inputRayon').addEventListener('change',e=>{updateDatalist(e.target.value);$('inputSousRayon').value='';});
+$('inputRayon').addEventListener('change',e=>{updateDatalist(e.target.value);$('inputSousRayon').selectedIndex=0;});
 $('productForm').addEventListener('submit',submitProduct);
 $('exportJsonBtn').addEventListener('click',exportJSON);
 $('exportExcelBtn').addEventListener('click',exportXlsx);
