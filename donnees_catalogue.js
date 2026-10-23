@@ -1,0 +1,1 @@
+window.BOOK_INITIAL_PRODUCTS = [];
