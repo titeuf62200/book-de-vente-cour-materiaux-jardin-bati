@@ -44,3 +44,7 @@ Le dépôt GitHub fournit les fichiers statiques `index.html`, `app.js`, `auth.j
 Le fichier `print-intercalaires.js` est un ancien complément conservé dans le dépôt : les intercalaires actifs sont directement intégrés dans `app.js` et `styles.css`.
 
 Le projet est indépendant de l'application **TWO Rayon Jardin**.
+
+
+### Authentification indépendante — octobre 2026
+Le Book de vente utilise son propre projet Supabase `zxxnvmbcambdnaeeqcyq` (distinct d’Organizeo). Les 190 références ont été copiées en conservant les images et les croquis. Les profils d’authentification sont initialement vides : `cedric.ledez@leroymerlin.fr` et `sylvie.ribery@leroymerlin.fr` ont les droits administrateur à la première inscription confirmée ; les autres inscrits ont des droits de lecture uniquement. Les droits d'écriture sont imposés côté serveur par RLS. Les e-mails de confirmation nécessitent une configuration de redirection Auth vers l’URL GitHub Pages du Book. Ne jamais stocker des mots de passe sur GitHub.
