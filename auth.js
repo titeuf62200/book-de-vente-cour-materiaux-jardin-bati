@@ -81,17 +81,35 @@ async function bookActivate(){
 async function bookLogin(ev){
  ev.preventDefault();if(!bookClient)return;
  const email=$('authEmail').value.trim().toLowerCase(),password=$('authPassword').value;
- if(password.length<8)return uiAuthStatus('Minimum 8 caractères pour le mot de passe.',true);
- uiAuthStatus('Vérification du compte…');
- const first=$('authFirstTime').checked;
+ if(password.length<8)return uiAuthStatus('Votre mot de passe doit contenir au moins 8 caractères.',true);
+ const btn=$('authLoginBtn');btn.disabled=true;uiAuthStatus('Connexion au catalogue…');
  try{
-  const {data,error}=first?await bookClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await bookClient.auth.signInWithPassword({email,password});
+  const {error}=await bookClient.auth.signInWithPassword({email,password});
   if(error)throw error;
-  if(first){
-   if(data?.session)await bookActivate();
-   else uiAuthStatus('Si votre compte est nouveau, vérifiez son e-mail de confirmation. Si vous aviez déjà un compte Supabase, décochez « Première connexion » et utilisez votre mot de passe habituel, ou « Mot de passe oublié ? ».');
-  }else await bookActivate();
- }catch(e){uiAuthStatus('Connexion refusée : '+e.message,true);}
+  await bookActivate();
+ }catch(e){
+  const msg=/invalid login credentials|invalid credentials/i.test(String(e.message))?
+  'Mot de passe incorrect pour ce compte. Si vous ne le connaissez plus, cliquez sur « Mot de passe oublié ? ». Aucune nouvelle inscription n’est nécessaire.':
+  'Connexion impossible : '+e.message;
+  uiAuthStatus(msg,true);
+ }finally{btn.disabled=false;}
+}
+async function bookSignup(){
+ if(!bookClient||!$('authForm').reportValidity())return;
+ const email=$('authEmail').value.trim().toLowerCase(),password=$('authPassword').value;
+ if(email===OWNER_EMAIL){
+  uiAuthStatus('Votre compte administrateur existe déjà et son adresse est confirmée. Utilisez « Se connecter » ou « Mot de passe oublié ? ».');
+  return;
+ }
+ if(!confirm('Créer un NOUVEAU compte pour '+email+' ? Si vous avez déjà un compte, choisissez plutôt « Se connecter ».'))return;
+ const btn=$('authSignupBtn');btn.disabled=true;uiAuthStatus('Création du compte…');
+ try{
+  const {data,error}=await bookClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(error)throw error;
+  if(data?.session)await bookActivate();
+  else uiAuthStatus('Demande de compte enregistrée. Pour un nouveau compte, vérifiez votre messagerie et confirmez votre adresse. Un administrateur doit aussi autoriser cet e-mail.');
+ }catch(e){uiAuthStatus('Inscription impossible : '+e.message,true);}
+ finally{btn.disabled=false;}
 }
 async function bookForgotPassword(){
  if(!bookClient)return;
@@ -115,10 +133,11 @@ async function bookInit(){
    if(event==='PASSWORD_RECOVERY'){setTimeout(()=>{const p=prompt('Définissez votre nouveau mot de passe (8 caractères minimum) :');if(p&&p.length>=8)bookClient.auth.updateUser({password:p}).then(({error})=>uiAuthStatus(error?'Réinitialisation impossible : '+error.message:'Mot de passe mis à jour. Vous pouvez vous connecter.',!!error));},0);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
-  if(session)await bookActivate();else uiAuthStatus('Première connexion : cochez la case pour définir votre mot de passe, puis confirmez votre adresse e-mail.');
+  if(session)await bookActivate();else uiAuthStatus('Connectez-vous avec le mot de passe de votre compte existant. La création de compte est réservée aux nouveaux utilisateurs.');
  }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+e.message,true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
+$('authSignupBtn').addEventListener('click',bookSignup);
 $('forgotPassword').addEventListener('click',bookForgotPassword);
 $('logoutBtn').addEventListener('click',bookLogout);
 $('addMemberForm').addEventListener('submit',bookAuthorizeMember);
