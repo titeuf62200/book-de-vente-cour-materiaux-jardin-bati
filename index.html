@@ -75,10 +75,11 @@
     <p>Administrateurs : ajout, modification et suppression. Collaborateurs : consultation, recherche et PDF.</p>
     <form id="authForm"><label>Adresse électronique<input id="authEmail" type="email" autocomplete="username" required placeholder="prenom.nom@leroymerlin.fr"></label>
     <label>Mot de passe<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
-    <label class="auth-checkbox"><input id="authFirstTime" type="checkbox"> Première connexion : définir mon mot de passe</label>
-    <button type="submit" class="btn btn-primary">Me connecter / créer mon compte</button></form>
-    <button id="forgotPassword" class="btn btn-simple" type="button">Mot de passe oublié ?</button>
-    <p id="authMessage" role="status"></p></div>
+    <button id="authLoginBtn" type="submit" class="btn btn-primary">Se connecter</button></form>
+    <div class="auth-alt"><button id="forgotPassword" class="btn btn-simple" type="button">Mot de passe oublié ?</button>
+    <button id="authSignupBtn" class="btn btn-outline" type="button">Créer un compte (nouvel utilisateur)</button></div>
+    <p class="auth-help">Vous avez déjà un compte ? Utilisez directement « Se connecter ». Vous n'avez pas besoin de le recréer ni de reconfirmer votre e-mail.</p>
+    <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="editDialog" class="edit-dialog">
@@ -102,6 +103,6 @@
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="app.js"></script>
-  <script src="auth.js"></script>
+  <script src="auth.js?v=20261023-loginfix"></script>
 </body>
 </html>
