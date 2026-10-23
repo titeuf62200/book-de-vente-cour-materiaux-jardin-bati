@@ -80,44 +80,39 @@ async function bookActivate(){
    if(bookCanEdit())await bookRenderMembers();
  }catch(e){bookShowGate(true);uiAuthStatus('Impossible d’ouvrir le book : '+e.message,true);}
 }
+/* Connexion sans mot de passe : seul le propriétaire de la boite e-mail peut valider le lien.
+ * shouldCreateUser:false n'autorise aucun nouveau compte via cet écran.
+ * Les droits restent contrôlés côté base par book_catalog_members et RLS.
+ */
 async function bookLogin(ev){
- ev.preventDefault();if(!bookClient)return;
- const email=$('authEmail').value.trim().toLowerCase(),password=$('authPassword').value;
- if(password.length<8)return uiAuthStatus('Votre mot de passe doit contenir au moins 8 caractères.',true);
- const btn=$('authLoginBtn');btn.disabled=true;uiAuthStatus('Connexion au catalogue…');
- try{
-  const {error}=await bookClient.auth.signInWithPassword({email,password});
-  if(error)throw error;
-  await bookActivate();
- }catch(e){
-  const msg=/invalid login credentials|invalid credentials/i.test(String(e.message))?
-  'Mot de passe incorrect pour ce compte. Si vous ne le connaissez plus, cliquez sur « Mot de passe oublié ? ». Aucune nouvelle inscription n’est nécessaire.':
-  'Connexion impossible : '+e.message;
-  uiAuthStatus(msg,true);
- }finally{btn.disabled=false;}
-}
-async function bookSignup(){
- if(!bookClient||!$('authForm').reportValidity())return;
- const email=$('authEmail').value.trim().toLowerCase(),password=$('authPassword').value;
- if(email===OWNER_EMAIL){
-  uiAuthStatus('Votre compte administrateur existe déjà et son adresse est confirmée. Utilisez « Se connecter » ou « Mot de passe oublié ? ».');
+ ev.preventDefault();
+ if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
+ const email=$('authEmail').value.trim().toLowerCase();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+  uiAuthStatus('Saisissez une adresse électronique valide.',true);
   return;
  }
- if(!confirm('Créer un NOUVEAU compte pour '+email+' ? Si vous avez déjà un compte, choisissez plutôt « Se connecter ».'))return;
- const btn=$('authSignupBtn');btn.disabled=true;uiAuthStatus('Création du compte…');
+ const btn=$('authLoginBtn');
+ if(btn.disabled)return;
+ btn.disabled=true;
+ btn.textContent='Envoi du lien…';
+ uiAuthStatus('Demande de lien de connexion sécurisé…');
  try{
-  const {data,error}=await bookClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+  const {error}=await bookClient.auth.signInWithOtp({
+   email,
+   options:{
+    shouldCreateUser:false,
+    emailRedirectTo:location.origin+location.pathname
+   }
+  });
   if(error)throw error;
-  if(data?.session)await bookActivate();
-  else uiAuthStatus('Demande de compte enregistrée. Pour un nouveau compte, vérifiez votre messagerie et confirmez votre adresse. Un administrateur doit aussi autoriser cet e-mail.');
- }catch(e){uiAuthStatus('Inscription impossible : '+e.message,true);}
- finally{btn.disabled=false;}
-}
-async function bookForgotPassword(){
- if(!bookClient)return;
- const email=$('authEmail').value.trim().toLowerCase();if(!email)return uiAuthStatus('Saisissez d’abord votre adresse e-mail.',true);
- const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
- uiAuthStatus(error?'Envoi impossible : '+error.message:'Si l’adresse possède un compte, un lien de réinitialisation vient de lui être envoyé.',!!error);
+  uiAuthStatus('Si cette adresse possède un compte, un lien de connexion vient de lui être envoyé. Ouvrez votre messagerie et cliquez sur le lien pour accéder au Book. Vérifiez les indésirables si nécessaire.');
+ }catch(e){
+  const msg=/rate limit|too many requests|over_email_send_rate_limit/i.test(String(e.message))
+   ?'Trop de demandes de connexion. Réessayez plus tard, sans multiplier les envois.'
+   :'Le lien n’a pas pu être envoyé : '+e.message;
+  uiAuthStatus(msg,true);
+ }finally{btn.disabled=false;btn.textContent='Recevoir mon lien de connexion';}
 }
 async function bookLogout(){
  await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
@@ -132,15 +127,12 @@ async function bookInit(){
   bookClient=window.supabase.createClient(BOOK_CFG.url,BOOK_CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   bookClient.auth.onAuthStateChange((event,session)=>{
    if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
-   if(event==='PASSWORD_RECOVERY'){setTimeout(()=>{const p=prompt('Définissez votre nouveau mot de passe (8 caractères minimum) :');if(p&&p.length>=8)bookClient.auth.updateUser({password:p}).then(({error})=>uiAuthStatus(error?'Réinitialisation impossible : '+error.message:'Mot de passe mis à jour. Vous pouvez vous connecter.',!!error));},0);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
-  if(session)await bookActivate();else uiAuthStatus('Connectez-vous avec le mot de passe de votre compte existant. La création de compte est réservée aux nouveaux utilisateurs.');
+  if(session)await bookActivate();else uiAuthStatus('Saisissez votre adresse professionnelle pour recevoir un lien de connexion. Aucun mot de passe nécessaire.');
  }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+e.message,true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
-$('authSignupBtn').addEventListener('click',bookSignup);
-$('forgotPassword').addEventListener('click',bookForgotPassword);
 $('logoutBtn').addEventListener('click',bookLogout);
 $('addMemberForm').addEventListener('submit',bookAuthorizeMember);
 $('memberList').addEventListener('click',e=>{const btn=e.target.closest('[data-remove-member]');if(btn)void bookRevokeMember(btn.dataset.removeMember);});
