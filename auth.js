@@ -6,6 +6,7 @@
 const BOOK_CFG=window.BOOK_SUPABASE_CONFIG||{};
 let bookClient=null,bookRole=null,bookEmail='',loadingBook=false;
 const OWNER_EMAIL='cedric.ledez@leroymerlin.fr';
+const BOOK_ALLOWED_EMAILS=new Set(['cedric.ledez@leroymerlin.fr','sylvie.ribery@leroymerlin.fr']);
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
@@ -38,46 +39,25 @@ async function bookSaveItem(item,originalRef=null){
 async function bookGetRole(){
  const {data:{user},error:userError}=await bookClient.auth.getUser();if(userError)throw userError;if(!user)throw new Error('Session expirée');
  const email=String(user.email||'').toLowerCase();
+ if(!BOOK_ALLOWED_EMAILS.has(email))return {role:null,email};
  const {data,error}=await bookClient.from('book_catalog_members').select('email,role').eq('email',email).maybeSingle();
  if(error)throw error;return {role:data?.role||null,email};
-}
-async function bookRenderMembers(){
- if(!bookCanEdit())return;
- const {data,error}=await bookClient.from('book_catalog_members').select('email,role').order('email');
- if(error){toast('Impossible de charger les utilisateurs : '+error.message);return;}
- $('memberList').innerHTML=(data||[]).map(p=>`<div class="member-tag"><strong>${escapeHtml(p.email)}</strong><span>${roleLabel(p.role)}</span>${p.email===OWNER_EMAIL?' <span>propriétaire</span>':`<button type="button" data-remove-member="${escapeHtml(p.email)}" aria-label="Révoquer ${escapeHtml(p.email)}">✕ Révoquer</button>`}</div>`).join('');
-}
-async function bookAuthorizeMember(ev){
- ev.preventDefault();if(!bookCanEdit())return;
- const email=$('newMemberEmail').value.trim().toLowerCase(),role=$('newMemberRole').value;
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return toast('Adresse invalide');
- if(!['admin','lecteur'].includes(role))return;
- if(email===OWNER_EMAIL&&role!=='admin')return toast('Le compte propriétaire reste administrateur');
- const {error}=await bookClient.from('book_catalog_members').upsert({email,role},{onConflict:'email'});
- if(error)return toast('Impossible d’autoriser cet utilisateur : '+error.message);
- $('newMemberEmail').value='';toast('Utilisateur autorisé : '+email+' · '+roleLabel(role));await bookRenderMembers();
-}
-async function bookRevokeMember(email){
- if(!bookCanEdit()||email===OWNER_EMAIL)return;
- if(!confirm('Retirer l’accès au book de vente pour '+email+' ?'))return;
- const {error}=await bookClient.from('book_catalog_members').delete().eq('email',email);
- if(error)return toast('Révocation impossible : '+error.message);
- toast('Accès retiré à '+email);await bookRenderMembers();
 }
 let bookSessionUserId='';
 async function bookActivate(){
  try{
    const {role,email}=await bookGetRole();
-   if(!role){bookShowGate(true);uiAuthStatus('Adresse non autorisée. Un administrateur doit d’abord vous ajouter.',true);return;}
+   if(role!=='admin'||!BOOK_ALLOWED_EMAILS.has(email)){
+   bookRole=null;await bookClient.auth.signOut();bookShowGate(true);
+   uiAuthStatus('Accès refusé : seules les deux adresses administrateur autorisées peuvent ouvrir ce Book.',true);return;
+ }
    bookRole=role;bookEmail=email;
    $('authBadge').textContent=email+' · '+roleLabel(role);
    $('editToggle').hidden=!bookCanEdit();
-   $('memberTools').hidden=!bookCanEdit();
    state.admin=bookCanEdit();$('app').classList.toggle('admin-on',state.admin);$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;
    $('editToggle').setAttribute('aria-pressed',String(state.admin));
    $('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';
    bookShowGate(false);await bookRefresh();
-   if(bookCanEdit())await bookRenderMembers();
  }catch(e){bookShowGate(true);uiAuthStatus('Impossible d’ouvrir le book : '+e.message,true);}
 }
 /* Connexion sans mot de passe : seul le propriétaire de la boite e-mail peut valider le lien.
@@ -90,6 +70,10 @@ async function bookLogin(ev){
  const email=$('authEmail').value.trim().toLowerCase();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
   uiAuthStatus('Saisissez une adresse électronique valide.',true);
+  return;
+ }
+ if(!BOOK_ALLOWED_EMAILS.has(email)){
+  uiAuthStatus('Accès refusé : adresse non autorisée pour ce Book de vente.',true);
   return;
  }
  const btn=$('authLoginBtn');
@@ -134,7 +118,5 @@ async function bookInit(){
 }
 $('authForm').addEventListener('submit',bookLogin);
 $('logoutBtn').addEventListener('click',bookLogout);
-$('addMemberForm').addEventListener('submit',bookAuthorizeMember);
-$('memberList').addEventListener('click',e=>{const btn=e.target.closest('[data-remove-member]');if(btn)void bookRevokeMember(btn.dataset.removeMember);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole)void bookRefresh();});
 void bookInit();
