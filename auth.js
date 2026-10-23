@@ -5,7 +5,7 @@
 'use strict';
 const BOOK_CFG=window.BOOK_SUPABASE_CONFIG||{};
 let bookClient=null,bookRole=null,bookEmail='',loadingBook=false;
-const OWNER_EMAIL='cedric.led@leroymerlin.fr';
+const OWNER_EMAIL='cedric.ledez@leroymerlin.fr';
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
@@ -89,7 +89,7 @@ async function bookLogin(ev){
   if(error)throw error;
   if(first){
    if(data?.session)await bookActivate();
-   else uiAuthStatus('Compte créé. Ouvrez votre messagerie pour confirmer votre adresse, puis connectez-vous.');
+   else uiAuthStatus('Si votre compte est nouveau, vérifiez son e-mail de confirmation. Si vous aviez déjà un compte Supabase, décochez « Première connexion » et utilisez votre mot de passe habituel, ou « Mot de passe oublié ? ».');
   }else await bookActivate();
  }catch(e){uiAuthStatus('Connexion refusée : '+e.message,true);}
 }
