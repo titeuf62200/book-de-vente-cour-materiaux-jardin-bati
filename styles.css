@@ -86,3 +86,29 @@
 .auth-card .auth-alt button{padding:10px 12px;font-size:12px}
 .auth-card .auth-help{font-size:12px;color:#587466;margin:14px 0 4px}
 .auth-card #authLoginBtn:disabled,.auth-card #authSignupBtn:disabled{opacity:.58;cursor:wait}
+
+/* Gestion visuelle des produits et bibliothèque des croquis côtés */
+#addTopBtn{white-space:nowrap}
+.product-title-line{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.ref-trash{width:36px;height:36px;border:1px solid #edc9c9;border-radius:9px;background:#fff3f3;color:#a92020;cursor:pointer;display:grid;place-items:center;font-size:17px;flex:none}
+.ref-trash:hover,.ref-trash:focus-visible{background:#ffe0df;border-color:#cd4242;outline-offset:2px}
+.sketch-editor{border:1px solid #c8dcd0;background:#f7faf8;padding:18px;border-radius:12px;display:grid;gap:13px;min-width:0}
+.sketch-editor [hidden],.form-photo-preview[hidden]{display:none!important}
+.sketch-heading{display:flex;flex-direction:column;gap:5px}
+.sketch-heading strong{font-size:16px;color:#0b6546}
+.sketch-heading small{font-size:12px;color:#63786c}
+.sketch-editor .dimension-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.sketch-editor .dimension-grid[hidden]{display:none!important}
+.sketch-preview{display:grid;gap:6px}
+.sketch-preview canvas{width:100%;max-height:370px;aspect-ratio:4/3;object-fit:contain;background:white;border:1px dashed #b0caba;border-radius:9px}
+.sketch-preview small{font-size:11px;color:#527565}
+.form-photo-preview{max-width:190px;max-height:140px;object-fit:contain;border:1px solid #dce6df;border-radius:8px;background:#fff}
+#saveProductBtn:disabled{cursor:progress;opacity:.65}
+@media(max-width:750px){
+  #addTopBtn{order:-1}
+  .sketch-editor .dimension-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ref-trash{width:40px;height:40px}
+}
+@media print{
+  .ref-trash,.sketch-editor,.form-photo-preview{display:none!important}
+}
