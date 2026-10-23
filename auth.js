@@ -6,7 +6,9 @@
 const BOOK_CFG=window.BOOK_SUPABASE_CONFIG||{};
 let bookClient=null,bookRole=null,bookEmail='',loadingBook=false;
 const OWNER_EMAIL='cedric.ledez@leroymerlin.fr';
-const BOOK_ALLOWED_EMAILS=new Set(['cedric.ledez@leroymerlin.fr','sylvie.ribery@leroymerlin.fr']);
+const BOOK_ADMIN_EMAILS=new Set(['cedric.ledez@leroymerlin.fr','sylvie.ribery@leroymerlin.fr']);
+let bookRecovery=false;
+let bookAuthMode='login';
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
@@ -37,20 +39,25 @@ async function bookSaveItem(item,originalRef=null){
  $('saveStatus').textContent='Catalogue enregistré sur le serveur';
 }
 async function bookGetRole(){
- const {data:{user},error:userError}=await bookClient.auth.getUser();if(userError)throw userError;if(!user)throw new Error('Session expirée');
- const email=String(user.email||'').toLowerCase();
- if(!BOOK_ALLOWED_EMAILS.has(email))return {role:null,email};
- const {data,error}=await bookClient.from('book_catalog_members').select('email,role').eq('email',email).maybeSingle();
- if(error)throw error;return {role:data?.role||null,email};
+ const {data:{user},error:userError}=await bookClient.auth.getUser();
+ if(userError)throw userError;
+ if(!user)throw new Error('Session expirée');
+ const email=String(user.email||'').trim().toLowerCase();
+ if(!user.email_confirmed_at)return {role:null,email};
+ const {data:role,error}=await bookClient.rpc('book_catalog_role');
+ if(error)throw error;
+ if(!['admin','lecteur'].includes(role))return {role:null,email};
+ if(role==='admin'&&!BOOK_ADMIN_EMAILS.has(email))throw new Error('Rôle administrateur incohérent, accès bloqué.');
+ return {role,email};
 }
 let bookSessionUserId='';
 async function bookActivate(){
  try{
    const {role,email}=await bookGetRole();
-   if(role!=='admin'||!BOOK_ALLOWED_EMAILS.has(email)){
-   bookRole=null;await bookClient.auth.signOut();bookShowGate(true);
-   uiAuthStatus('Accès refusé : seules les deux adresses administrateur autorisées peuvent ouvrir ce Book.',true);return;
- }
+   if(!['admin','lecteur'].includes(role)){
+    bookRole=null;bookShowGate(true);
+    uiAuthStatus('Confirmez votre adresse e-mail pour activer votre compte.',true);return;
+   }
    bookRole=role;bookEmail=email;
    $('authBadge').textContent=email+' · '+roleLabel(role);
    $('editToggle').hidden=!bookCanEdit();
@@ -60,43 +67,100 @@ async function bookActivate(){
    bookShowGate(false);await bookRefresh();
  }catch(e){bookShowGate(true);uiAuthStatus('Impossible d’ouvrir le book : '+e.message,true);}
 }
-/* Connexion sans mot de passe : seul le propriétaire de la boite e-mail peut valider le lien.
- * shouldCreateUser:false n'autorise aucun nouveau compte via cet écran.
- * Les droits restent contrôlés côté base par book_catalog_members et RLS.
+/* Comptes utilisateurs gérés par Supabase Auth.
+ * Les mots de passe ne sont jamais enregistrés dans GitHub ou les tables publiques.
+ * L'accès en lecture/édition est imposé par book_catalog_role() et les politiques RLS.
  */
+function bookSwitchAuthMode(mode){
+ if(bookRecovery)return;
+ bookAuthMode=mode==='signup'?'signup':'login';
+ const signup=bookAuthMode==='signup';
+ $('authSignupFields').hidden=!signup;
+ $('authConfirmPassword').required=signup;
+ $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
+ $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
+ $('authIntro').textContent=signup?
+   'Créez votre compte avec votre adresse et votre mot de passe. Les nouveaux profils sont en lecture seule.':
+   'Connectez-vous avec votre adresse professionnelle et votre mot de passe.';
+ uiAuthStatus(signup?'Un e-mail de confirmation peut être nécessaire pour activer votre profil.':'');
+}
 async function bookLogin(ev){
  ev.preventDefault();
  if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
  const email=$('authEmail').value.trim().toLowerCase();
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-  uiAuthStatus('Saisissez une adresse électronique valide.',true);
-  return;
+ const password=$('authPassword').value;
+ if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return uiAuthStatus('Adresse e-mail incorrecte.',true);
+ if(password.length<8)return uiAuthStatus('Le mot de passe doit contenir au moins 8 caractères.',true);
+ if(bookAuthMode==='signup'){
+  const check=$('authConfirmPassword').value;
+  if(check!==password)return uiAuthStatus('Les deux mots de passe ne correspondent pas.',true);
+  if(BOOK_ADMIN_EMAILS.has(email))
+   return uiAuthStatus('Ce profil administrateur existe déjà. Utilisez « Mot de passe oublié ? » pour définir un nouveau mot de passe.',true);
  }
- if(!BOOK_ALLOWED_EMAILS.has(email)){
-  uiAuthStatus('Accès refusé : adresse non autorisée pour ce Book de vente.',true);
-  return;
- }
- const btn=$('authLoginBtn');
- if(btn.disabled)return;
- btn.disabled=true;
- btn.textContent='Envoi du lien…';
- uiAuthStatus('Demande de lien de connexion sécurisé…');
+ const btn=$('authLoginBtn');if(btn.disabled)return;
+ btn.disabled=true;btn.textContent=bookAuthMode==='signup'?'Création du profil…':'Connexion…';
  try{
-  const {error}=await bookClient.auth.signInWithOtp({
-   email,
-   options:{
-    shouldCreateUser:false,
-    emailRedirectTo:location.origin+location.pathname
-   }
-  });
+  if(bookAuthMode==='signup'){
+   const {data,error}=await bookClient.auth.signUp({
+    email,password,options:{emailRedirectTo:location.origin+location.pathname}
+   });
+   if(error)throw error;
+   if(data?.session){await bookActivate();}
+   else uiAuthStatus('Si cette adresse est nouvelle, ouvrez le lien de confirmation reçu dans votre messagerie. Après confirmation, votre profil sera en lecture seule.');
+  }else{
+   const {error}=await bookClient.auth.signInWithPassword({email,password});
+   if(error)throw error;
+   await bookActivate();
+  }
+ }catch(error){
+  uiAuthStatus('Impossible de '+(bookAuthMode==='signup'?'créer le compte':'se connecter')+' : '+error.message,true);
+ }finally{btn.disabled=false;btn.textContent=bookAuthMode==='signup'?'Créer mon profil':'Se connecter';}
+}
+async function bookForgotPassword(){
+ if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
+ const email=$('authEmail').value.trim().toLowerCase();
+ if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return uiAuthStatus('Indiquez votre adresse e-mail.',true);
+ const button=$('authForgotBtn');button.disabled=true;
+ try{
+  const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
   if(error)throw error;
-  uiAuthStatus('Si cette adresse possède un compte, un lien de connexion vient de lui être envoyé. Ouvrez votre messagerie et cliquez sur le lien pour accéder au Book. Vérifiez les indésirables si nécessaire.');
- }catch(e){
-  const msg=/rate limit|too many requests|over_email_send_rate_limit/i.test(String(e.message))
-   ?'Trop de demandes de connexion. Réessayez plus tard, sans multiplier les envois.'
-   :'Le lien n’a pas pu être envoyé : '+e.message;
-  uiAuthStatus(msg,true);
- }finally{btn.disabled=false;btn.textContent='Recevoir mon lien de connexion';}
+  uiAuthStatus('Si cette adresse est enregistrée, un e-mail pour définir un nouveau mot de passe a été envoyé.');
+ }catch(e){uiAuthStatus('Réinitialisation impossible : '+e.message,true);}
+ finally{button.disabled=false;}
+}
+function bookShowRecovery(){
+ bookRecovery=true;
+ bookShowGate(true);
+ $('authForm').hidden=true;
+ $('authSwitchMode').hidden=true;
+ $('authForgotBtn').hidden=true;
+ $('authRecoveryForm').hidden=false;
+ $('authIntro').textContent='Définissez votre nouveau mot de passe.';
+ uiAuthStatus('Choisissez un nouveau mot de passe de 8 caractères minimum.');
+}
+async function bookCompleteRecovery(ev){
+ ev.preventDefault();
+ if(!bookClient)return;
+ const p=$('newAuthPassword').value;
+ if(p.length<8)return uiAuthStatus('Le mot de passe doit contenir au moins 8 caractères.',true);
+ if(p!==$('newAuthPasswordConfirm').value)return uiAuthStatus('Les mots de passe ne correspondent pas.',true);
+ const btn=$('authRecoveryBtn');btn.disabled=true;
+ try{
+  const {error}=await bookClient.auth.updateUser({password:p});
+  if(error)throw error;
+  bookRecovery=false;
+  await bookClient.auth.signOut();
+  $('authRecoveryForm').hidden=true;
+  $('authForm').hidden=false;
+  $('authSwitchMode').hidden=false;
+  $('authForgotBtn').hidden=false;
+  $('authPassword').value='';
+  $('newAuthPassword').value='';
+  $('newAuthPasswordConfirm').value='';
+  bookSwitchAuthMode('login');
+  uiAuthStatus('Mot de passe enregistré. Connectez-vous avec votre nouveau mot de passe.');
+ }catch(e){uiAuthStatus('Mot de passe non modifié : '+e.message,true);}
+ finally{btn.disabled=false;}
 }
 async function bookLogout(){
  await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
@@ -110,13 +174,20 @@ async function bookInit(){
   }
   bookClient=window.supabase.createClient(BOOK_CFG.url,BOOK_CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   bookClient.auth.onAuthStateChange((event,session)=>{
+   if(event==='PASSWORD_RECOVERY')setTimeout(bookShowRecovery,0);
+   if(event==='SIGNED_IN'&&!bookRecovery)setTimeout(()=>{if(!bookRecovery&&!bookRole)void bookActivate();},0);
    if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
-  if(session)await bookActivate();else uiAuthStatus('Saisissez votre adresse professionnelle pour recevoir un lien de connexion. Aucun mot de passe nécessaire.');
+  if(bookRecovery)bookShowRecovery();
+  else if(session)await bookActivate();
+  else bookSwitchAuthMode('login');
  }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+e.message,true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
+$('authSwitchMode').addEventListener('click',()=>bookSwitchAuthMode(bookAuthMode==='login'?'signup':'login'));
+$('authForgotBtn').addEventListener('click',bookForgotPassword);
+$('authRecoveryForm').addEventListener('submit',bookCompleteRecovery);
 $('logoutBtn').addEventListener('click',bookLogout);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole)void bookRefresh();});
 void bookInit();
