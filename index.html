@@ -74,12 +74,9 @@
   <section id="authGate" class="auth-gate">
     <div class="auth-card"><div class="auth-logo">◩ &nbsp; BOOK DE VENTE · CALAIS</div><h1>Connexion au book de vente</h1>
     <p>Administrateurs : ajout, modification et suppression. Collaborateurs : consultation, recherche et PDF.</p>
-    <form id="authForm"><label>Adresse électronique<input id="authEmail" type="email" autocomplete="username" required placeholder="prenom.nom@leroymerlin.fr"></label>
-    <label>Mot de passe<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
-    <button id="authLoginBtn" type="submit" class="btn btn-primary">Se connecter</button></form>
-    <div class="auth-alt"><button id="forgotPassword" class="btn btn-simple" type="button">Mot de passe oublié ?</button>
-    <button id="authSignupBtn" class="btn btn-outline" type="button">Créer un compte (nouvel utilisateur)</button></div>
-    <p class="auth-help">Vous avez déjà un compte ? Utilisez directement « Se connecter ». Vous n'avez pas besoin de le recréer ni de reconfirmer votre e-mail.</p>
+    <form id="authForm"><label>Adresse électronique professionnelle<input id="authEmail" type="email" autocomplete="email" required placeholder="prenom.nom@leroymerlin.fr"></label>
+    <button id="authLoginBtn" type="submit" class="btn btn-primary">Recevoir mon lien de connexion</button></form>
+    <p class="auth-help">Aucun mot de passe. Vous recevrez un lien personnel et temporaire dans votre messagerie professionnelle. Seules les adresses autorisées auront accès au Book de vente.</p>
     <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -141,6 +138,6 @@
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=20261023-manual"></script>
+  <script src="auth.js?v=20261023-sans-mot-de-passe"></script>
 </body>
 </html>
