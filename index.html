@@ -132,12 +132,12 @@
       <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" id="saveProductBtn" class="btn btn-primary">Enregistrer le produit</button></div>
     </form>
   </dialog>
-  <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><div id="memberTools" hidden><form id="addMemberForm" class="member-form"><label>Autoriser un collaborateur ou un second administrateur : <input id="newMemberEmail" type="email" placeholder="prenom.nom@leroymerlin.fr" required></label><select id="newMemberRole"><option value="lecteur">Consultation</option><option value="admin">Administrateur</option></select><button class="btn btn-primary" type="submit">+ Autoriser</button></form><div id="memberList" class="member-list"></div></div></div>
+  <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Accès réservé à cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Les autres adresses sont refusées.</p></div>
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=20261023-sans-mot-de-passe"></script>
+  <script src="auth.js?v=20261023-deux-admins"></script>
 </body>
 </html>
