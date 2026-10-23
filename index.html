@@ -121,11 +121,12 @@
           </select></label>
           <label id="sketchReuseField" hidden>Croquis à reprendre<select id="reuseCroquis"><option value="">Choisir un croquis existant…</option></select></label>
           <label id="sketchUploadField" hidden>Image du croquis<input id="inputCroquis" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <p class="dimension-instructions">Saisissez vos nouvelles cotes. Vous pouvez mélanger les unités : par exemple « 3 m », « 75 mm » et « 63 mm ». À défaut, l’unité choisie ci-dessous sera utilisée.</p>
           <div id="sketchDimensionFields" class="dimension-grid" hidden>
             <label>Longueur<input id="dimensionLong" maxlength="28" placeholder="Ex. 200"></label>
             <label>Largeur<input id="dimensionWide" maxlength="28" placeholder="Ex. 50"></label>
             <label>Hauteur / épaisseur<input id="dimensionHigh" maxlength="28" placeholder="Ex. 6"></label>
-            <label>Unité<select id="dimensionUnit"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option></select></label>
+            <label>Unité par défaut<select id="dimensionUnit"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option></select></label>
           </div>
           <div class="sketch-preview"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
         </div>
@@ -138,7 +139,7 @@
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
-  <script src="app.js?v=20261023-sans-tableau"></script>
+  <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-modeles-reels"></script>
   <script src="auth.js?v=20261023-manual"></script>
 </body>
