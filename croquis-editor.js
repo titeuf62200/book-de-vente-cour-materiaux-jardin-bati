@@ -19,12 +19,19 @@ const MODELS={
  'Panneaux - OSB':{ref:'70406721',type:'wood',name:'Panneau OSB'},
  'Clôtures - Panneaux et portillons':{ref:'14091280',type:'panneau',name:'Panneau de clôture'},
  'Clôtures - Poteaux':{ref:'590842',type:'poteau',name:'Poteau de clôture'},
+ 'Clôtures - Lames, profils et poteaux':{ref:'70182651',type:'poteau',name:'Profil / poteau'},
  'Clôtures - Accessoires et fixations':{ref:'13156472',type:'fixation',name:'Support / fixation'},
  'Terrasses - Lames et lambourdes':{ref:'65950822',type:'wood',name:'Lame de terrasse'},
  'Terrasses - Dalles bois et clipsables':{ref:'36277360',type:'dalle',name:'Dalle bois'},
+ 'Terrasses - Accessoires et pose':{ref:'65250913',type:'vis',name:'Vis / fixation'},
  'Sols extérieurs - Bordures béton':{ref:'62482266',type:'bordure',name:'Bordure béton'},
  'Sols extérieurs - Bordures bois, PVC et métal':{ref:'64966342',type:'bordure',name:'Bordure'},
- 'Sols extérieurs - Pas japonais':{ref:'151473',type:'dalle',name:'Pas japonais'}
+ 'Sols extérieurs - Pas japonais':{ref:'151473',type:'dalle',name:'Pas japonais'},
+ 'Sols extérieurs - Pavés':{ref:'70713692',type:'dalle',name:'Pavé'},
+ 'Sols extérieurs - Dalles minérales':{ref:'62237133',type:'dalle',name:'Dalle minérale'},
+ 'Sols extérieurs - Gazon synthétique':{ref:'75043310',type:'panneau',name:'Rouleau / panneau'},
+ 'Sols extérieurs - Aménagement et plots':{ref:'80089933',type:'dalle',name:'Plot / dalle'},
+ 'Jardin - Divers':{ref:'70182602',type:'wood',name:'Planche / lame'}
 };
 /* Coordonnées, sur le schéma original de 572 x 180 pixels :
    zones de la forme uniquement (sans flèches, références ni cotes d'origine). */
@@ -37,9 +44,10 @@ const CROP={
  poteau:[[128,65,47,70],[401,64,54,73]],
  fixation:[[123,69,73,67],[402,65,53,71]],
  dalle:[[98,66,136,68],[348,96,180,27]],
- bordure:[[92,71,154,55],[348,95,180,28]]
+ bordure:[[92,71,154,55],[348,95,180,28]],
+ vis:[[126,63,40,73],[403,76,63,59]]
 };
-const TEMPLATES={chapeau:'pilier',element:'pilier',couvre:'dalle',wood:'poutre',panneau:'panneau',poteau:'poteau',fixation:'bloc',dalle:'dalle',bordure:'dalle'};
+const TEMPLATES={chapeau:'pilier',element:'pilier',couvre:'dalle',wood:'poutre',panneau:'panneau',poteau:'poteau',fixation:'bloc',vis:'rond',dalle:'dalle',bordure:'dalle'};
 let current=null,generation=0,ready=false,lastError='',chosenBookRef='';
 function trim(s){return String(s||'').trim();}
 function field(id){return trim(Q(id).value);}
