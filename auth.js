@@ -98,8 +98,16 @@ async function bookLogin(ev){
  if(bookAuthMode==='signup'){
   const check=$('authConfirmPassword').value;
   if(check!==password)return uiAuthStatus('Les deux mots de passe ne correspondent pas.',true);
-  if(BOOK_ADMIN_EMAILS.has(email))
-   return uiAuthStatus('Ce profil administrateur existe déjà. Utilisez « Mot de passe oublié ? » pour définir un nouveau mot de passe.',true);
+  if(BOOK_ADMIN_EMAILS.has(email)){
+   // Ces deux comptes administrateurs existent déjà : l'inscription ne peut pas modifier leur mot de passe.
+   // Lien de récupération sécurisé pour qu'ils puissent définir eux-mêmes leur mot de passe.
+   try{
+    const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    if(error)throw error;
+    uiAuthStatus('Ce compte administrateur existe déjà. Un lien pour définir votre mot de passe vient de vous être envoyé par e-mail. Le mot de passe saisi sur cette page n’a pas encore été enregistré.');
+   }catch(e){uiAuthStatus('Impossible d’envoyer le lien de définition du mot de passe : '+e.message,true);}
+   return;
+  }
  }
  const btn=$('authLoginBtn');if(btn.disabled)return;
  btn.disabled=true;btn.textContent=bookAuthMode==='signup'?'Création du profil…':'Connexion…';
