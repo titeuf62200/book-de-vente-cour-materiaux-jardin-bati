@@ -73,10 +73,23 @@
   </div>
   <section id="authGate" class="auth-gate">
     <div class="auth-card"><div class="auth-logo">◩ &nbsp; BOOK DE VENTE · CALAIS</div><h1>Connexion au book de vente</h1>
-    <p>Accès réservé aux deux administrateurs autorisés. Gestion des références, consultation et PDF.</p>
-    <form id="authForm"><label>Adresse électronique professionnelle<input id="authEmail" type="email" autocomplete="email" required placeholder="prenom.nom@leroymerlin.fr"></label>
-    <button id="authLoginBtn" type="submit" class="btn btn-primary">Recevoir mon lien de connexion</button></form>
-    <p class="auth-help">Aucun mot de passe. Vous recevrez un lien personnel et temporaire dans votre messagerie professionnelle. Seules les adresses autorisées auront accès au Book de vente.</p>
+    <p id="authIntro">Connectez-vous avec votre adresse professionnelle et votre mot de passe.</p>
+    <form id="authForm">
+      <label>Adresse électronique<input id="authEmail" type="email" autocomplete="email" required placeholder="prenom.nom@leroymerlin.fr"></label>
+      <label>Mot de passe<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
+      <div id="authSignupFields" hidden><label>Confirmer le mot de passe<input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="8"></label></div>
+      <button id="authLoginBtn" type="submit" class="btn btn-primary">Se connecter</button>
+    </form>
+    <div class="auth-alt">
+      <button id="authSwitchMode" type="button" class="btn btn-outline">Créer un profil</button>
+      <button id="authForgotBtn" type="button" class="btn btn-simple">Mot de passe oublié ?</button>
+    </div>
+    <form id="authRecoveryForm" hidden>
+      <label>Nouveau mot de passe<input id="newAuthPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Confirmer le mot de passe<input id="newAuthPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required></label>
+      <button id="authRecoveryBtn" type="submit" class="btn btn-primary">Enregistrer mon nouveau mot de passe</button>
+    </form>
+    <p class="auth-help">Administrateurs : cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Tous les autres profils : consultation et téléchargement des deux books uniquement. Votre mot de passe n'est pas enregistré dans le site.</p>
     <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -132,12 +145,12 @@
       <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" id="saveProductBtn" class="btn btn-primary">Enregistrer le produit</button></div>
     </form>
   </dialog>
-  <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Accès réservé à cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Les autres adresses sont refusées.</p></div>
+  <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=20261023-deux-admins"></script>
+  <script src="auth.js?v=20261023-profils-lecteurs"></script>
 </body>
 </html>
