@@ -86,7 +86,7 @@ function showForm(ref=null){if(!state.admin||typeof bookCanEdit==='function'&&!b
  if(ref&&!p){toast('Référence introuvable');return;}
  const form=$('productForm');form.reset();$('dialogTitle').textContent=p?'Modifier la référence '+p.reference:'Ajouter une référence';
  for(const field of ['reference','designation','ean','rayon','sousRayon','notes'])form.elements[field].value=p?.[field]??(field==='rayon'?(state.rayon==='all'?'Matériaux':state.rayon):'');
- updateDatalist(form.elements.rayon.value);if(p&&MASTER_GROUPS[p.rayon].includes(p.sousRayon))form.elements.sousRayon.value=p.sousRayon;if(window.BookSketchEditor)window.BookSketchEditor.open(p);$('inputPhotoPreview').hidden=true;$('inputPhotoPreview').removeAttribute('src');$('editDialog').showModal();
+ updateDatalist(form.elements.rayon.value);if(p&&MASTER_GROUPS[p.rayon].includes(p.sousRayon))form.elements.sousRayon.value=p.sousRayon;else if(!p&&state.group&&MASTER_GROUPS[form.elements.rayon.value].includes(state.group))form.elements.sousRayon.value=state.group;if(window.BookSketchEditor)window.BookSketchEditor.open(p);$('inputPhotoPreview').hidden=true;$('inputPhotoPreview').removeAttribute('src');$('editDialog').showModal();
 }
 async function asDataUrl(file,isDrawing=false){if(!file)return '';
  if(!file.type.startsWith('image/'))throw new Error('Le fichier doit être une image');
