@@ -84,9 +84,24 @@ function bookSwitchAuthMode(mode){
  $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
  $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
  $('authIntro').textContent=signup?
-   'Créez votre compte avec votre adresse et votre mot de passe. Les nouveaux profils sont en lecture seule.':
+   'Nouveau collaborateur : créez votre compte avec votre mot de passe (lecture seule). Les deux profils administrateurs existent déjà : utilisez la connexion ou la récupération du mot de passe.':
    'Connectez-vous avec votre adresse professionnelle et votre mot de passe.';
  uiAuthStatus(signup?'Un e-mail de confirmation peut être nécessaire pour activer votre profil.':'');
+}
+function bookAuthErrorMessage(error){
+ const message=String(error?.message||error||'Erreur inconnue');
+ const code=String(error?.code||'');
+ if(/over_email_send_rate_limit|email rate limit exceeded|email rate limit/i.test(code+' '+message))
+  return 'Envoi des e-mails temporairement bloqué : le quota de messages de Supabase est atteint (2 e-mails par heure avec le service intégré). Aucune demande n’a pu être envoyée. Évitez de renouveler les essais immédiatement. Pour une solution durable, il faut configurer un service SMTP dédié dans Supabase.';
+ if(/email address not authorized|email not authorized/i.test(code+' '+message))
+  return 'L’adresse n’est pas autorisée par le service d’envoi d’e-mails intégré. Il faut configurer un service SMTP dédié dans Supabase pour envoyer les confirmations aux collaborateurs.';
+ if(/invalid login credentials|invalid credentials/i.test(code+' '+message))
+  return 'Adresse ou mot de passe incorrect. Si le profil existe déjà, choisissez « Mot de passe oublié ? ».';
+ if(/email not confirmed/i.test(code+' '+message))
+  return 'Votre adresse doit être confirmée via l’e-mail reçu avant la connexion.';
+ if(/for security purposes|too many requests|rate limit/i.test(code+' '+message))
+  return 'Trop de demandes rapprochées. N’effectuez pas de nouvel essai immédiatement.';
+ return message;
 }
 async function bookLogin(ev){
  ev.preventDefault();
@@ -99,13 +114,9 @@ async function bookLogin(ev){
   const check=$('authConfirmPassword').value;
   if(check!==password)return uiAuthStatus('Les deux mots de passe ne correspondent pas.',true);
   if(BOOK_ADMIN_EMAILS.has(email)){
-   // Ces deux comptes administrateurs existent déjà : l'inscription ne peut pas modifier leur mot de passe.
-   // Lien de récupération sécurisé pour qu'ils puissent définir eux-mêmes leur mot de passe.
-   try{
-    const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-    if(error)throw error;
-    uiAuthStatus('Ce compte administrateur existe déjà. Un lien pour définir votre mot de passe vient de vous être envoyé par e-mail. Le mot de passe saisi sur cette page n’a pas encore été enregistré.');
-   }catch(e){uiAuthStatus('Impossible d’envoyer le lien de définition du mot de passe : '+e.message,true);}
+   // Un profil existant ne peut pas être recréé : l'inscription ne change jamais son mot de passe.
+   // Aucune demande d'e-mail automatique, pour ne pas épuiser le quota Supabase.
+   uiAuthStatus('Ce profil administrateur existe déjà. Aucun mot de passe n’a été modifié et aucun e-mail n’a été envoyé. Utilisez « Déjà inscrit ? Se connecter » avec votre mot de passe existant, ou « Mot de passe oublié ? » pour en définir un autre.',true);
    return;
   }
  }
@@ -125,7 +136,7 @@ async function bookLogin(ev){
    await bookActivate();
   }
  }catch(error){
-  uiAuthStatus('Impossible de '+(bookAuthMode==='signup'?'créer le compte':'se connecter')+' : '+error.message,true);
+  uiAuthStatus('Impossible de '+(bookAuthMode==='signup'?'créer le compte':'se connecter')+' : '+bookAuthErrorMessage(error),true);
  }finally{btn.disabled=false;btn.textContent=bookAuthMode==='signup'?'Créer mon profil':'Se connecter';}
 }
 async function bookForgotPassword(){
@@ -137,7 +148,7 @@ async function bookForgotPassword(){
   const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
   if(error)throw error;
   uiAuthStatus('Si cette adresse est enregistrée, un e-mail pour définir un nouveau mot de passe a été envoyé.');
- }catch(e){uiAuthStatus('Réinitialisation impossible : '+e.message,true);}
+ }catch(e){uiAuthStatus('Réinitialisation impossible : '+bookAuthErrorMessage(e),true);}
  finally{button.disabled=false;}
 }
 function bookShowRecovery(){
