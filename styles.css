@@ -129,3 +129,12 @@
 .dimension-grid .dimension-instructions{grid-column:1/-1;margin:0;padding:7px 10px;border-radius:7px;background:#fffbe9;color:#785b28;font-size:11px;line-height:1.55;font-weight:500}
 .book-source-field .book-sketch-info{padding:8px 10px;background:#fff;border-left:3px solid #7bb592}
 @media(max-width:570px){.book-source-field{padding:10px 8px}.book-sketch-info{font-size:11px}}
+
+/* Connexion / création / récupération : seuls les panneaux actifs sont visibles. */
+.auth-card [hidden]{display:none!important}
+.auth-card #authSignupFields{display:grid;gap:12px}
+.auth-card #authSignupFields label{display:grid;gap:6px}
+.auth-card #authRecoveryForm{display:grid;gap:15px;margin-top:20px}
+.auth-card #authLoginBtn,.auth-card #authRecoveryBtn{width:100%}
+.auth-card .auth-alt{justify-content:space-between}
+.book-access-notice{font-size:12px;color:#4b735e;margin-top:8px}
