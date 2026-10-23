@@ -146,6 +146,12 @@ function printCard(p){let bar=barcodeDataURL(p.ean);let photo=safeImage(p.photo)
 return `<article class="p-product"><div class="p-reference">RÉF. ${escapeHtml(p.reference)}</div><div class="p-name">${escapeHtml(p.designation)}</div><div class="p-row"><div class="p-asset">${photo?`<img src="${escapeHtml(photo)}">`:'<span class="p-missing">Photo non disponible</span>'}</div><div class="p-asset">${croquis?`<img src="${escapeHtml(croquis)}">`:'<span class="p-missing">Croquis non disponible</span>'}</div><div class="p-asset bar">${bar?`<img src="${escapeHtml(bar)}">`:'<span class="p-missing">EAN non renseigné</span>'}</div></div>${p.notes?`<div class="p-note">⚠ ${escapeHtml(p.notes)}</div>`:''}</article>`;
 }
 function printHeader(rayon,page,pageCount){return `<div class="p-header"><span>BOOK DE VENTE</span><span>${escapeHtml(rayon.toUpperCase())}</span></div><div class="p-footer"><span>LEROY MERLIN CALAIS / GUIDE PRODUITS</span><span>${page} / ${pageCount}</span></div>`;}
+function coverGallery(active, groups){
+ const representatives=groups.map(g=>active.find(p=>p.sousRayon===g&&safeImage(p.photo))).filter(Boolean);
+ const positions=[0,Math.floor((representatives.length-1)/2),representatives.length-1];
+ const samples=positions.map(i=>representatives[i]).filter((p,i,arr)=>p&&arr.findIndex(other=>other.reference===p.reference)===i);
+ return '<div class="cover-gallery">'+samples.map(p=>'<figure class="cover-tile"><img src="'+escapeHtml(safeImage(p.photo))+'" alt=""><figcaption>'+escapeHtml(p.sousRayon)+'</figcaption></figure>').join('')+'</div>';
+}
 function makePrintHTML(rayon){
  if(!UNIVERSES.includes(rayon))throw new Error('Choisir Matériaux ou Jardin');
  const active=products.filter(p=>!p.archived&&p.rayon===rayon);
@@ -161,7 +167,7 @@ function makePrintHTML(rayon){
    if(p.kind==='cover'){
      const nm=rayon==='Matériaux'?'BÂTI & MATÉRIAUX':'JARDIN';
      
-     return `<div class="print-page p-cover"><div class="cover-micro">LEROY MERLIN CALAIS · BOOK DE VENTE</div><h1>${nm}</h1><div class="cover-band">LEROY MERLIN · CALAIS</div><p>Photos produits · Croquis cotés · Codes-barres EAN-13</p><div class="p-bottom">${active.length} RÉFÉRENCES<br>${groups.length} sous-rayons</div><small>Visuel de couverture d'illustration, non photographie du magasin.</small></div>`;
+     return `<div class="print-page p-cover ${rayon==='Matériaux'?'p-cover-bati':'p-cover-jardin'}"><div class="cover-micro">LEROY MERLIN CALAIS · BOOK DE VENTE</div><h1>${nm}</h1><p>Guide caisse · Photos produits · Croquis cotés · Codes-barres EAN-13</p>${coverGallery(active,groups)}<div class="p-bottom">${active.length} RÉFÉRENCES<br>${groups.length} sous-rayons</div><small>Photos des références du book : illustrations des produits, pas du magasin.</small></div>`;
    }
    if(p.kind==='intro')return `<div class="print-page p-intro">${printHeader(rayon,i+1,pages.length)}<div class="p-label">${rayon==='Matériaux'?'01':'09'} — RAYON</div><h1>${escapeHtml(rayon.toUpperCase())}</h1><p>${active.length} références / ${groups.length} sous-rayons</p><h2 class="p-toc-title">SOMMAIRE · COULEURS D'INTERCALAIRES</h2><ul class="p-toc">${groups.map(g=>`<li style="--tab-color:${groupColor(rayon,g)}"><span class="p-toc-swatch"></span><span class="p-toc-name">${escapeHtml(g)}</span><strong>p. ${toc[g]}</strong></li>`).join('')}</ul><p class="p-toc-note">Retrouvez la même couleur sur le liseré vertical droit de toutes les pages du sous-rayon.</p></div>`;
    const color=groupColor(rayon,p.g);
