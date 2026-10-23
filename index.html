@@ -36,6 +36,8 @@ button{border:none;border-radius:10px;background:#007c52;color:white;padding:12p
       .replace('href="Book_de_vente_Jardin_Calais.pdf" download','href="#" onclick="event.preventDefault(); document.getElementById(\'printJardinBtn\').click()"')
       .replace('PDF Bâti (édition initiale)','Générer le PDF Bâti')
       .replace('PDF Jardin (édition initiale)','Générer le PDF Jardin');
+    // Charger les sous-rayons couleurs après le catalogue, sans toucher aux données produit.
+    html=html.replace('</body>','<script src="print-intercalaires.js"><'+'/script></body>');
     document.open();document.write(html);document.close();
   } catch(e){
     document.getElementById('message').textContent='Le book n’a pas pu se charger complètement.';
