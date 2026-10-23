@@ -156,7 +156,7 @@ function updateVisibility(){
  Q('sketchDimensionFields').hidden=mode==='none';
 }
 function gallery(){
- const list=sourcesForGroup(),selected=field('bookSketchSource'),area=Q('bookSketchGallery');
+ const selected=field('bookSketchSource'),list=sourcesForGroup().sort((a,b)=>Number(a.reference!==selected)-Number(b.reference!==selected)||a.reference.localeCompare(b.reference,'fr')),area=Q('bookSketchGallery');
  const max=8;
  area.innerHTML=list.slice(0,max).map(p=>'<button type="button" class="book-sketch-tile'+(p.reference===selected?' selected':'')+'" data-book-ref="'+escapeText(p.reference)+'" aria-pressed="'+(p.reference===selected?'true':'false')+'"><img loading="lazy" alt="Croquis de '+escapeText(p.designation)+'" src="'+escapeText(p.croquis)+'"><span>'+escapeText(p.reference)+'</span></button>').join('');
 }
@@ -174,6 +174,7 @@ function populateGroup(autopick){
  return !!pref;
 }
 function genericKind(group){
+ if(/Entretien|Graviers|galets/i.test(group))return '';
  if(/chevron|madrier|bastaing|liteau|lambourde|lames/i.test(group))return'poutre';
  if(/pilier|couvre-mur/i.test(group))return'pilier';
  if(/poteaux/i.test(group))return'poteau';
