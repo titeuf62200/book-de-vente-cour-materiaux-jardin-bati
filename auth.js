@@ -44,6 +44,10 @@ async function bookGetRole(){
  if(!user)throw new Error('Session expirée');
  const email=String(user.email||'').trim().toLowerCase();
  if(!user.email_confirmed_at)return {role:null,email};
+ // Un profil non administrateur se déclare lecteur une fois l’adresse confirmée.
+ // Cette fonction ne peut jamais créer un compte administrateur.
+ const {error:registerError}=await bookClient.rpc('book_catalog_register_reader');
+ if(registerError)throw registerError;
  const {data:role,error}=await bookClient.rpc('book_catalog_role');
  if(error)throw error;
  if(!['admin','lecteur'].includes(role))return {role:null,email};
@@ -89,7 +93,7 @@ async function bookLogin(ev){
  if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
  const email=$('authEmail').value.trim().toLowerCase();
  const password=$('authPassword').value;
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return uiAuthStatus('Adresse e-mail incorrecte.',true);
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return uiAuthStatus('Adresse e-mail incorrecte.',true);
  if(password.length<8)return uiAuthStatus('Le mot de passe doit contenir au moins 8 caractères.',true);
  if(bookAuthMode==='signup'){
   const check=$('authConfirmPassword').value;
@@ -119,7 +123,7 @@ async function bookLogin(ev){
 async function bookForgotPassword(){
  if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
  const email=$('authEmail').value.trim().toLowerCase();
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return uiAuthStatus('Indiquez votre adresse e-mail.',true);
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return uiAuthStatus('Indiquez votre adresse e-mail.',true);
  const button=$('authForgotBtn');button.disabled=true;
  try{
   const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
@@ -166,6 +170,7 @@ async function bookLogout(){
  await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
 }
 async function bookInit(){
+ bookRecovery=location.hash.includes('type=recovery');
  bookShowGate(true);uiAuthStatus('Connexion au catalogue sécurisé…');
  try{
   if(!BOOK_CFG.url||!BOOK_CFG.publishableKey)throw new Error('Configuration sécurisée manquante');
