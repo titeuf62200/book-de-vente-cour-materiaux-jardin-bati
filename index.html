@@ -1,48 +1,107 @@
 <!doctype html>
 <html lang="fr">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#006b4e"><title>Book de vente — Cour matériaux, Jardin & Bâti | Calais</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f3f7f2;color:#193d2d;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:620px;margin:18vh auto;padding:40px;text-align:center;background:white;border-radius:22px;box-shadow:0 12px 45px #15442917}
-h1{font-size:27px;line-height:1.2}p{color:#607467;line-height:1.6}.progress{width:100%;height:9px;border-radius:9px;background:#e2ece4;overflow:hidden;margin:24px 0}.bar{height:100%;background:#007c52;width:0%;transition:width .2s}
-button{border:none;border-radius:10px;background:#007c52;color:white;padding:12px 18px;font-weight:700;cursor:pointer}
-</style></head>
-<body><main>
-<div style="font-size:14px;letter-spacing:.15em;font-weight:900;color:#08774f">LEROY MERLIN · CALAIS</div>
-<h1>Book de vente<br>Cour matériaux · Jardin &amp; Bâti</h1>
-<p id="message">Chargement des 190 références, photos, croquis et codes-barres…</p>
-<div class="progress"><div class="bar" id="bar"></div></div>
-<p id="details">Préparation du catalogue autonome</p>
-<button id="retry" hidden onclick="location.reload()">Réessayer le chargement</button>
-</main>
-<script>
-(async()=>{
-  const COUNT=15;
-  const paths=Array.from({length:COUNT},(_,i)=>'content/part-'+String(i).padStart(2,'0')+'.txt');
-  const set=(n)=>{document.getElementById('bar').style.width=Math.round(n/COUNT*100)+'%';document.getElementById('details').textContent=n+' / '+COUNT+' parties chargées';};
-  let count=0;
-  try {
-    const data=await Promise.all(paths.map(async(path)=>{
-      const r=await fetch(path,{cache:'default'});
-      if(!r.ok)throw Error(path+' : erreur HTTP '+r.status);
-      const t=await r.text();set(++count);return t;
-    }));
-    let html=data.join('');
-    if(!/^\s*<!doctype html>/i.test(html)||!html.includes('</html>')||html.length<10000000)throw Error('Catalogue incomplet');
-    // Les deux liens historiques pointaient vers des PDF non hébergés.
-    // Les remplacer par l'export PDF actualisé par rayon.
-    html=html.replace('href="Book_de_vente_Bati_Materiaux_Calais.pdf" download','href="#" onclick="event.preventDefault(); document.getElementById(\'printBatiBtn\').click()"')
-      .replace('href="Book_de_vente_Jardin_Calais.pdf" download','href="#" onclick="event.preventDefault(); document.getElementById(\'printJardinBtn\').click()"')
-      .replace('PDF Bâti (édition initiale)','Générer le PDF Bâti')
-      .replace('PDF Jardin (édition initiale)','Générer le PDF Jardin');
-    // Charger les sous-rayons couleurs après le catalogue, sans toucher aux données produit.
-    html=html.replace('</body>','<script src="print-intercalaires.js"><'+'/script></body>');
-    document.open();document.write(html);document.close();
-  } catch(e){
-    document.getElementById('message').textContent='Le book n’a pas pu se charger complètement.';
-    document.getElementById('details').textContent=String(e.message||e);
-    document.getElementById('retry').hidden=false;
-  }
-})();
-</script></body></html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a5c45">
+  <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
+  <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-locked">
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◩</span>
+        <div><strong>BOOK DE VENTE</strong><small>CALAIS / COUR MATÉRIAUX · JARDIN · BÂTI</small></div>
+      </div>
+      <div class="topactions">
+        <span id="authBadge" class="save-status">Mode local · non partagé</span><span id="saveStatus" class="save-status">Catalogue local</span><button id="logoutBtn" class="btn btn-white auth-only" hidden>Déconnexion</button>
+        <button id="printBatiBtn" class="btn btn-white" title="Génère le PDF du rayon Matériaux à partir des modifications de ce navigateur">↻ PDF Bâti actualisé</button>
+        <button id="printJardinBtn" class="btn btn-white" title="Génère le PDF du rayon Jardin à partir des modifications de ce navigateur">↻ PDF Jardin actualisé</button>
+        <button id="exportExcelBtn" class="btn btn-accent">↓ Excel</button>
+      </div>
+    </header>
+    <div class="workspace">
+      <aside id="sidebar" class="sidebar">
+        <div class="side-caption">LE BOOK DE VENTE</div>
+        <button class="nav-home active" data-filter="all">⌂ &nbsp; Tous les produits <span id="sideTotal">190</span></button>
+        <div id="sidebarChapters"></div>
+        <div class="side-footer">
+          <button id="editToggle" class="btn btn-outline" aria-pressed="false">✎ Mode contributeur</button>
+          <span>Les modifications sont partagées avec les utilisateurs autorisés.</span>
+        </div>
+      </aside>
+      <main class="main">
+        <section id="hero" class="hero">
+          <div class="hero-topline">LEROY MERLIN · MAGASIN DE CALAIS</div>
+          <div class="hero-content">
+            <div>
+              <span class="hero-eyebrow">LE GUIDE PRODUITS · ÉDITION 2026</span>
+              <h1>Book de vente<br><em>Cour matériaux · Jardin & Bâti</em></h1>
+              <p>Deux catalogues indépendants, un pour Bâti / Matériaux et un pour Jardin. Chaque nouvelle référence est classée dans le PDF de son rayon.</p>
+              <div class="hero-cta"><button class="btn btn-accent" id="browseBtn">Consulter le catalogue ↓</button><span>Photos · Croquis · EAN-13</span></div>
+            </div>
+            <div class="hero-stat"><span id="heroTotal">190</span><strong>Références</strong><small>28 sous-rayons</small></div>
+          </div>
+          <div class="hero-categories"><span>01 — MATÉRIAUX</span><span>09 — JARDIN</span></div>
+        </section>
+        <section id="bookDoors" class="book-doors" aria-label="Choisir un book et télécharger son PDF">
+          <article class="book-door bati">
+            <div class="book-door-pictogram" aria-hidden="true">▤</div>
+            <div class="book-door-body"><span class="book-kicker">01 · COUR MATÉRIAUX / BÂTI</span><h2>Book Bâti & Matériaux</h2><p><span id="bookBatiCount">50</span> références · 11 sous-rayons</p><div class="door-actions"><button id="browseBatiBtn" class="btn btn-primary">Parcourir le Bâti</button><button class="btn btn-outline" id="coverPrintBati">↓ Générer le PDF actuel</button></div></div>
+          </article>
+          <article class="book-door jardin">
+            <div class="book-door-pictogram green" aria-hidden="true">❧</div>
+            <div class="book-door-body"><span class="book-kicker">09 · JARDIN</span><h2>Book Jardin</h2><p><span id="bookJardinCount">140</span> références · 17 sous-rayons</p><div class="door-actions"><button id="browseJardinBtn" class="btn btn-primary">Parcourir le Jardin</button><button class="btn btn-outline" id="coverPrintJardin">↓ Générer le PDF actuel</button></div></div>
+          </article>
+          <p class="book-hint">Les PDF sont générés depuis le catalogue partagé : couleurs par sous-rayon, sommaire et intercalaires. Dans la fenêtre d’impression, choisissez « Enregistrer au format PDF ».</p>
+        </section>
+        <section id="toolSection" class="tools">
+          <div class="search-wrap"><label for="searchInput" class="sr-only">Chercher une référence</label><span>⌕</span><input id="searchInput" type="search" placeholder="Rechercher une référence, une désignation, un EAN..." autocomplete="off"></div>
+          <select id="rayonSelect" aria-label="Filtrer par rayon"><option value="all">Tous les rayons</option><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select>
+          <button id="clearFilters" class="btn btn-simple">Effacer</button>
+          <button id="addBtn" class="btn btn-primary admin-only" hidden>+ Ajouter une référence</button>
+        </section>
+        <section class="result-meta"><div><strong id="resultTitle">Catalogue complet</strong><span id="resultSub">Parcourir les sous-rayons</span></div><span id="resultCount" class="result-count">190 produits</span></section>
+        <section id="managerListing" class="manager-listing" hidden></section><div id="catalogue"></div>
+        <div id="emptyState" hidden class="empty-state"><strong>Aucun résultat</strong><p>Modifiez votre recherche ou choisissez un autre sous-rayon.</p></div>
+        <footer class="main-footer">BOOK DE VENTE • LEROY MERLIN CALAIS — Bâti & Jardin séparés. Les deux boutons PDF génèrent les références actives à jour, avec le sommaire et les intercalaires de couleurs correspondants. Vérifiez les mentions « À vérifier » avant usage en caisse.</footer>
+      </main>
+    </div>
+  </div>
+  <section id="authGate" class="auth-gate">
+    <div class="auth-card"><div class="auth-logo">◩ &nbsp; BOOK DE VENTE · CALAIS</div><h1>Connexion au book de vente</h1>
+    <p>Administrateurs : ajout, modification et suppression. Collaborateurs : consultation, recherche et PDF.</p>
+    <form id="authForm"><label>Adresse électronique<input id="authEmail" type="email" autocomplete="username" required placeholder="prenom.nom@leroymerlin.fr"></label>
+    <label>Mot de passe<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
+    <label class="auth-checkbox"><input id="authFirstTime" type="checkbox"> Première connexion : définir mon mot de passe</label>
+    <button type="submit" class="btn btn-primary">Me connecter / créer mon compte</button></form>
+    <button id="forgotPassword" class="btn btn-simple" type="button">Mot de passe oublié ?</button>
+    <p id="authMessage" role="status"></p></div>
+  </section>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="editDialog" class="edit-dialog">
+    <form id="productForm">
+      <header class="dialog-head"><div><span>ESPACE CONTRIBUTEUR</span><h2 id="dialogTitle">Modifier la référence</h2></div><button type="button" id="dialogClose" class="dialog-close" aria-label="Fermer">×</button></header>
+      <div class="form-grid">
+        <label>Référence Leroy Merlin<input name="reference" id="inputReference" required maxlength="35" placeholder="Ex. 384426"></label>
+        <label>EAN-13<input name="ean" id="inputEan" inputmode="numeric" maxlength="13" placeholder="13 chiffres"></label>
+        <label class="full-width">Désignation<input name="designation" required maxlength="260" placeholder="Libellé exact du produit"></label>
+        <label>Rayon<select name="rayon" id="inputRayon"><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select></label>
+        <label>Sous-rayon<select name="sousRayon" id="inputSousRayon" required></select></label>
+        <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*" capture="environment"><small>Photographier ou sélectionner une image, sans lien Internet.</small></label>
+        <label class="full-width">Croquis coté<input id="inputCroquis" type="file" accept="image/*"><small>Facultatif, conservation du croquis existant si aucune photo ajoutée.</small></label>
+        <label class="full-width">Notes / points à vérifier<textarea name="notes" rows="3" placeholder="Dimensions, particularités, vérifications..."></textarea></label>
+      </div>
+      <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+    </form>
+  </dialog>
+  <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><div id="memberTools" hidden><form id="addMemberForm" class="member-form"><label>Autoriser un collaborateur ou un second administrateur : <input id="newMemberEmail" type="email" placeholder="prenom.nom@leroymerlin.fr" required></label><select id="newMemberRole"><option value="lecteur">Consultation</option><option value="admin">Administrateur</option></select><button class="btn btn-primary" type="submit">+ Autoriser</button></form><div id="memberList" class="member-list"></div></div></div>
+  <div id="printArea" aria-hidden="true"></div>
+  <script src="supabase.config.js"></script>
+  <script src="donnees_catalogue.js"></script>
+  <script src="app.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
