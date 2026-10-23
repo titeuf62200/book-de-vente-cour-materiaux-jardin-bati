@@ -19,6 +19,7 @@
         <span id="authBadge" class="save-status">Mode local · non partagé</span><span id="saveStatus" class="save-status">Catalogue local</span><button id="logoutBtn" class="btn btn-white auth-only" hidden>Déconnexion</button>
         <button id="printBatiBtn" class="btn btn-white" title="Génère le PDF du rayon Matériaux à partir des modifications de ce navigateur">↻ PDF Bâti actualisé</button>
         <button id="printJardinBtn" class="btn btn-white" title="Génère le PDF du rayon Jardin à partir des modifications de ce navigateur">↻ PDF Jardin actualisé</button>
+        <button id="addTopBtn" class="btn btn-accent admin-only" hidden>＋ Ajouter un produit</button>
         <button id="exportExcelBtn" class="btn btn-accent">↓ Excel</button>
       </div>
     </header>
@@ -29,7 +30,7 @@
         <div id="sidebarChapters"></div>
         <div class="side-footer">
           <button id="editToggle" class="btn btn-outline" aria-pressed="false">✎ Mode contributeur</button>
-          <span>Les modifications sont partagées avec les utilisateurs autorisés.</span>
+          <span>Les administrateurs ajoutent, modifient et archivent des références. Les deux PDF sont recalculés à chaque impression.</span>
         </div>
       </aside>
       <main class="main">
@@ -61,7 +62,7 @@
           <div class="search-wrap"><label for="searchInput" class="sr-only">Chercher une référence</label><span>⌕</span><input id="searchInput" type="search" placeholder="Rechercher une référence, une désignation, un EAN..." autocomplete="off"></div>
           <select id="rayonSelect" aria-label="Filtrer par rayon"><option value="all">Tous les rayons</option><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select>
           <button id="clearFilters" class="btn btn-simple">Effacer</button>
-          <button id="addBtn" class="btn btn-primary admin-only" hidden>+ Ajouter une référence</button>
+          <button id="addBtn" class="btn btn-primary admin-only" hidden>＋ Ajouter une référence</button>
         </section>
         <section class="result-meta"><div><strong id="resultTitle">Catalogue complet</strong><span id="resultSub">Parcourir les sous-rayons</span></div><span id="resultCount" class="result-count">190 produits</span></section>
         <section id="managerListing" class="manager-listing" hidden></section><div id="catalogue"></div>
@@ -87,22 +88,50 @@
       <header class="dialog-head"><div><span>ESPACE CONTRIBUTEUR</span><h2 id="dialogTitle">Modifier la référence</h2></div><button type="button" id="dialogClose" class="dialog-close" aria-label="Fermer">×</button></header>
       <div class="form-grid">
         <label>Référence Leroy Merlin<input name="reference" id="inputReference" required maxlength="35" placeholder="Ex. 384426"></label>
-        <label>EAN-13<input name="ean" id="inputEan" inputmode="numeric" maxlength="13" placeholder="13 chiffres"></label>
+        <label>EAN-13 (facultatif)<input name="ean" id="inputEan" inputmode="numeric" maxlength="13" pattern="[0-9]{13}" placeholder="13 chiffres si disponibles"><small>Le code-barres sera créé automatiquement à partir des 13 chiffres saisis.</small></label>
         <label class="full-width">Désignation<input name="designation" required maxlength="260" placeholder="Libellé exact du produit"></label>
         <label>Rayon<select name="rayon" id="inputRayon"><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select></label>
         <label>Sous-rayon<select name="sousRayon" id="inputSousRayon" required></select></label>
-        <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*" capture="environment"><small>Photographier ou sélectionner une image, sans lien Internet.</small></label>
-        <label class="full-width">Croquis coté<input id="inputCroquis" type="file" accept="image/*"><small>Facultatif, conservation du croquis existant si aucune photo ajoutée.</small></label>
+        <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*"><small>Prendre une photo ou sélectionner une image depuis le téléphone ou le PC. La photo est incorporée au book.</small><img id="inputPhotoPreview" class="form-photo-preview" alt="Aperçu de la photo choisie" hidden></label>
+        <div class="full-width sketch-editor" id="sketchEditor">
+          <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Choisissez un modèle, réutilisez un croquis du book ou importez votre propre dessin. Les dimensions restent celles que vous saisissez.</small></div>
+          <label>Source du croquis<select id="sketchMode">
+            <option value="none">Pas de croquis</option>
+            <option value="keep">Conserver le croquis actuel</option>
+            <option value="template">Créer à partir d’un gabarit</option>
+            <option value="reuse">Réutiliser un croquis existant du book</option>
+            <option value="upload">Importer mon propre croquis</option>
+          </select></label>
+          <label id="sketchTemplateField" hidden>Gabarit du dessin<select id="sketchTemplate">
+            <option value="poutre">Liteau / chevron / poutre rectangulaire</option>
+            <option value="pilier">Chapeau / élément de pilier</option>
+            <option value="poteau">Poteau</option>
+            <option value="panneau">Panneau / plaque</option>
+            <option value="dalle">Dalle / pavé / margelle</option>
+            <option value="rond">Élément rond / tube</option>
+            <option value="bloc">Bloc / parpaing</option>
+          </select></label>
+          <label id="sketchReuseField" hidden>Croquis à reprendre<select id="reuseCroquis"><option value="">Choisir un croquis existant…</option></select></label>
+          <label id="sketchUploadField" hidden>Image du croquis<input id="inputCroquis" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <div id="sketchDimensionFields" class="dimension-grid" hidden>
+            <label>Longueur<input id="dimensionLong" maxlength="28" placeholder="Ex. 200"></label>
+            <label>Largeur<input id="dimensionWide" maxlength="28" placeholder="Ex. 50"></label>
+            <label>Hauteur / épaisseur<input id="dimensionHigh" maxlength="28" placeholder="Ex. 6"></label>
+            <label>Unité<select id="dimensionUnit"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option></select></label>
+          </div>
+          <div class="sketch-preview"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
+        </div>
         <label class="full-width">Notes / points à vérifier<textarea name="notes" rows="3" placeholder="Dimensions, particularités, vérifications..."></textarea></label>
       </div>
-      <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+      <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" id="saveProductBtn" class="btn btn-primary">Enregistrer le produit</button></div>
     </form>
   </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><div id="memberTools" hidden><form id="addMemberForm" class="member-form"><label>Autoriser un collaborateur ou un second administrateur : <input id="newMemberEmail" type="email" placeholder="prenom.nom@leroymerlin.fr" required></label><select id="newMemberRole"><option value="lecteur">Consultation</option><option value="admin">Administrateur</option></select><button class="btn btn-primary" type="submit">+ Autoriser</button></form><div id="memberList" class="member-list"></div></div></div>
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
-  <script src="app.js"></script>
-  <script src="auth.js?v=20261023-loginfix"></script>
+  <script src="app.js?v=20261023-manual"></script>
+  <script src="croquis-editor.js?v=20261023-manual"></script>
+  <script src="auth.js?v=20261023-manual"></script>
 </body>
 </html>
