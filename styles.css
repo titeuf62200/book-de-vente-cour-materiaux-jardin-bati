@@ -112,3 +112,16 @@
 @media print{
   .ref-trash,.sketch-editor,.form-photo-preview{display:none!important}
 }
+
+/* Bibliothèque de croquis originaux du book : sous-rayon suggéré et vignettes sélectionnables. */
+.book-source-field{display:grid;gap:10px;padding:11px 12px;background:#f1f7f3;border:1px solid #c6decf;border-radius:10px;min-width:0}
+.book-source-field[hidden]{display:none!important}
+.book-sketch-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;max-height:228px;overflow:auto;padding:2px}
+.book-sketch-tile{background:#fff;border:2px solid #d9e4dc;border-radius:8px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center;min-width:0;color:#365443;transition:border-color .1s,background-color .1s}
+.book-sketch-tile img{width:100%;height:72px;object-fit:contain;background:#fff}
+.book-sketch-tile span{font-size:11px;font-weight:800}
+.book-sketch-tile:hover{border-color:#6cb58d}
+.book-sketch-tile.selected{background:#e3f6e9;border-color:#08784e;box-shadow:0 0 0 1px #08784e}
+.book-sketch-info{font-size:11px;line-height:1.45;margin:0;color:#436e59}
+.sketch-preview .sketch-error{color:#ac2222;font-weight:800}
+@media(max-width:570px){.book-sketch-gallery{grid-template-columns:repeat(2,minmax(0,1fr));max-height:204px}.book-sketch-tile img{height:62px}}
