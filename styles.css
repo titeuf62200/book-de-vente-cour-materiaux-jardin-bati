@@ -125,3 +125,7 @@
 .book-sketch-info{font-size:11px;line-height:1.45;margin:0;color:#436e59}
 .sketch-preview .sketch-error{color:#ac2222;font-weight:800}
 @media(max-width:570px){.book-sketch-gallery{grid-template-columns:repeat(2,minmax(0,1fr));max-height:204px}.book-sketch-tile img{height:62px}}
+
+.dimension-grid .dimension-instructions{grid-column:1/-1;margin:0;padding:7px 10px;border-radius:7px;background:#fffbe9;color:#785b28;font-size:11px;line-height:1.55;font-weight:500}
+.book-source-field .book-sketch-info{padding:8px 10px;background:#fff;border-left:3px solid #7bb592}
+@media(max-width:570px){.book-source-field{padding:10px 8px}.book-sketch-info{font-size:11px}}
