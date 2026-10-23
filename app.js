@@ -71,13 +71,7 @@ function render(){buildSidebar();const shown=getShown();const shownActive=produc
  out+=`<section class="chapter-intro ${rayon==='Jardin'?'jardin':''}"><div><div class="chapter-tag">UNIVERS ${number}</div><h2>${escapeHtml(rayon)}</h2><p>${matching.length} références · ${gr.length} sous-rayon${gr.length>1?'s':''}</p></div><div class="chapter-index">${number}</div></section>`;
  for(const [g,n] of gr){const gp=matching.filter(p=>p.sousRayon===g);out+=`<section class="subcategory"><header class="subcategory-header" style="--group-color:${groupColor(rayon,g)};border-left:8px solid ${groupColor(rayon,g)}"><h3>${escapeHtml(g)}</h3><span>${gp.length} réf.</span></header><div class="products-grid">${gp.map(productMarkup).join('')}</div></section>`;}
  }
- $('catalogue').innerHTML=out;renderManageTable();
-}
-function renderManageTable(){
- const panel=$('managerListing');if(!panel)return;panel.hidden=!state.admin;if(!state.admin)return;
- const matched=getShown();
- panel.innerHTML=`<div class="manager-heading"><strong>Gestion des références</strong><span>${matched.length} lignes · cliquer sur le crayon ou la poubelle</span></div>
- <div class="manager-scroll"><table><thead><tr><th>Référence</th><th>Désignation</th><th>Rayon</th><th>Sous-rayon</th><th>EAN</th><th>Actions</th></tr></thead><tbody>${matched.map(p=>`<tr class="${p.archived?'manager-archived':''}"><td>${escapeHtml(p.reference)}</td><td>${escapeHtml(p.designation)}</td><td>${escapeHtml(p.rayon)}</td><td><span class="group-color-dot" style="background:${groupColor(p.rayon,p.sousRayon)}"></span>${escapeHtml(p.sousRayon)}</td><td>${escapeHtml(p.ean)}</td><td><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}" aria-label="Modifier ${escapeHtml(p.reference)}">✎</button> <button class="btn btn-danger" data-archive="${escapeHtml(p.reference)}" aria-label="${p.archived?'Restaurer':'Supprimer'} ${escapeHtml(p.reference)}">${p.archived?'↺':'🗑'}</button></td></tr>`).join('')}</tbody></table></div>`;
+ $('catalogue').innerHTML=out;
 }
 function selectFilter(rayon,group=''){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
 function toggleAdmin(){if(typeof bookCanEdit==='function'&&!bookCanEdit()){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',String(state.admin));$('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;render();toast(state.admin?'Modification des références activée':'Consultation activée');}
@@ -201,8 +195,7 @@ $('editToggle').addEventListener('click',toggleAdmin);
 $('addBtn').addEventListener('click',()=>showForm());
 $('addTopBtn').addEventListener('click',()=>showForm());
 $('inputPhoto').addEventListener('change',()=>{const file=$('inputPhoto').files[0],preview=$('inputPhotoPreview');if(preview.dataset.url){URL.revokeObjectURL(preview.dataset.url);delete preview.dataset.url;}if(file&&file.type.startsWith('image/')){const url=URL.createObjectURL(file);preview.dataset.url=url;preview.src=url;preview.hidden=false;}else{preview.removeAttribute('src');preview.hidden=true;}});
-$('managerListing').before($('adminPanel'));
-$('managerListing').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive)setArchive(archive.dataset.archive);});
+$('catalogue').before($('adminPanel'));
 $('catalogue').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
 $('dialogClose').addEventListener('click',()=>$('editDialog').close());
 $('dialogCancel').addEventListener('click',()=>$('editDialog').close());
