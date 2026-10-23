@@ -89,7 +89,7 @@
       <label>Confirmer le mot de passe<input id="newAuthPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required></label>
       <button id="authRecoveryBtn" type="submit" class="btn btn-primary">Enregistrer mon nouveau mot de passe</button>
     </form>
-    <p class="auth-help">Administrateurs : cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Tous les autres profils : consultation et téléchargement des deux books uniquement. Votre mot de passe n'est pas enregistré dans le site.</p>
+    <p class="auth-help">Administrateurs : cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Tous les autres profils : consultation et téléchargement des deux books uniquement. Chaque profil est créé directement dans le Book de vente et n'a aucun lien avec Organizeo. Les mots de passe sont gérés par l'authentification Supabase du Book.</p>
     <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -147,10 +147,10 @@
   </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
   <div id="printArea" aria-hidden="true"></div>
-  <script src="supabase.config.js"></script>
+  <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=20261023-quota-email"></script>
+  <script src="auth.js?v=book-independent-20261023"></script>
 </body>
 </html>
