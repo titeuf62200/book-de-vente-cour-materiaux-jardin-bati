@@ -97,11 +97,19 @@
           <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Choisissez un modèle, réutilisez un croquis du book ou importez votre propre dessin. Les dimensions restent celles que vous saisissez.</small></div>
           <label>Source du croquis<select id="sketchMode">
             <option value="none">Pas de croquis</option>
+            <option value="book">Modèle réel du book conseillé pour ce sous-rayon</option>
             <option value="keep">Conserver le croquis actuel</option>
-            <option value="template">Créer à partir d’un gabarit</option>
-            <option value="reuse">Réutiliser un croquis existant du book</option>
+            <option value="template">Gabarit schématique personnalisable</option>
+            <option value="reuse">Copier un croquis original à l’identique</option>
             <option value="upload">Importer mon propre croquis</option>
           </select></label>
+          <div id="bookSourceField" class="book-source-field" hidden>
+            <label>Choisir le modèle original de cette sous-famille
+              <select id="bookSketchSource"><option value="">Aucun modèle disponible</option></select>
+            </label>
+            <div id="bookSketchGallery" class="book-sketch-gallery" aria-label="Vignettes des croquis de cette sous-famille"></div>
+            <p id="bookSketchInfo" class="book-sketch-info"></p>
+          </div>
           <label id="sketchTemplateField" hidden>Gabarit du dessin<select id="sketchTemplate">
             <option value="poutre">Liteau / chevron / poutre rectangulaire</option>
             <option value="pilier">Chapeau / élément de pilier</option>
@@ -131,7 +139,7 @@
   <script src="supabase.config.js"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-sans-tableau"></script>
-  <script src="croquis-editor.js?v=20261023-manual"></script>
+  <script src="croquis-editor.js?v=20261023-modeles-reels"></script>
   <script src="auth.js?v=20261023-manual"></script>
 </body>
 </html>
