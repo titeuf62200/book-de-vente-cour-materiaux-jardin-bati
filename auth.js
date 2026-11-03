@@ -69,7 +69,15 @@ async function bookActivate(){
    $('editToggle').setAttribute('aria-pressed',String(state.admin));
    $('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';
    bookShowGate(false);await bookRefresh();
- }catch(e){bookShowGate(true);uiAuthStatus('Impossible d’ouvrir le book : '+e.message,true);}
+ }catch(e){
+  bookRole=null;bookShowGate(true);
+  const message=String(e?.message||'');
+  if(/user[_ ]not[_ ]found|user from sub claim|user.*does not exist|session expired|invalid refresh token|refresh token not found|jwt expired/i.test(String(e?.code||'')+' '+message)){
+   try{await bookClient.auth.signOut({scope:'local'});}catch(_error){}
+   bookSwitchAuthMode('signup');
+   uiAuthStatus('Votre ancienne session n’est plus valable. Créez vos nouveaux identifiants pour accéder au Book de vente.');
+  }else uiAuthStatus('Impossible d’ouvrir le book : '+bookAuthErrorMessage(e),true);
+ }
 }
 /* Comptes utilisateurs gérés par Supabase Auth.
  * Les mots de passe ne sont jamais enregistrés dans GitHub ou les tables publiques.
@@ -200,7 +208,13 @@ async function bookInit(){
    if(event==='SIGNED_IN'&&!bookRecovery)setTimeout(()=>{if(!bookRecovery&&!bookRole)void bookActivate();},0);
    if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
   });
-  const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
+  const {data:{session},error}=await bookClient.auth.getSession();
+  if(error){
+   try{await bookClient.auth.signOut({scope:'local'});}catch(_error){}
+   bookSwitchAuthMode('signup');
+   uiAuthStatus('Votre ancienne session a expiré. Créez vos nouveaux identifiants.');
+   return;
+  }
   if(bookRecovery)bookShowRecovery();
   else if(session)await bookActivate();
   else bookSwitchAuthMode('signup');
