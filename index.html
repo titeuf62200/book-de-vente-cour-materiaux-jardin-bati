@@ -72,16 +72,16 @@
     </div>
   </div>
   <section id="authGate" class="auth-gate">
-    <div class="auth-card"><div class="auth-logo">◩ &nbsp; BOOK DE VENTE · CALAIS</div><h1>Connexion au book de vente</h1>
-    <p id="authIntro">Connectez-vous avec votre adresse professionnelle et votre mot de passe.</p>
+    <div class="auth-card"><div class="auth-logo">◩ &nbsp; BOOK DE VENTE · CALAIS</div><h1 id="authTitle">Créer mes identifiants</h1>
+    <p id="authIntro">Choisissez votre adresse e-mail et un mot de passe personnel pour accéder au Book de vente.</p>
     <form id="authForm">
       <label>Adresse électronique<input id="authEmail" type="email" autocomplete="email" required placeholder="prenom.nom@leroymerlin.fr"></label>
-      <label>Mot de passe<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label>
-      <div id="authSignupFields" hidden><label>Confirmer le mot de passe<input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="8"></label></div>
-      <button id="authLoginBtn" type="submit" class="btn btn-primary">Se connecter</button>
+      <label>Mot de passe<input id="authPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <div id="authSignupFields"><label>Confirmer le mot de passe<input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="8" required></label></div>
+      <button id="authLoginBtn" type="submit" class="btn btn-primary">Créer mon profil</button>
     </form>
     <div class="auth-alt">
-      <button id="authSwitchMode" type="button" class="btn btn-outline">Créer un profil</button>
+      <button id="authSwitchMode" type="button" class="btn btn-outline">Déjà inscrit ? Se connecter</button>
       <button id="authForgotBtn" type="button" class="btn btn-simple">Mot de passe oublié ?</button>
     </div>
     <form id="authRecoveryForm" hidden>
@@ -151,6 +151,6 @@
   <script src="donnees_catalogue.js"></script>
   <script src="app.js?v=20261023-croquis-reels"></script>
   <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=book-independent-20261023b"></script>
+  <script src="auth.js?v=book-signup-20261103"></script>
 </body>
 </html>
