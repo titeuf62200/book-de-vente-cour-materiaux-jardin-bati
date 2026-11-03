@@ -82,6 +82,7 @@ function bookSwitchAuthMode(mode){
  $('authTitle').textContent=signup?'Créer mes identifiants':'Connexion au book de vente';
  $('authSignupFields').hidden=!signup;
  $('authConfirmPassword').required=signup;
+ $('authPassword').setAttribute('autocomplete',signup?'new-password':'current-password');
  $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
  $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
  $('authIntro').textContent=signup?
