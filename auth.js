@@ -8,7 +8,7 @@ let bookClient=null,bookRole=null,bookEmail='',loadingBook=false;
 const OWNER_EMAIL='cedric.ledez@leroymerlin.fr';
 const BOOK_ADMIN_EMAILS=new Set(['cedric.ledez@leroymerlin.fr','sylvie.ribery@leroymerlin.fr']);
 let bookRecovery=false;
-let bookAuthMode='login';
+let bookAuthMode='signup';
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
@@ -79,12 +79,13 @@ function bookSwitchAuthMode(mode){
  if(bookRecovery)return;
  bookAuthMode=mode==='signup'?'signup':'login';
  const signup=bookAuthMode==='signup';
+ $('authTitle').textContent=signup?'Créer mes identifiants':'Connexion au book de vente';
  $('authSignupFields').hidden=!signup;
  $('authConfirmPassword').required=signup;
  $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
  $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
  $('authIntro').textContent=signup?
-   'Créez votre profil Book de vente avec un mot de passe. Les deux adresses administratrices définies auront le droit de modifier le catalogue. Les autres profils seront en lecture seule.':
+   'Choisissez votre adresse e-mail et votre mot de passe personnel. Cédric et Sylvie disposent des droits administrateur ; les autres collaborateurs ont accès à la consultation.':
    'Connectez-vous avec votre adresse professionnelle et votre mot de passe.';
  uiAuthStatus(signup?'Un e-mail de confirmation peut être nécessaire pour activer votre profil.':'');
 }
@@ -95,6 +96,8 @@ function bookAuthErrorMessage(error){
   return 'Envoi des e-mails temporairement bloqué : le quota de messages de Supabase est atteint (2 e-mails par heure avec le service intégré). Aucune demande n’a pu être envoyée. Évitez de renouveler les essais immédiatement. Pour une solution durable, il faut configurer un service SMTP dédié dans Supabase.';
  if(/email address not authorized|email not authorized/i.test(code+' '+message))
   return 'L’adresse n’est pas autorisée par le service d’envoi d’e-mails intégré. Il faut configurer un service SMTP dédié dans Supabase pour envoyer les confirmations aux collaborateurs.';
+ if(/user already registered|already registered|already exists/i.test(code+' '+message))
+  return 'Un profil existe déjà pour cette adresse. Utilisez « Se connecter » ou « Mot de passe oublié ? » pour choisir un nouveau mot de passe.';
  if(/invalid login credentials|invalid credentials/i.test(code+' '+message))
   return 'Adresse ou mot de passe incorrect. Si le profil existe déjà, choisissez « Mot de passe oublié ? ».';
  if(/email not confirmed/i.test(code+' '+message))
@@ -199,7 +202,7 @@ async function bookInit(){
   const {data:{session},error}=await bookClient.auth.getSession();if(error)throw error;
   if(bookRecovery)bookShowRecovery();
   else if(session)await bookActivate();
-  else bookSwitchAuthMode('login');
+  else bookSwitchAuthMode('signup');
  }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+e.message,true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
