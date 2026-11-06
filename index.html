@@ -17,8 +17,8 @@
       </div>
       <div class="topactions">
         <span id="authBadge" class="save-status">Mode local · non partagé</span><span id="saveStatus" class="save-status">Catalogue local</span><button id="logoutBtn" class="btn btn-white auth-only" hidden>Déconnexion</button>
-        <button id="printBatiBtn" class="btn btn-white" title="Génère le PDF du rayon Matériaux à partir des modifications de ce navigateur">↻ PDF Bâti actualisé</button>
-        <button id="printJardinBtn" class="btn btn-white" title="Génère le PDF du rayon Jardin à partir des modifications de ce navigateur">↻ PDF Jardin actualisé</button>
+        <button id="printBatiBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Matériaux">↻ PDF Bâti actualisé</button>
+        <button id="printJardinBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Jardin">↻ PDF Jardin actualisé</button>
         <button id="addTopBtn" class="btn btn-accent admin-only" hidden>＋ Ajouter un produit</button>
         <button id="exportExcelBtn" class="btn btn-accent">↓ Excel</button>
       </div>
@@ -104,7 +104,7 @@
         <label>Sous-rayon<select name="sousRayon" id="inputSousRayon" required></select></label>
         <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*"><small>Prendre une photo ou sélectionner une image depuis le téléphone ou le PC. La photo est incorporée au book.</small><img id="inputPhotoPreview" class="form-photo-preview" alt="Aperçu de la photo choisie" hidden></label>
         <div class="full-width sketch-editor" id="sketchEditor">
-          <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Choisissez un modèle, réutilisez un croquis du book ou importez votre propre dessin. Les dimensions restent celles que vous saisissez.</small></div>
+          <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Touchez le dessin ressemblant à votre produit, puis saisissez longueur, largeur et épaisseur. Vous pouvez aussi importer votre croquis.</small></div>
           <label>Source du croquis<select id="sketchMode">
             <option value="none">Pas de croquis</option>
             <option value="book">Modèle réel du book conseillé pour ce sous-rayon</option>
@@ -114,21 +114,27 @@
             <option value="upload">Importer mon propre croquis</option>
           </select></label>
           <div id="bookSourceField" class="book-source-field" hidden>
-            <label>Choisir le modèle original de cette sous-famille
-              <select id="bookSketchSource"><option value="">Aucun modèle disponible</option></select>
-            </label>
+            <strong>Croquis existants de ce sous-rayon — toucher le dessin pour le choisir</strong>
+            <label class="sr-only" for="bookSketchSource">Sélectionner un croquis existant</label>
+            <select id="bookSketchSource" class="sr-only"><option value="">Aucun modèle disponible</option></select>
             <div id="bookSketchGallery" class="book-sketch-gallery" aria-label="Vignettes des croquis de cette sous-famille"></div>
             <p id="bookSketchInfo" class="book-sketch-info"></p>
           </div>
-          <label id="sketchTemplateField" hidden>Gabarit du dessin<select id="sketchTemplate">
-            <option value="poutre">Liteau / chevron / poutre rectangulaire</option>
-            <option value="pilier">Chapeau / élément de pilier</option>
-            <option value="poteau">Poteau</option>
-            <option value="panneau">Panneau / plaque</option>
-            <option value="dalle">Dalle / pavé / margelle</option>
-            <option value="rond">Élément rond / tube</option>
-            <option value="bloc">Bloc / parpaing</option>
-          </select></label>
+          <div id="sketchTemplateField" class="sketch-model-field">
+            <strong>Choisir un croquis directement par son dessin</strong>
+            <label class="sr-only" for="sketchTemplate">Type de croquis schématique</label>
+            <select id="sketchTemplate" class="sr-only">
+              <option value="poutre">Liteau / chevron / poutre rectangulaire</option>
+              <option value="pilier">Chapeau / élément de pilier</option>
+              <option value="poteau">Poteau</option>
+              <option value="panneau">Panneau / plaque</option>
+              <option value="dalle">Dalle / pavé / margelle</option>
+              <option value="rond">Élément rond / tube</option>
+              <option value="bloc">Bloc / parpaing</option>
+            </select>
+            <div id="sketchTemplateGallery" class="book-sketch-gallery sketch-template-gallery" aria-label="Choisir la forme du croquis en cliquant sur son dessin"></div>
+            <small>Touchez une silhouette, puis renseignez les dimensions du produit.</small>
+          </div>
           <label id="sketchReuseField" hidden>Croquis à reprendre<select id="reuseCroquis"><option value="">Choisir un croquis existant…</option></select></label>
           <label id="sketchUploadField" hidden>Image du croquis<input id="inputCroquis" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <div id="sketchDimensionFields" class="dimension-grid" hidden>
@@ -149,8 +155,8 @@
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
-  <script src="app.js?v=20261023-croquis-reels"></script>
-  <script src="croquis-editor.js?v=20261023-schemas26b"></script>
-  <script src="auth.js?v=book-signup-20261103"></script>
+  <script src="app.js?v=20261106-sync"></script>
+  <script src="croquis-editor.js?v=20261106-visuels"></script>
+  <script src="auth.js?v=20261106-sync"></script>
 </body>
 </html>

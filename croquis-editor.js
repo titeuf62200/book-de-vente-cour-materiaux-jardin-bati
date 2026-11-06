@@ -48,6 +48,20 @@ const CROP={
  vis:[[126,63,40,73],[403,76,63,59]]
 };
 const TEMPLATES={chapeau:'pilier',element:'pilier',couvre:'dalle',wood:'poutre',panneau:'panneau',poteau:'poteau',fixation:'bloc',vis:'rond',dalle:'dalle',bordure:'dalle'};
+
+const VISUAL_TEMPLATES=[
+ {value:'poutre',label:'Liteau / poutre',drawing:'<polygon points="20,56 136,56 160,40 44,40" fill="#f2d6a8"/><polygon points="20,56 136,56 136,82 20,82" fill="#e8c38a"/><polygon points="136,56 160,40 160,66 136,82" fill="#d1aa75"/>'},
+ {value:'pilier',label:'Chapeau / pilier',drawing:'<polygon points="32,51 80,23 132,51 80,78" fill="#e4e8e8"/><polygon points="32,51 80,78 80,90 32,63" fill="#c7d3d2"/><polygon points="80,78 132,51 132,63 80,90" fill="#aabfbb"/>'},
+ {value:'poteau',label:'Poteau',drawing:'<polygon points="69,21 95,12 113,23 86,33" fill="#f5dbb5"/><polygon points="69,21 86,33 86,92 69,80" fill="#dfb981"/><polygon points="86,33 113,23 113,81 86,92" fill="#cda16d"/>'},
+ {value:'panneau',label:'Panneau / plaque',drawing:'<polygon points="26,29 136,29 152,22 42,22" fill="#f4dfbd"/><polygon points="26,29 136,29 136,87 26,87" fill="#e8c88e"/><polygon points="136,29 152,22 152,79 136,87" fill="#ceac7b"/><path d="M26 56H136 M64 29V87 M100 29V87" fill="none" stroke="#a8794e"/>'},
+ {value:'dalle',label:'Dalle / pavé',drawing:'<polygon points="23,58 74,35 155,45 104,72" fill="#e0e5e5"/><polygon points="23,58 104,72 104,88 23,75" fill="#c3d0cf"/><polygon points="104,72 155,45 155,61 104,88" fill="#aebfbc"/>'},
+ {value:'rond',label:'Tube / rond',drawing:'<ellipse cx="70" cy="54" rx="33" ry="30" fill="#d9e3e2"/><ellipse cx="70" cy="54" rx="15" ry="14" fill="white"/><path d="M70 24H119Q146 24 146 53Q146 83 119 84H70" fill="#c9d8d7"/><ellipse cx="119" cy="53" rx="27" ry="30" fill="#d9e3e2"/><ellipse cx="119" cy="53" rx="14" ry="15" fill="white"/>'},
+ {value:'bloc',label:'Bloc / parpaing',drawing:'<polygon points="24,45 65,22 146,37 108,58" fill="#dde2e4"/><polygon points="24,45 108,58 108,93 24,80" fill="#c7d1d3"/><polygon points="108,58 146,37 146,71 108,93" fill="#aebdc0"/><path d="M58 46L76 37L93 41L75 51Z M92 52L110 44L126 48L109 57Z" fill="#82989b"/>'}
+];
+function templateGallery(){
+ const selected=field('sketchMode')==='template'?field('sketchTemplate'):'';
+ Q('sketchTemplateGallery').innerHTML=VISUAL_TEMPLATES.map(t=>'<button type="button" class="book-sketch-tile sketch-template-tile'+(t.value===selected?' selected':'')+'" data-sketch-template="'+t.value+'" aria-pressed="'+(t.value===selected?'true':'false')+'" title="Choisir '+t.label+'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 108" aria-hidden="true" focusable="false"><g stroke="#46646b" stroke-width="2" stroke-linejoin="round">'+t.drawing+'</g></svg><span>'+t.label+'</span></button>').join('');
+}
 let current=null,generation=0,ready=false,lastError='',chosenBookRef='';
 function trim(s){return String(s||'').trim();}
 function field(id){return trim(Q(id).value);}
@@ -149,16 +163,15 @@ function setHint(text,error=false){
 }
 function updateVisibility(){
  const mode=field('sketchMode');
- Q('bookSourceField').hidden=mode!=='book';
- Q('sketchTemplateField').hidden=mode!=='template';
+ Q('bookSourceField').hidden=!sourcesForGroup().length;
+ Q('sketchTemplateField').hidden=false;
  Q('sketchReuseField').hidden=mode!=='reuse';
  Q('sketchUploadField').hidden=mode!=='upload';
  Q('sketchDimensionFields').hidden=mode==='none';
 }
 function gallery(){
  const selected=field('bookSketchSource'),list=sourcesForGroup().sort((a,b)=>Number(a.reference!==selected)-Number(b.reference!==selected)||a.reference.localeCompare(b.reference,'fr')),area=Q('bookSketchGallery');
- const max=8;
- area.innerHTML=list.slice(0,max).map(p=>'<button type="button" class="book-sketch-tile'+(p.reference===selected?' selected':'')+'" data-book-ref="'+escapeText(p.reference)+'" aria-pressed="'+(p.reference===selected?'true':'false')+'"><img loading="lazy" alt="Croquis de '+escapeText(p.designation)+'" src="'+escapeText(p.croquis)+'"><span>'+escapeText(p.reference)+'</span></button>').join('');
+ area.innerHTML=list.map(p=>'<button type="button" class="book-sketch-tile'+(p.reference===selected?' selected':'')+'" data-book-ref="'+escapeText(p.reference)+'" aria-pressed="'+(p.reference===selected?'true':'false')+'" title="'+escapeText(p.designation)+'"><img loading="lazy" alt="Croquis '+escapeText(p.designation)+'" src="'+escapeText(p.croquis)+'"><span>Réf. '+escapeText(p.reference)+'</span><small>'+escapeText(p.designation.slice(0,35))+'</small></button>').join('');
 }
 function populateGroup(autopick){
  const sources=sourcesForGroup(),pref=recommended(),sel=Q('bookSketchSource');
@@ -169,7 +182,7 @@ function populateGroup(autopick){
  sel.value=chosenBookRef;
  Q('bookSketchInfo').textContent=pref
    ?'Modèle conseillé : '+pref.name+' — dessin issu de la référence '+pref.ref+'. Seules ses formes sont reprises : les anciens chiffres et la référence d’origine sont écartés.'
-   :'Aucun dessin original validé automatiquement pour ce sous-rayon. Choisissez un gabarit, ou copiez un croquis original seulement si sa forme et ses cotes conviennent.';
+   :'Choisissez un dessin. Les croquis copiés à l’identique conservent leurs anciennes cotes, les gabarits permettent de saisir de nouvelles dimensions.';
  gallery();
  return !!pref;
 }
@@ -197,7 +210,7 @@ function refreshGroup(){
  void paint();
 }
 async function paint(){
- const n=++generation;ready=false;lastError='';updateVisibility();paintBase();
+ const n=++generation;ready=false;lastError='';updateVisibility();templateGallery();paintBase();
  const mode=field('sketchMode');
  try{
   if(mode==='book'){
@@ -268,7 +281,12 @@ async function resolveCroquis(){
  if(!ready||lastError)throw new Error(lastError||'Le croquis ne peut pas être créé.');
  return canvas.toDataURL('image/png');
 }
-Q('sketchMode').addEventListener('change',()=>void paint());
+Q('sketchTemplateGallery').addEventListener('click',e=>{
+  const button=e.target.closest('[data-sketch-template]');if(!button)return;
+  Q('sketchTemplate').value=button.dataset.sketchTemplate;
+  Q('sketchMode').value='template';void paint();
+ });
+ Q('sketchMode').addEventListener('change',()=>void paint());
 Q('sketchTemplate').addEventListener('change',()=>void paint());
 Q('reuseCroquis').addEventListener('change',()=>void paint());
 Q('inputCroquis').addEventListener('change',()=>void paint());
@@ -278,7 +296,10 @@ Q('bookSketchSource').addEventListener('change',()=>{
 Q('bookSketchGallery').addEventListener('click',e=>{
  const button=e.target.closest('[data-book-ref]');if(!button)return;
  const ref=button.dataset.bookRef;if(!sourcesForGroup().some(p=>p.reference===ref))return;
- chosenBookRef=ref;Q('bookSketchSource').value=ref;gallery();void paint();
+ chosenBookRef=ref;Q('bookSketchSource').value=ref;gallery();
+  if(MODELS[currentGroup()])Q('sketchMode').value='book';
+  else{Q('reuseCroquis').value=ref;Q('sketchMode').value='reuse';}
+  void paint();
 });
 for(const id of ['dimensionLong','dimensionWide','dimensionHigh','dimensionUnit'])
  Q(id).addEventListener(id==='dimensionUnit'?'change':'input',()=>void paint());
