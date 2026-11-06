@@ -13,8 +13,8 @@ const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
 function bookCanEdit(){return !!bookClient&&bookRole==='admin';}
-function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
-function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,pageSource:p.page_source});}
+function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,sous_rayon_code:p.sousRayonCode||null,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
+function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,sousRayonCode:p.sous_rayon_code,pageSource:p.page_source});}
 let bookRefreshTask=null;
 async function bookRefresh(){
  if(!bookClient||!bookRole)return false;
@@ -23,7 +23,7 @@ async function bookRefresh(){
   loadingBook=true;$('saveStatus').textContent='Synchronisation du catalogue…';
   try{
    const {data,error}=await bookClient.from('book_catalog_products')
-    .select('reference,designation,ean,rayon,sous_rayon,photo,croquis,notes,page_source,archived')
+    .select('reference,designation,ean,rayon,sous_rayon,sous_rayon_code,photo,croquis,notes,page_source,archived')
     .order('rayon').order('sous_rayon').order('reference');
    if(error)throw error;
    products=(data||[]).map(fromRemote);
@@ -43,9 +43,9 @@ async function bookSaveItem(item,originalRef=null){
  if(row.ean&&!validEan(row.ean))throw new Error('EAN-13 incorrect : les barres doivent correspondre au numéro.');
  const {data:saved,error}=await bookClient.from('book_catalog_products')
    .upsert(row,{onConflict:'reference'})
-   .select('reference,rayon,sous_rayon,archived').single();
+   .select('reference,rayon,sous_rayon,sous_rayon_code,archived').single();
   if(error)throw error;
-  if(!saved||saved.reference!==row.reference||saved.rayon!==row.rayon||saved.sous_rayon!==row.sous_rayon||saved.archived!==row.archived)
+  if(!saved||saved.reference!==row.reference||saved.rayon!==row.rayon||saved.sous_rayon!==row.sous_rayon||saved.sous_rayon_code!==row.sous_rayon_code||saved.archived!==row.archived)
    throw new Error('La référence n’a pas pu être confirmée sur le serveur. Réactualisez le catalogue.');
  if(originalRef&&originalRef!==row.reference){
    const {error:removeError}=await bookClient.from('book_catalog_products').delete().eq('reference',originalRef);

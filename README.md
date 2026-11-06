@@ -48,3 +48,13 @@ Le projet est indépendant de l'application **TWO Rayon Jardin**.
 
 ### Authentification indépendante — octobre 2026
 Le Book de vente utilise son propre projet Supabase `zxxnvmbcambdnaeeqcyq` (distinct d’Organizeo). Les 190 références ont été copiées en conservant les images et les croquis. Les profils d’authentification sont initialement vides : `cedric.ledez@leroymerlin.fr` et `sylvie.ribery@leroymerlin.fr` ont les droits administrateur à la première inscription confirmée ; les autres inscrits ont des droits de lecture uniquement. Les droits d'écriture sont imposés côté serveur par RLS. Les e-mails de confirmation nécessitent une configuration de redirection Auth vers l’URL GitHub Pages du Book. Ne jamais stocker des mots de passe sur GitHub.
+
+
+## Nomenclatures officielles 001 / 009 — novembre 2026
+
+- **001 — Matériaux de construction** : 16 sous-rayons officiels numérotés, dont 010 Éléments de construction, 019 Panneaux et dalles et 020 Bois brut.
+- **009 — Jardin** : 17 sous-rayons officiels numérotés, dont 056 Sol extérieur et 060 Délimitation de terrain.
+- La référence stocke maintenant `sous_rayon_code` en plus de la sous-famille existante `sous_rayon`, sans modifier les photos, croquis, EAN ou désignations.
+- Tous les sous-rayons (y compris sans produits) sont visibles dans la navigation et dans le formulaire de création.
+- Les PDF sont reconstitués avec un sommaire et des intercalaires numérotés colorés, uniquement pour les sous-rayons contenant des références actives. Les nouveaux articles se placent automatiquement au bon endroit et les pages sont renumérotées.
+- Les anciennes références sans classement officiel apparaissent sous « À classer » pour éviter un rangement arbitraire : elles sont visibles et imprimables et peuvent être reclassées en mode administrateur.

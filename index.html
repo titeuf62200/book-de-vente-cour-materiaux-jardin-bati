@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a5c45">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261106-gallery">
+  <link rel="stylesheet" href="styles.css?v=20261106-nomenclatures">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -30,7 +30,7 @@
         <div id="sidebarChapters"></div>
         <div class="side-footer">
           <button id="editToggle" class="btn btn-outline" aria-pressed="false">✎ Mode contributeur</button>
-          <span>Les administrateurs ajoutent, modifient et archivent des références. Les deux PDF sont recalculés à chaque impression.</span>
+          <span>Les administrateurs ajoutent, modifient et archivent des références. Les sous-rayons 001 (Matériaux) et 009 (Jardin), leurs couleurs et les PDF sont recalculés à chaque impression.</span>
         </div>
       </aside>
       <main class="main">
@@ -64,7 +64,7 @@
           <button id="clearFilters" class="btn btn-simple">Effacer</button>
           <button id="addBtn" class="btn btn-primary admin-only" hidden>＋ Ajouter une référence</button>
         </section>
-        <section class="result-meta"><div><strong id="resultTitle">Catalogue complet</strong><span id="resultSub">Parcourir les sous-rayons</span></div><span id="resultCount" class="result-count">190 produits</span></section>
+        <section class="result-meta"><div><strong id="resultTitle">Catalogue complet</strong><span id="resultSub">Parcourir les sous-rayons numérotés</span></div><span id="resultCount" class="result-count">190 produits</span></section>
         <div id="catalogue"></div>
         <div id="emptyState" hidden class="empty-state"><strong>Aucun résultat</strong><p>Modifiez votre recherche ou choisissez un autre sous-rayon.</p></div>
         <footer class="main-footer">BOOK DE VENTE • LEROY MERLIN CALAIS — Bâti & Jardin séparés. Les deux boutons PDF génèrent les références actives à jour, avec le sommaire et les intercalaires de couleurs correspondants. Vérifiez les mentions « À vérifier » avant usage en caisse.</footer>
@@ -101,7 +101,7 @@
         <label>EAN-13 (facultatif)<input name="ean" id="inputEan" inputmode="numeric" maxlength="13" pattern="[0-9]{13}" placeholder="13 chiffres si disponibles"><small>Le code-barres sera créé automatiquement à partir des 13 chiffres saisis.</small></label>
         <label class="full-width">Désignation<input name="designation" required maxlength="260" placeholder="Libellé exact du produit"></label>
         <label>Rayon<select name="rayon" id="inputRayon"><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select></label>
-        <label>Sous-rayon<select name="sousRayon" id="inputSousRayon" required></select></label>
+        <label>Sous-rayon officiel LM (numéro)<select name="deptCode" id="inputDept" required><option value="">Sélectionner le sous-rayon officiel…</option></select><small>Numéros 001 à 099 selon le rayon sélectionné.</small></label><label>Famille / détail du produit<select name="sousRayon" id="inputSousRayon" required></select><small>Familles existantes conservées, ou « Autres références » pour une nouvelle activité.</small></label>
         <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*"><small>Prendre une photo ou sélectionner une image depuis le téléphone ou le PC. La photo est incorporée au book.</small><img id="inputPhotoPreview" class="form-photo-preview" alt="Aperçu de la photo choisie" hidden></label>
         <div class="full-width sketch-editor" id="sketchEditor">
           <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Touchez le dessin ressemblant à votre produit, puis saisissez longueur, largeur et épaisseur. Vous pouvez aussi importer votre croquis.</small></div>
@@ -155,8 +155,8 @@
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
-  <script src="app.js?v=20261106-sync"></script>
-  <script src="croquis-editor.js?v=20261106-visuels"></script>
-  <script src="auth.js?v=20261106-sync"></script>
+  <script src="app.js?v=20261106-nomenclatures"></script>
+  <script src="croquis-editor.js?v=20261106-nomenclatures"></script>
+  <script src="auth.js?v=20261106-nomenclatures"></script>
 </body>
 </html>

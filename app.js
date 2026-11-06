@@ -8,6 +8,33 @@ const INITIAL = Array.isArray(window.BOOK_INITIAL_PRODUCTS) ? window.BOOK_INITIA
 const STORAGE = 'book_vente_calais_v1';
 const UNIVERSES = ['Matériaux','Jardin'];
 const MASTER_GROUPS = {"Matériaux":["Maçonnerie - Chapeaux de piliers","Maçonnerie - Éléments de piliers","Maçonnerie - Couvre-murs","Bois de charpente - Madriers","Bois de charpente - Bastaings","Bois de charpente - Chevrons","Bois de charpente - Poutres","Bois brut - Liteaux et lattes","Bois brut - Demi-bastaings","Bois brut - Lambourdes","Panneaux - OSB"],"Jardin":["Clôtures - Panneaux et portillons","Clôtures - Poteaux","Clôtures - Lames, profils et poteaux","Clôtures - Accessoires et fixations","Clôtures - Entretien","Terrasses - Lames et lambourdes","Terrasses - Dalles bois et clipsables","Terrasses - Accessoires et pose","Sols extérieurs - Pavés","Sols extérieurs - Dalles minérales","Sols extérieurs - Pas japonais","Sols extérieurs - Bordures béton","Sols extérieurs - Bordures bois, PVC et métal","Sols extérieurs - Graviers et galets","Sols extérieurs - Gazon synthétique","Sols extérieurs - Aménagement et plots","Jardin - Divers"]};
+
+/* Nomenclatures sous-rayons photographiées : numéros propres à chaque univers. */
+const OFFICIAL_SECTORS = {"Matériaux":[{"code":"001","name":"MATÉRIEL DE CONSTRUCTION","color":"#547FAD"},{"code":"005","name":"POUDRES","color":"#D7A23D"},{"code":"010","name":"ÉLÉMENTS DE CONSTRUCTION","color":"#D97B8B"},{"code":"015","name":"AGRÉGATS","color":"#83974D"},{"code":"016","name":"BOIS DE CHAUFFAGE ET PELLETS","color":"#BA8156"},{"code":"019","name":"PANNEAUX ET DALLES","color":"#5CA7A9"},{"code":"020","name":"BOIS BRUT","color":"#9675BA"},{"code":"021","name":"BARDAGES ET CLINS","color":"#D68C68"},{"code":"023","name":"TOITURE PRIMAIRE POUR MAISON","color":"#638FCD"},{"code":"024","name":"TOITURE SECONDAIRE POUR ANNEXE","color":"#B46FB4"},{"code":"025","name":"ÉVACUATION EAUX DE PLUIE/USÉES","color":"#47A28E"},{"code":"030","name":"ÉTANCHÉITÉ - PROTECTION","color":"#B78D4A"},{"code":"035","name":"ISOLATION DE L'HABITAT","color":"#77A457"},{"code":"040","name":"CLOISON - PLAFOND","color":"#6E89A6"},{"code":"094","name":"OBI","color":"#C27D97"},{"code":"099","name":"ARTICLES SERVICES","color":"#7B8B98"}],"Jardin":[{"code":"004","name":"VÉGÉTAL & SEMIS","color":"#64A65A"},{"code":"024","name":"OUTIL & MATÉRIEL DU JARDINIER","color":"#CA824B"},{"code":"032","name":"PRODUITS DE SOIN DU JARDIN","color":"#94B64F"},{"code":"036","name":"ARROSAGE & GESTION DE L'EAU","color":"#48A5C3"},{"code":"040","name":"OUTILLAGE MOTORISÉ & NHP","color":"#D77361"},{"code":"054","name":"CONTENANTS & DÉCORATION","color":"#B387B7"},{"code":"056","name":"SOL EXTÉRIEUR","color":"#D6AD47"},{"code":"060","name":"DÉLIMITATION DE TERRAIN","color":"#71AD8F"},{"code":"064","name":"PORTAIL","color":"#8294C2"},{"code":"068","name":"ABRI CARPORT & RANGEMENT","color":"#A0936D"},{"code":"071","name":"PERGOLA","color":"#8BA35D"},{"code":"072","name":"MOBILIER DE JARDIN & PARASOL","color":"#C39B74"},{"code":"074","name":"CUISSON EXTÉRIEURE","color":"#D68062"},{"code":"080","name":"PISCINE & SPA","color":"#53B3BE"},{"code":"096","name":"ANIMALERIE","color":"#A084BC"},{"code":"097","name":"JEUX DE PLEIN AIR","color":"#E0A76A"},{"code":"099","name":"ARTICLES SERVICES","color":"#82949A"}]};
+const UNASSIGNED_SECTOR={code:'UNASSIGNED',name:'À CLASSER — ANCIENNES RÉFÉRENCES',color:'#93A1A8'};
+function officialSector(rayon,code){return (OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code)||null;}
+function inferOfficialCode(rayon,family){
+ const s=String(family||'');
+ if(rayon==='Matériaux'){
+  if(s.startsWith('Maçonnerie - '))return '010';
+  if(s.startsWith('Panneaux - '))return '019';
+  if(s.startsWith('Bois brut - ')||s.startsWith('Bois de charpente - '))return '020';
+ }
+ if(rayon==='Jardin'){
+  if(s.startsWith('Clôtures - '))return '060';
+  if(s.startsWith('Terrasses - ')||s.startsWith('Sols extérieurs - '))return '056';
+ }
+ return '';
+}
+function productSectorCode(p){return officialSector(p.rayon,p.sousRayonCode)?.code||inferOfficialCode(p.rayon,p.sousRayon)||'';}
+function productSectorKey(p){return productSectorCode(p)||'UNASSIGNED';}
+function sectorList(rayon,collection=products,includeEmpty=false){
+ const known=OFFICIAL_SECTORS[rayon]||[];
+ const departments=known.filter(d=>includeEmpty||collection.some(p=>p.rayon===rayon&&productSectorKey(p)===d.code));
+ if(collection.some(p=>p.rayon===rayon&&productSectorKey(p)==='UNASSIGNED'))departments.push(UNASSIGNED_SECTOR);
+ return departments;
+}
+
 const GROUP_COLORS = {"Matériaux":{"Maçonnerie - Chapeaux de piliers":"#EC7FA1","Maçonnerie - Éléments de piliers":"#F4A261","Maçonnerie - Couvre-murs":"#87BD93","Bois de charpente - Madriers":"#7DA9E6","Bois de charpente - Bastaings":"#B89AE9","Bois de charpente - Chevrons":"#E7CA61","Bois de charpente - Poutres":"#6DC4CA","Bois brut - Liteaux et lattes":"#D898B5","Bois brut - Demi-bastaings":"#A9B965","Bois brut - Lambourdes":"#C68D64","Panneaux - OSB":"#89A9D3"},"Jardin":{"Clôtures - Panneaux et portillons":"#EC7FA1","Clôtures - Poteaux":"#F4A261","Clôtures - Lames, profils et poteaux":"#87BD93","Clôtures - Accessoires et fixations":"#7DA9E6","Clôtures - Entretien":"#B89AE9","Terrasses - Lames et lambourdes":"#E7CA61","Terrasses - Dalles bois et clipsables":"#6DC4CA","Terrasses - Accessoires et pose":"#D898B5","Sols extérieurs - Pavés":"#A9B965","Sols extérieurs - Dalles minérales":"#C68D64","Sols extérieurs - Pas japonais":"#89A9D3","Sols extérieurs - Bordures béton":"#E89C80","Sols extérieurs - Bordures bois, PVC et métal":"#77B89C","Sols extérieurs - Graviers et galets":"#D6B17C","Sols extérieurs - Gazon synthétique":"#A494CF","Sols extérieurs - Aménagement et plots":"#D88AA5","Jardin - Divers":"#8EA4AB"}};
 function groupColor(rayon,group){
  const predefined=GROUP_COLORS[rayon]?.[group];if(predefined)return predefined;
@@ -25,7 +52,7 @@ let toastTimer = null;
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function normalize(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/lit[eé]aux|liteau/g,'lito');}
 function safeImage(s){s=String(s||'');return /^(?:assets\/[a-z0-9_-]+_(?:photo|croquis|ean)\.(?:webp|png|jpe?g)|data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+)$/i.test(s)?s:'';}
-function cleanItem(p){return {reference:String(p.reference??'').trim(),designation:String(p.designation??'').trim(),ean:String(p.ean??'').trim(),rayon:UNIVERSES.includes(p.rayon)?p.rayon:'Jardin',sousRayon:String(p.sousRayon??'Divers').trim(),photo:safeImage(p.photo),croquis:safeImage(p.croquis),barcode:safeImage(p.barcode),notes:String(p.notes??'').trim(),pageSource:Number(p.pageSource)||null,archived:!!p.archived};}
+function cleanItem(p){return {reference:String(p.reference??'').trim(),designation:String(p.designation??'').trim(),ean:String(p.ean??'').trim(),rayon:UNIVERSES.includes(p.rayon)?p.rayon:'Jardin',sousRayon:String(p.sousRayon??'Divers').trim(),sousRayonCode:officialSector(p.rayon,p.sousRayonCode)?p.sousRayonCode:inferOfficialCode(p.rayon,p.sousRayon),photo:safeImage(p.photo),croquis:safeImage(p.croquis),barcode:safeImage(p.barcode),notes:String(p.notes??'').trim(),pageSource:Number(p.pageSource)||null,archived:!!p.archived};}
 function loadProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)return INITIAL.map(cleanItem);try{const saved=JSON.parse(localStorage.getItem(STORAGE));if(Array.isArray(saved)&&saved.length)return saved.map(cleanItem);}catch(e){console.warn('Sauvegarde locale indisponible',e)}return INITIAL.map(cleanItem);}
 function saveProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)throw Error('Enregistrement local désactivé : utiliser la sauvegarde distante');try{localStorage.setItem(STORAGE,JSON.stringify(products));$('saveStatus').textContent='Enregistré dans ce navigateur';if(typeof triggerBackendSave==='function')triggerBackendSave();return true;}catch(e){console.error(e);toast('Mémoire du navigateur saturée. Exportez une sauvegarde JSON.');return false;}}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
@@ -41,8 +68,16 @@ function barcodeDataURL(ean){if(!validEan(ean))return '';
  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
 }
 function imageMarkup(src,description){return src?`<img src="${escapeHtml(src)}" alt="${escapeHtml(description)}" loading="lazy" decoding="async">`:`<div class="media-empty" role="img" aria-label="Illustration indisponible">Photo non disponible</div>`;}
-function getShown(){return products.filter(p=>(!p.archived||state.showArchived)&&(state.rayon==='all'||p.rayon===state.rayon)&&(!state.group||p.sousRayon===state.group)&&(!state.search||normalize([p.reference,p.designation,p.ean,p.sousRayon,p.notes].join(' ')).includes(normalize(state.search))));}
-function groupsFor(rayon,collection=products){let map=new Map();for(const p of collection){if(p.rayon!==rayon||(!state.showArchived&&p.archived))continue;if(!map.has(p.sousRayon))map.set(p.sousRayon,0);map.set(p.sousRayon,map.get(p.sousRayon)+1);}return [...map.entries()].sort((a,b)=>MASTER_GROUPS[rayon].indexOf(a[0])-MASTER_GROUPS[rayon].indexOf(b[0]));}
+
+function getShown(){
+ return products.filter(p=>
+  (!p.archived||state.showArchived)
+  &&(state.rayon==='all'||p.rayon===state.rayon)
+  &&(!state.group||productSectorKey(p)===state.group)
+  &&(!state.search||normalize([p.reference,p.designation,p.ean,p.sousRayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'',p.notes].join(' ')).includes(normalize(state.search)))
+ );
+}
+
 function productMarkup(p){let isArchived=p.archived?' archived':'';let barcode=barcodeDataURL(p.ean);
 return `<article class="product-card${isArchived}">
  <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4></div>
@@ -51,37 +86,91 @@ return `<article class="product-card${isArchived}">
  ${p.notes?`<div class="product-notes">⚠ ${escapeHtml(p.notes)}</div>`:''}
  ${state.admin?`<div class="admin-actions"><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}">✎ Modifier</button><button class="btn ${p.archived?'btn-primary':'btn-danger'}" data-archive="${escapeHtml(p.reference)}">${p.archived?'↺ Restaurer':'🗑 Supprimer'}</button></div>`:''}</article>`;
 }
-function buildSidebar(){const counts={};for(const rayon of UNIVERSES)counts[rayon]=products.filter(p=>p.rayon===rayon&&!p.archived).length;
+
+function buildSidebar(){
+ const counts={};
+ for(const rayon of UNIVERSES)counts[rayon]=products.filter(p=>p.rayon===rayon&&!p.archived).length;
  $('sideTotal').textContent=products.filter(p=>!p.archived).length;
- const all=state.rayon==='all'&&!state.group;
- document.querySelector('.nav-home').classList.toggle('active',all);
+ document.querySelector('.nav-home').classList.toggle('active',state.rayon==='all'&&!state.group);
  $('sidebarChapters').innerHTML=UNIVERSES.map((rayon,i)=>{
- const gr=groupsFor(rayon);return `<div class="side-chapter"><button class="chapter-btn ${i?'jardin':''} ${state.rayon===rayon&&!state.group?'active':''}" data-rayon="${rayon}"><span class="chap-name">${i?'09':'01'} — ${escapeHtml(rayon)}</span><span class="count">${counts[rayon]}</span></button><div class="group-list">${gr.map(([name,n])=>`<button class="group-btn ${state.rayon===rayon&&state.group===name?'active':''}" data-rayon="${rayon}" data-group="${escapeHtml(name)}"><span class="group-color-dot" style="background:${groupColor(rayon,name)}"></span><span>${escapeHtml(name)}</span><span class="count">${n}</span></button>`).join('')}</div></div>`;
+  const departments=sectorList(rayon,products.filter(p=>!p.archived),true);
+  const buttons=departments.map(d=>{
+   const n=products.filter(p=>!p.archived&&p.rayon===rayon&&productSectorKey(p)===d.code).length;
+   const color=d.color;
+   return '<button class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>';
+  }).join('');
+  return '<div class="side-chapter"><button class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon&&!state.group?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'"><span class="chap-name">'+(i?'009':'001')+' — '+escapeHtml(rayon)+'</span><span class="count">'+counts[rayon]+'</span></button><div class="group-list">'+buttons+'</div></div>';
  }).join('');
 }
-function render(){buildSidebar();const shown=getShown();const shownActive=products.filter(p=>!p.archived);$('bookBatiCount').textContent=shownActive.filter(p=>p.rayon==='Matériaux').length;$('bookJardinCount').textContent=shownActive.filter(p=>p.rayon==='Jardin').length;$('heroTotal').textContent=shownActive.length;
+function render(){
+ buildSidebar();
+ const shown=getShown();
+ const shownActive=products.filter(p=>!p.archived);
+ $('bookBatiCount').textContent=shownActive.filter(p=>p.rayon==='Matériaux').length;
+ $('bookJardinCount').textContent=shownActive.filter(p=>p.rayon==='Jardin').length;
+ $('heroTotal').textContent=shownActive.length;
  $('hero').hidden=!(state.rayon==='all'&&!state.group&&!state.search);
  $('rayonSelect').value=state.rayon;
  $('resultCount').textContent=shown.length+' produit'+(shown.length>1?'s':'');
- $('resultTitle').textContent=state.group|| (state.rayon==='all'?'Catalogue complet':state.rayon);
- $('resultSub').textContent=state.search?`Résultat de recherche : « ${state.search} »` : (state.group?state.rayon+' · Sous-rayon': 'Parcourir les sous-rayons');
+ const selectedSector=state.rayon==='all'?null:sectorList(state.rayon,products,true).find(d=>d.code===state.group);
+ $('resultTitle').textContent=selectedSector?(selectedSector.code==='UNASSIGNED'?'?':selectedSector.code)+' — '+selectedSector.name:(state.rayon==='all'?'Catalogue complet':state.rayon);
+ $('resultSub').textContent=state.search?'Résultat de recherche : « '+state.search+' »':(selectedSector?state.rayon+' · Sous-rayon officiel':'Parcourir les sous-rayons numérotés');
  $('emptyState').hidden=shown.length>0;
- let out='';for(const rayon of UNIVERSES){const matching=shown.filter(p=>p.rayon===rayon);if(!matching.length)continue;
- const gr=groupsFor(rayon,matching);const number=rayon==='Matériaux'?'01':'09';
- out+=`<section class="chapter-intro ${rayon==='Jardin'?'jardin':''}"><div><div class="chapter-tag">UNIVERS ${number}</div><h2>${escapeHtml(rayon)}</h2><p>${matching.length} références · ${gr.length} sous-rayon${gr.length>1?'s':''}</p></div><div class="chapter-index">${number}</div></section>`;
- for(const [g,n] of gr){const gp=matching.filter(p=>p.sousRayon===g);out+=`<section class="subcategory"><header class="subcategory-header" style="--group-color:${groupColor(rayon,g)};border-left:8px solid ${groupColor(rayon,g)}"><h3>${escapeHtml(g)}</h3><span>${gp.length} réf.</span></header><div class="products-grid">${gp.map(productMarkup).join('')}</div></section>`;}
+ let out='';
+ for(const rayon of UNIVERSES){
+  const matching=shown.filter(p=>p.rayon===rayon);if(!matching.length)continue;
+  const departments=sectorList(rayon,matching,false);
+  const number=rayon==='Matériaux'?'001':'009';
+  out+='<section class="chapter-intro '+(rayon==='Jardin'?'jardin':'')+'"><div><div class="chapter-tag">RAYON '+number+'</div><h2>'+escapeHtml(rayon)+'</h2><p>'+matching.length+' références · '+departments.length+' sous-rayon'+(departments.length>1?'s':'')+' représentés</p></div><div class="chapter-index">'+number+'</div></section>';
+  for(const d of departments){
+   const entries=matching.filter(p=>productSectorKey(p)===d.code);
+   if(!entries.length)continue;
+   out+='<section class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
+   const families=[...new Set(entries.map(p=>p.sousRayon))].sort((a,b)=>a.localeCompare(b,'fr'));
+   for(const family of families){
+    const subset=entries.filter(p=>p.sousRayon===family);
+    out+='<div class="official-family"><div class="official-family-heading">'+escapeHtml(family)+' <small>· '+subset.length+' réf.</small></div><div class="products-grid">'+subset.map(productMarkup).join('')+'</div></div>';
+   }
+   out+='</section>';
+  }
  }
  $('catalogue').innerHTML=out;
 }
-function selectFilter(rayon,group=''){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
+
+function selectFilter(rayon,group=''){state.rayon=rayon;state.group=deptCode;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
 function toggleAdmin(){if(typeof bookCanEdit==='function'&&!bookCanEdit()){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',String(state.admin));$('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;render();toast(state.admin?'Modification des références activée':'Consultation activée');}
-function updateDatalist(rayon){const sel=$('inputSousRayon');const current=sel.value;sel.innerHTML=MASTER_GROUPS[rayon].map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');if(MASTER_GROUPS[rayon].includes(current))sel.value=current;}
-function showForm(ref=null){if(!state.admin||typeof bookCanEdit==='function'&&!bookCanEdit())return toast('Accès administrateur requis');originalEditReference=ref;const p=ref?products.find(x=>x.reference===ref):null;
- if(ref&&!p){toast('Référence introuvable');return;}
- const form=$('productForm');form.reset();$('dialogTitle').textContent=p?'Modifier la référence '+p.reference:'Ajouter une référence';
- for(const field of ['reference','designation','ean','rayon','sousRayon','notes'])form.elements[field].value=p?.[field]??(field==='rayon'?(state.rayon==='all'?'Matériaux':state.rayon):'');
- updateDatalist(form.elements.rayon.value);if(p&&MASTER_GROUPS[p.rayon].includes(p.sousRayon))form.elements.sousRayon.value=p.sousRayon;else if(!p&&state.group&&MASTER_GROUPS[form.elements.rayon.value].includes(state.group))form.elements.sousRayon.value=state.group;if(window.BookSketchEditor)window.BookSketchEditor.open(p);$('inputPhotoPreview').hidden=true;$('inputPhotoPreview').removeAttribute('src');$('editDialog').showModal();
+
+function updateDatalist(rayon,code,preferred=''){
+ const sel=$('inputSousRayon');
+ let options=MASTER_GROUPS[rayon].filter(g=>inferOfficialCode(rayon,g)===code);
+ if(preferred&&!options.includes(preferred))options.push(preferred);
+ options.push('Autres références');
+ options=[...new Set(options)];
+ sel.innerHTML=options.map(g=>'<option value="'+escapeHtml(g)+'">'+escapeHtml(g)+'</option>').join('');
+ sel.value=options.includes(preferred)?preferred:options[0];
 }
+function updateDepartmentOptions(rayon,code='',preferredFamily=''){
+ const sel=$('inputDept');
+ sel.innerHTML='<option value="">Sélectionner le sous-rayon officiel…</option>'+
+   OFFICIAL_SECTORS[rayon].map(d=>'<option value="'+d.code+'">'+d.code+' — '+escapeHtml(d.name)+'</option>').join('');
+ sel.value=officialSector(rayon,code)?code:'';
+ updateDatalist(rayon,sel.value,preferredFamily);
+}
+function showForm(ref=null){
+ if(!state.admin||typeof bookCanEdit==='function'&&!bookCanEdit())return toast('Accès administrateur requis');
+ originalEditReference=ref;
+ const p=ref?products.find(x=>x.reference===ref):null;
+ if(ref&&!p){toast('Référence introuvable');return;}
+ const form=$('productForm');form.reset();
+ $('dialogTitle').textContent=p?'Modifier la référence '+p.reference:'Ajouter une référence';
+ for(const field of ['reference','designation','ean','rayon','notes'])
+  form.elements[field].value=p?.[field]??(field==='rayon'?(state.rayon==='all'?'Matériaux':state.rayon):'');
+ updateDepartmentOptions(form.elements.rayon.value,p?productSectorCode(p):(state.group||''),p?.sousRayon||'');
+ if(window.BookSketchEditor)window.BookSketchEditor.open(p);
+ $('inputPhotoPreview').hidden=true;$('inputPhotoPreview').removeAttribute('src');
+ $('editDialog').showModal();
+}
+
 async function asDataUrl(file,isDrawing=false){if(!file)return '';
  if(!file.type.startsWith('image/'))throw new Error('Le fichier doit être une image');
  let image=await createImageBitmap(file);let max=isDrawing?1400:1100;
@@ -91,12 +180,12 @@ async function asDataUrl(file,isDrawing=false){if(!file)return '';
  if(image.close)image.close();return canvas.toDataURL(isDrawing?'image/png':'image/jpeg',isDrawing?1:.77);
 }
 async function submitProduct(event){event.preventDefault();if(!state.admin)return;const form=$('productForm');const data=new FormData(form);const saveBtn=$('saveProductBtn');if(saveBtn.disabled)return;saveBtn.disabled=true;saveBtn.textContent='Enregistrement…';try{
- let ref=String(data.get('reference')||'').trim();let des=String(data.get('designation')||'').trim();let ean=String(data.get('ean')||'').trim();let rayon=String(data.get('rayon')||'');let group=String(data.get('sousRayon')||'').trim();
- if(!ref||!des||!group||!UNIVERSES.includes(rayon)){toast('Renseignez les champs obligatoires');return;}
+ let ref=String(data.get('reference')||'').trim();let des=String(data.get('designation')||'').trim();let ean=String(data.get('ean')||'').trim();let rayon=String(data.get('rayon')||'');let group=String(data.get('sousRayon')||'').trim();let deptCode=String(data.get('deptCode')||'');
+ if(!ref||!des||!group||!UNIVERSES.includes(rayon)||!officialSector(rayon,deptCode)){toast('Renseignez la référence, la désignation et le sous-rayon officiel numéroté');return;}
  if(ean&&!validEan(ean)){toast('Code EAN-13 invalide : vérifiez les 13 chiffres et la clé de contrôle');return;}
  if(products.some(p=>p.reference===ref&&p.reference!==originalEditReference)){toast('Cette référence existe déjà');return;}
  let existing=originalEditReference?products.find(p=>p.reference===originalEditReference):null;
- const item={...(existing||{}),reference:ref,designation:des,ean,rayon,sousRayon:group,notes:String(data.get('notes')||'').trim(),archived:!!existing?.archived,photo:existing?.photo||'',croquis:existing?.croquis||'',barcode:existing?.ean===ean?(existing?.barcode||''):''};
+ const item={...(existing||{}),reference:ref,designation:des,ean,rayon,sousRayon:group,sousRayonCode:deptCode,notes:String(data.get('notes')||'').trim(),archived:!!existing?.archived,photo:existing?.photo||'',croquis:existing?.croquis||'',barcode:existing?.ean===ean?(existing?.barcode||''):''};
  try{if($('inputPhoto').files[0])item.photo=await asDataUrl($('inputPhoto').files[0]);if(window.BookSketchEditor)item.croquis=await window.BookSketchEditor.resolveCroquis();}catch(e){toast('Impossible de préparer les images : '+e.message);return;}
  try{await bookSaveItem(item,originalEditReference);}catch(err){toast('Erreur : '+err.message);return;}
  if(existing){products[products.indexOf(existing)]=cleanItem(item);}else{products.push(cleanItem(item));}
@@ -104,10 +193,10 @@ async function submitProduct(event){event.preventDefault();if(!state.admin)retur
  state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';
  render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});
  const synced=typeof bookRefresh!=='function'||await bookRefresh();
- const confirmed=products.some(p=>p.reference===ref&&!p.archived&&p.rayon===rayon&&p.sousRayon===group);
+ const confirmed=products.some(p=>p.reference===ref&&!p.archived&&p.rayon===rayon&&p.sousRayon===group&&productSectorCode(p)===deptCode);
  if(!synced)toast('Réf. '+ref+' enregistrée, mais rechargement impossible. Utilisez Actualiser avant le PDF.');
  else if(!confirmed)toast('Réf. '+ref+' absente du catalogue actif après synchronisation : vérifiez son statut.');
- else toast('✓ Réf. '+ref+' '+(existing?'actualisée':'ajoutée')+' dans le catalogue et les prochains PDF '+rayon+'.');
+ else toast('✓ Réf. '+ref+' '+(existing?'actualisée':'ajoutée')+' dans le sous-rayon '+deptCode+' du book '+rayon+'.');
  }finally{saveBtn.disabled=false;saveBtn.textContent='Enregistrer le produit';}
 }
 async function setArchive(ref){if(!state.admin)return;const p=products.find(x=>x.reference===ref);if(!p)return;if(!p.archived&&!confirm(`Retirer la référence ${ref} des futurs PDF et exports Excel ? Elle pourra être restaurée.`))return;
@@ -127,7 +216,7 @@ function zipStore(files){const enc=new TextEncoder(),local=[],central=[];let off
 function xml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
 function col(i){let s='';for(let k=i+1;k>0;k=Math.floor((k-1)/26))s=String.fromCharCode(65+(k-1)%26)+s;return s;}
 function exportXlsx(){
- const headers=['Rayon','Sous-rayon / famille','Référence LM','Désignation','EAN-13','Notes'];
+ const headers=['Rayon','Code sous-rayon','Nomenclature officielle','Famille / détail','Référence LM','Désignation','EAN-13','Notes'];
  const base='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
  const files={
   '[Content_Types].xml':base+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
@@ -136,44 +225,50 @@ function exportXlsx(){
   'xl/_rels/workbook.xml.rels':base+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>'
  };
  for(let i=0;i<UNIVERSES.length;i++){
- const rayon=UNIVERSES[i];const sorted=products.filter(p=>p.rayon===rayon&&!p.archived).sort((a,b)=>MASTER_GROUPS[rayon].indexOf(a.sousRayon)-MASTER_GROUPS[rayon].indexOf(b.sousRayon));
- const rows=[headers,...sorted.map(p=>[p.rayon,p.sousRayon,p.reference,p.designation,p.ean,p.notes])];
+ const rayon=UNIVERSES[i];const sorted=products.filter(p=>p.rayon===rayon&&!p.archived).sort((a,b)=>productSectorKey(a).localeCompare(productSectorKey(b))||a.sousRayon.localeCompare(b.sousRayon,'fr'));
+ const rows=[headers,...sorted.map(p=>[p.rayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'À CLASSER',p.sousRayon,p.reference,p.designation,p.ean,p.notes])];
  const rowxml=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${col(c)}${r+1}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`).join('')}</row>`).join('');
- files['xl/worksheets/sheet'+(i+1)+'.xml']=base+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:F'+rows.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="42" customWidth="1"/><col min="3" max="3" width="18" customWidth="1"/><col min="4" max="4" width="65" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="40" customWidth="1"/></cols><sheetData>'+rowxml+'</sheetData><autoFilter ref="A1:F'+rows.length+'"/></worksheet>';
+ files['xl/worksheets/sheet'+(i+1)+'.xml']=base+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:F'+rows.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="42" customWidth="1"/><col min="3" max="3" width="18" customWidth="1"/><col min="4" max="4" width="65" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="65" customWidth="1"/><col min="7" max="7" width="22" customWidth="1"/><col min="8" max="8" width="40" customWidth="1"/></cols><sheetData>'+rowxml+'</sheetData><autoFilter ref="A1:F'+rows.length+'"/></worksheet>';
  }
  downloadBlob(zipStore(files),'Book_de_vente_Calais_Materiaux_Jardin_ACTUALISE.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');toast('Excel actualisé exporté : 2 onglets, références actives uniquement');
 }
 
-function printCard(p){let bar=barcodeDataURL(p.ean);let photo=safeImage(p.photo),croquis=safeImage(p.croquis);
-return `<article class="p-product"><div class="p-reference">RÉF. ${escapeHtml(p.reference)}</div><div class="p-name">${escapeHtml(p.designation)}</div><div class="p-row"><div class="p-asset">${photo?`<img src="${escapeHtml(photo)}">`:'<span class="p-missing">Photo non disponible</span>'}</div><div class="p-asset">${croquis?`<img src="${escapeHtml(croquis)}">`:'<span class="p-missing">Croquis non disponible</span>'}</div><div class="p-asset bar">${bar?`<img src="${escapeHtml(bar)}">`:'<span class="p-missing">EAN non renseigné</span>'}</div></div>${p.notes?`<div class="p-note">⚠ ${escapeHtml(p.notes)}</div>`:''}</article>`;
+
+function printCard(p){
+ const bar=barcodeDataURL(p.ean),photo=safeImage(p.photo),croquis=safeImage(p.croquis);
+ return '<article class="p-product"><div class="p-reference">RÉF. '+escapeHtml(p.reference)+'</div><div class="p-family">'+escapeHtml(p.sousRayon)+'</div><div class="p-name">'+escapeHtml(p.designation)+'</div><div class="p-row"><div class="p-asset">'+(photo?'<img src="'+escapeHtml(photo)+'">':'<span class="p-missing">Photo non disponible</span>')+'</div><div class="p-asset">'+(croquis?'<img src="'+escapeHtml(croquis)+'">':'<span class="p-missing">Croquis non disponible</span>')+'</div><div class="p-asset bar">'+(bar?'<img src="'+escapeHtml(bar)+'">':'<span class="p-missing">EAN non renseigné</span>')+'</div></div>'+(p.notes?'<div class="p-note">⚠ '+escapeHtml(p.notes)+'</div>':'')+'</article>';
 }
-function printHeader(rayon,page,pageCount){return `<div class="p-header"><span>BOOK DE VENTE</span><span>${escapeHtml(rayon.toUpperCase())}</span></div><div class="p-footer"><span>LEROY MERLIN CALAIS / GUIDE PRODUITS</span><span>${page} / ${pageCount}</span></div>`;}
-function coverGallery(active, groups){
- const representatives=groups.map(g=>active.find(p=>p.sousRayon===g&&safeImage(p.photo))).filter(Boolean);
- const positions=[0,Math.floor((representatives.length-1)/2),representatives.length-1];
- const samples=positions.map(i=>representatives[i]).filter((p,i,arr)=>p&&arr.findIndex(other=>other.reference===p.reference)===i);
- return '<div class="cover-gallery">'+samples.map(p=>'<figure class="cover-tile"><img src="'+escapeHtml(safeImage(p.photo))+'" alt=""><figcaption>'+escapeHtml(p.sousRayon)+'</figcaption></figure>').join('')+'</div>';
+function printHeader(rayon,page,pageCount){
+ return '<div class="p-header"><span>BOOK DE VENTE</span><span>'+escapeHtml(rayon.toUpperCase())+'</span></div><div class="p-footer"><span>LEROY MERLIN CALAIS / GUIDE PRODUITS</span><span>'+page+' / '+pageCount+'</span></div>';
+}
+function coverGallery(active,sectors){
+ const representative=sectors.map(d=>active.find(p=>productSectorKey(p)===d.code&&safeImage(p.photo))).filter(Boolean);
+ const positions=[0,Math.floor((representative.length-1)/2),representative.length-1];
+ const samples=positions.map(i=>representative[i]).filter((p,i,arr)=>p&&arr.findIndex(other=>other.reference===p.reference)===i);
+ return '<div class="cover-gallery">'+samples.map(p=>'<figure class="cover-tile"><img src="'+escapeHtml(safeImage(p.photo))+'" alt=""><figcaption>'+escapeHtml((officialSector(p.rayon,productSectorCode(p))?.code||'?')+' — '+(officialSector(p.rayon,productSectorCode(p))?.name||'À classer'))+'</figcaption></figure>').join('')+'</div>';
 }
 function makePrintHTML(rayon){
  if(!UNIVERSES.includes(rayon))throw new Error('Choisir Matériaux ou Jardin');
  const active=products.filter(p=>!p.archived&&p.rayon===rayon);
- const groups=MASTER_GROUPS[rayon].filter(g=>active.some(p=>p.sousRayon===g));
- const pages=[{kind:'cover',rayon},{kind:'intro',rayon}];
- const toc={};
- for(const g of groups){
-   const entries=active.filter(p=>p.sousRayon===g);toc[g]=pages.length+1;
-   for(let i=0;i<entries.length;i+=3)pages.push({kind:'products',rayon,g,continued:i>0,entries:entries.slice(i,i+3)});
+ const sectors=sectorList(rayon,active,false);
+ const pages=[{kind:'cover'},{kind:'intro'}],toc={};
+ for(const d of sectors){
+  const entries=active.filter(p=>productSectorKey(p)===d.code).sort((a,b)=>a.sousRayon.localeCompare(b.sousRayon,'fr')||a.reference.localeCompare(b.reference,'fr'));
+  toc[d.code]=pages.length+1;
+  for(let i=0;i<entries.length;i+=3)pages.push({kind:'products',sector:d,continued:i>0,entries:entries.slice(i,i+3)});
  }
- const colorBar=g=>`<div class="p-tab" style="--tab-color:${hexBright(groupColor(rayon,g))}"><span>${escapeHtml(g)}</span></div>`;
+ const label=d=>((d.code==='UNASSIGNED'?'?':d.code)+' — '+d.name);
+ const colorBar=d=>'<div class="p-tab" style="--tab-color:'+d.color+'"><span>'+escapeHtml(label(d))+'</span></div>';
  return pages.map((p,i)=>{
-   if(p.kind==='cover'){
-     const nm=rayon==='Matériaux'?'BÂTI & MATÉRIAUX':'JARDIN';
-     
-     return `<div class="print-page p-cover ${rayon==='Matériaux'?'p-cover-bati':'p-cover-jardin'}"><div class="cover-micro">LEROY MERLIN CALAIS · BOOK DE VENTE</div><h1>${nm}</h1><p>Guide caisse · Photos produits · Croquis cotés · Codes-barres EAN-13</p>${coverGallery(active,groups)}<div class="p-bottom">${active.length} RÉFÉRENCES<br>${groups.length} sous-rayons</div><small>Photos des références du book : illustrations des produits, pas du magasin.</small></div>`;
-   }
-   if(p.kind==='intro')return `<div class="print-page p-intro">${printHeader(rayon,i+1,pages.length)}<div class="p-label">${rayon==='Matériaux'?'01':'09'} — RAYON</div><h1>${escapeHtml(rayon.toUpperCase())}</h1><p>${active.length} références / ${groups.length} sous-rayons</p><h2 class="p-toc-title">SOMMAIRE · COULEURS D'INTERCALAIRES</h2><ul class="p-toc">${groups.map(g=>`<li style="--tab-color:${groupColor(rayon,g)}"><span class="p-toc-swatch"></span><span class="p-toc-name">${escapeHtml(g)}</span><strong>p. ${toc[g]}</strong></li>`).join('')}</ul><p class="p-toc-note">Retrouvez la même couleur sur le liseré vertical droit de toutes les pages du sous-rayon.</p></div>`;
-   const color=groupColor(rayon,p.g);
-   return `<div class="print-page p-content" style="--tab-color:${color}">${colorBar(p.g)}${printHeader(rayon,i+1,pages.length)}<div class="p-category-label ${p.continued?'continued':''}">${escapeHtml(p.g)}${p.continued?' (suite)':''}</div>${p.entries.map(printCard).join('')}</div>`;
+  if(p.kind==='cover'){
+   const nm=rayon==='Matériaux'?'BÂTI & MATÉRIAUX':'JARDIN';
+   return '<div class="print-page p-cover '+(rayon==='Matériaux'?'p-cover-bati':'p-cover-jardin')+'"><div class="cover-micro">LEROY MERLIN CALAIS · BOOK DE VENTE</div><h1>'+nm+'</h1><p>Sous-rayons LM numérotés · Photos · Croquis · EAN-13</p>'+coverGallery(active,sectors)+'<div class="p-bottom">'+active.length+' RÉFÉRENCES<br>'+sectors.length+' sous-rayons représentés</div><small>Les intercalaires et les numéros de pages se recalculent à partir du catalogue actif.</small></div>';
+  }
+  if(p.kind==='intro'){
+   return '<div class="print-page p-intro">'+printHeader(rayon,i+1,pages.length)+'<div class="p-label">'+(rayon==='Matériaux'?'001':'009')+' — RAYON</div><h1>'+escapeHtml(rayon.toUpperCase())+'</h1><p>'+active.length+' références / '+sectors.length+' sous-rayons représentés</p><h2 class="p-toc-title">SOMMAIRE · SOUS-RAYONS NUMÉROTÉS & COULEURS</h2><ul class="p-toc">'+sectors.map(d=>'<li style="--tab-color:'+d.color+'"><span class="p-toc-swatch"></span><span class="p-toc-name">'+escapeHtml(label(d))+'</span><strong>p. '+toc[d.code]+'</strong></li>').join('')+'</ul><p class="p-toc-note">Le code et sa couleur sont identiques dans le sommaire et sur le liseré vertical des pages correspondantes.</p></div>';
+  }
+  const d=p.sector;
+  return '<div class="print-page p-content" style="--tab-color:'+d.color+'">'+colorBar(d)+printHeader(rayon,i+1,pages.length)+'<div class="p-category-label '+(p.continued?'continued':'')+'">'+escapeHtml(label(d))+(p.continued?' (suite)':'')+'</div>'+p.entries.map(printCard).join('')+'</div>';
  }).join('');
 }
 
@@ -214,7 +309,8 @@ $('catalogue').before($('adminPanel'));
 $('catalogue').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
 $('dialogClose').addEventListener('click',()=>$('editDialog').close());
 $('dialogCancel').addEventListener('click',()=>$('editDialog').close());
-$('inputRayon').addEventListener('change',e=>{updateDatalist(e.target.value);$('inputSousRayon').selectedIndex=0;});
+$('inputRayon').addEventListener('change',e=>{updateDepartmentOptions(e.target.value);if(window.BookSketchEditor)window.BookSketchEditor.refreshGroup();});
+$('inputDept').addEventListener('change',e=>{updateDatalist($('inputRayon').value,e.target.value);if(window.BookSketchEditor)window.BookSketchEditor.refreshGroup();});
 $('productForm').addEventListener('submit',submitProduct);
 $('exportJsonBtn').addEventListener('click',exportJSON);
 $('exportExcelBtn').addEventListener('click',exportXlsx);
