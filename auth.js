@@ -15,23 +15,38 @@ function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggl
 function bookCanEdit(){return !!bookClient&&bookRole==='admin';}
 function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
 function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,pageSource:p.page_source});}
+let bookRefreshTask=null;
 async function bookRefresh(){
- if(!bookClient||!bookRole||loadingBook)return;
- loadingBook=true;$('saveStatus').textContent='Actualisation du catalogue…';
- try{
-  // Les photos ne sont renvoyées qu'aux utilisateurs autorisés (politiques RLS).
-  const {data,error}=await bookClient.from('book_catalog_products').select('reference,designation,ean,rayon,sous_rayon,photo,croquis,notes,page_source,archived').order('rayon').order('sous_rayon').order('reference');
-  if(error)throw error;
-  products=(data||[]).map(fromRemote);render();$('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
- }catch(error){$('saveStatus').textContent='Erreur de chargement';toast('Impossible de charger le catalogue : '+error.message);}
- finally{loadingBook=false;}
+ if(!bookClient||!bookRole)return false;
+ if(bookRefreshTask)return bookRefreshTask;
+ bookRefreshTask=(async()=>{
+  loadingBook=true;$('saveStatus').textContent='Synchronisation du catalogue…';
+  try{
+   const {data,error}=await bookClient.from('book_catalog_products')
+    .select('reference,designation,ean,rayon,sous_rayon,photo,croquis,notes,page_source,archived')
+    .order('rayon').order('sous_rayon').order('reference');
+   if(error)throw error;
+   products=(data||[]).map(fromRemote);
+   render();$('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
+   return true;
+  }catch(error){
+   $('saveStatus').textContent='Erreur de synchronisation';
+   toast('Impossible de charger le catalogue : '+error.message);
+   return false;
+  }finally{loadingBook=false;}
+ })();
+ try{return await bookRefreshTask;}finally{bookRefreshTask=null;}
 }
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
  const row=toRemote(item);
  if(row.ean&&!validEan(row.ean))throw new Error('EAN-13 incorrect : les barres doivent correspondre au numéro.');
- const {error}=await bookClient.from('book_catalog_products').upsert(row,{onConflict:'reference'});
- if(error)throw error;
+ const {data:saved,error}=await bookClient.from('book_catalog_products')
+   .upsert(row,{onConflict:'reference'})
+   .select('reference,rayon,sous_rayon,archived').single();
+  if(error)throw error;
+  if(!saved||saved.reference!==row.reference||saved.rayon!==row.rayon||saved.sous_rayon!==row.sous_rayon||saved.archived!==row.archived)
+   throw new Error('La référence n’a pas pu être confirmée sur le serveur. Réactualisez le catalogue.');
  if(originalRef&&originalRef!==row.reference){
    const {error:removeError}=await bookClient.from('book_catalog_products').delete().eq('reference',originalRef);
    if(removeError)throw new Error('Nouvelle référence enregistrée, mais suppression de l’ancienne impossible : '+removeError.message);

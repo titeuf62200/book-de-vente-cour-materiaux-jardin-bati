@@ -100,11 +100,18 @@ async function submitProduct(event){event.preventDefault();if(!state.admin)retur
  try{if($('inputPhoto').files[0])item.photo=await asDataUrl($('inputPhoto').files[0]);if(window.BookSketchEditor)item.croquis=await window.BookSketchEditor.resolveCroquis();}catch(e){toast('Impossible de préparer les images : '+e.message);return;}
  try{await bookSaveItem(item,originalEditReference);}catch(err){toast('Erreur : '+err.message);return;}
  if(existing){products[products.indexOf(existing)]=cleanItem(item);}else{products.push(cleanItem(item));}
- $('editDialog').close();if(!existing){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';}render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});toast(existing?'Référence mise à jour et synchronisée':'Référence ajoutée au rayon '+rayon+' et aux prochains PDF');
+ $('editDialog').close();
+ state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';
+ render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});
+ const synced=typeof bookRefresh!=='function'||await bookRefresh();
+ const confirmed=products.some(p=>p.reference===ref&&!p.archived&&p.rayon===rayon&&p.sousRayon===group);
+ if(!synced)toast('Réf. '+ref+' enregistrée, mais rechargement impossible. Utilisez Actualiser avant le PDF.');
+ else if(!confirmed)toast('Réf. '+ref+' absente du catalogue actif après synchronisation : vérifiez son statut.');
+ else toast('✓ Réf. '+ref+' '+(existing?'actualisée':'ajoutée')+' dans le catalogue et les prochains PDF '+rayon+'.');
  }finally{saveBtn.disabled=false;saveBtn.textContent='Enregistrer le produit';}
 }
 async function setArchive(ref){if(!state.admin)return;const p=products.find(x=>x.reference===ref);if(!p)return;if(!p.archived&&!confirm(`Retirer la référence ${ref} des futurs PDF et exports Excel ? Elle pourra être restaurée.`))return;
- try{await bookSaveItem({...p,archived:!p.archived},ref);p.archived=!p.archived;render();toast(p.archived?'Référence retirée des éditions futures (récupérable)':'Référence restaurée');}catch(e){toast('Modification non enregistrée : '+e.message);}
+ try{await bookSaveItem({...p,archived:!p.archived},ref);p.archived=!p.archived;render();if(typeof bookRefresh==='function')await bookRefresh();toast(p.archived?'Référence retirée des éditions futures (récupérable)':'Référence restaurée dans le catalogue et les prochains PDF');}catch(e){toast('Modification non enregistrée : '+e.message);}
 }
 function downloadBlob(content,name,mime){const blob=content instanceof Blob?content:new Blob([content],{type:mime||'application/octet-stream'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),8000);}
 function exportJSON(){downloadBlob(JSON.stringify({version:1,source:'Book de vente Leroy Merlin Calais',exportedAt:new Date().toISOString(),products},null,2),'Book_de_vente_Calais_SAUVEGARDE.json','application/json');toast('Sauvegarde JSON téléchargée');}
@@ -171,10 +178,18 @@ function makePrintHTML(rayon){
 }
 
 async function printBook(rayon){
- toast('Préparation du PDF '+rayon+' et de ses intercalaires…');
+ if(!UNIVERSES.includes(rayon))return;
+ if(window.BOOK_SUPABASE_CONFIG?.url){
+  $('saveStatus').textContent='Vérification du catalogue avant PDF…';
+  const synced=typeof bookRefresh==='function'&&await bookRefresh();
+  if(!synced){toast('PDF non ouvert : impossible de vérifier les dernières références sur le serveur. Réessayez.');return;}
+ }
+ const total=products.filter(p=>!p.archived&&p.rayon===rayon).length;
+ if(!total){toast('Aucune référence active dans le rayon '+rayon+'.');return;}
  const area=$('printArea');area.innerHTML=makePrintHTML(rayon);
  const images=[...area.querySelectorAll('img')];
  try{await Promise.race([Promise.all(images.map(img=>img.decode().catch(()=>{}))),new Promise(resolve=>setTimeout(resolve,12000))]);}catch(e){}
+ toast('PDF '+rayon+' prêt : '+total+' références actives, sommaire et intercalaires à jour.');
  window.print();
 }
 async function importJSON(file){if(!file)return;try{let j=JSON.parse(await file.text());let rows=Array.isArray(j)?j:j.products;
