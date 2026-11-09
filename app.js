@@ -316,6 +316,84 @@ function makePrintHTML(rayon){
  }).join('');
 }
 
+
+/* Outil complémentaire : reconstitution imprimable des nuanciers du 08/11/2026.
+   Sections nominales identiques aux fiches A4 d'origine ; une page par profil.
+   Aucune photo ou référence n'est inventée : les visuels/EAN viennent du catalogue. */
+const NUANCIER_SECTIONS = [
+ {rayon:'Matériaux',kind:'charpente',label:'Bois de charpente',code:'020'},
+ {rayon:'Jardin',kind:'terrasses',label:'Terrasses · Lames et lambourdes',code:'056'},
+ {rayon:'Jardin',kind:'paves',label:'Pavés',code:'056'},
+ {rayon:'Jardin',kind:'bordures',label:'Bordures',code:'056'}
+];
+let selectedNuancier='Matériaux';
+function nuancierFor(rayon){
+ const data=Array.isArray(window.BOOK_NUANCIER_PROFILES)?window.BOOK_NUANCIER_PROFILES:[];
+ return data.filter(p=>NUANCIER_SECTIONS.some(s=>s.rayon===rayon&&s.kind===p.kind))
+  .sort((a,b)=>{
+   const order=NUANCIER_SECTIONS.findIndex(s=>s.kind===a.kind)-NUANCIER_SECTIONS.findIndex(s=>s.kind===b.kind);
+   return order||compareProductsAlphabetically({designation:a.name,reference:a.id},{designation:b.name,reference:b.id})
+     ||a.w-b.w||a.h-b.h;
+  });
+}
+function nuancierDimentions(p){
+ if(p.kind==='paves')return p.w+' × '+p.h+' mm · ép. '+p.length+' mm';
+ if(p.kind==='bordures')return 'H '+p.h+' × ép. '+p.w+' mm · longueur '+p.length+' mm';
+ return p.w+' × '+p.h+' mm';
+}
+function showNuancier(rayon){
+ const list=nuancierFor(rayon);if(!list.length)return toast('Les profils du nuancier sont indisponibles.');
+ selectedNuancier=rayon;
+ $('nuancierDialogTitle').textContent='Nuancier '+(rayon==='Matériaux'?'Bâti':'Jardin');
+ $('nuancierDialogSubtitle').textContent=list.length+' profils · Format A4 · Une fiche par gabarit';
+ $('nuancierDialogContent').innerHTML=NUANCIER_SECTIONS.filter(g=>g.rayon===rayon).map(group=>{
+  const groupItems=list.filter(p=>p.kind===group.kind);
+  return '<section class="nuancier-group"><h3>'+escapeHtml(group.label)+' <small>· '+groupItems.length+' profils</small></h3><div class="nuancier-profile-list">'+groupItems.map(p=>{
+   const product=p.refs.map(ref=>products.find(item=>item.reference===ref&&!item.archived)).find(Boolean);
+   return '<article class="nuancier-list-item"><div class="nuancier-list-photo">'+(product?.photo?imageMarkup(safeImage(product.photo),p.name):'<span>1:1</span>')+'</div><div class="nuancier-list-info"><strong>'+escapeHtml(p.name)+'</strong><span>'+escapeHtml(nuancierDimentions(p))+'</span><small>Réf. '+escapeHtml(p.refs.join(', '))+'</small></div><button type="button" class="btn btn-outline nuancier-one-btn" data-nuancier-one="'+escapeHtml(p.id)+'">Imprimer cette fiche</button></article>';
+  }).join('')+'</div></section>';
+ }).join('');
+ $('nuancierDialog').showModal();
+}
+function nuancierPrintCard(p,index,count,rayon){
+ const info=NUANCIER_SECTIONS.find(s=>s.kind===p.kind);
+ const available=p.refs.map(ref=>({ref,product:products.find(item=>item.reference===ref&&!item.archived)}));
+ const photo=available.find(x=>x.product?.photo)?.product?.photo||'';
+ const detail=available.map(({ref,product})=>{
+  const barcode=product?.ean?barcodeDataURL(product.ean):'';
+  return '<div class="nuancier-ref"><strong>RÉF. '+escapeHtml(ref)+'</strong>'
+    +(barcode?'<img class="nuancier-barcode" alt="EAN '+escapeHtml(product.ean)+'" src="'+escapeHtml(barcode)+'">':(product?.ean?'<span>EAN '+escapeHtml(product.ean)+'</span>':''))
+    +'</div>';
+ }).join('');
+ const isHorizontal=p.kind==='terrasses'||p.kind==='paves';
+ const kindText=p.kind==='paves'?'VUE DE DESSUS · GABARIT NOMINAL':p.kind==='bordures'?'COUPE NOMINALE · HAUTEUR × ÉPAISSEUR':'COUPE NOMINALE · ÉCHELLE 1:1';
+ const panel='<div class="nuancier-print-panel"><div class="nuancier-print-photo">'+(photo?'<img src="'+escapeHtml(safeImage(photo))+'" alt="Photo produit">':'<span>Photo du book indisponible</span>')+'</div><div class="nuancier-refs">'+detail+'</div></div>';
+ const sidenote=p.kind==='bordures'?'Longueur de la bordure : '+p.length+' mm':p.kind==='paves'?'Épaisseur du pavé : '+p.length+' mm':'';
+ return '<section class="print-page nuancier-print-page nuancier-'+escapeHtml(p.kind)+'">'
+  +'<div class="nuancier-print-header"><strong>LEROY MERLIN · CALAIS</strong><span>NUANCIER '+(rayon==='Matériaux'?'BÂTI':'JARDIN')+' · '+(index+1)+'/'+count+'</span></div>'
+  +'<div class="nuancier-print-heading"><small>'+escapeHtml(info.label.toUpperCase())+' · SOUS-RAYON '+escapeHtml(info.code)+'</small><h2>'+escapeHtml(p.name)+'</h2><p>'+escapeHtml(nuancierDimentions(p))+' · '+kindText+'</p></div>'
+  +'<div class="nuancier-profile-outline" style="width:'+p.w+'mm;height:'+p.h+'mm" aria-label="Gabarit physique '+p.w+' sur '+p.h+' millimètres"><span>SECTION NOMINALE</span></div>'
+  +(isHorizontal?'<div class="nuancier-print-bottom">'+panel+'</div>':'<div class="nuancier-print-side">'+panel+'</div>')
+  +(sidenote?'<div class="nuancier-print-length">'+escapeHtml(sidenote)+'</div>':'')
+  +'<div class="nuancier-print-calibration"><div class="nuancier-50mm"></div><span>50 mm de contrôle</span></div>'
+  +'<footer class="nuancier-print-footer">IMPRIMER À 100 % · NE PAS AJUSTER À LA PAGE · Contrôle des cotes sur le produit réel</footer>'
+  +'</section>';
+}
+async function printNuancier(rayon,profileId=''){
+ const profiles=nuancierFor(rayon).filter(p=>!profileId||p.id===profileId);
+ if(!profiles.length)return toast('Profil non disponible.');
+ $('nuancierDialog').close();
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookRefresh==='function'){
+  const synced=await bookRefresh();
+  if(!synced)toast('Catalogue non actualisé : photos et EAN potentiellement incomplets.');
+ }
+ const area=$('printArea');
+ area.innerHTML=profiles.map((p,i)=>nuancierPrintCard(p,i,profiles.length,rayon)).join('');
+ const images=[...area.querySelectorAll('img')];
+ try{await Promise.race([Promise.all(images.map(img=>img.decode().catch(()=>{}))),new Promise(resolve=>setTimeout(resolve,12000))]);}catch(e){}
+ window.print();
+}
+
 async function printBook(rayon){
  if(!UNIVERSES.includes(rayon))return;
  if(window.BOOK_SUPABASE_CONFIG?.url){
@@ -358,6 +436,13 @@ $('inputDept').addEventListener('change',e=>{updateDatalist($('inputRayon').valu
 $('productForm').addEventListener('submit',submitProduct);
 $('exportJsonBtn').addEventListener('click',exportJSON);
 $('exportExcelBtn').addEventListener('click',exportXlsx);
+document.querySelectorAll('[data-nuancier]').forEach(btn=>btn.addEventListener('click',()=>showNuancier(btn.dataset.nuancier)));
+$('nuancierClose').addEventListener('click',()=>$('nuancierDialog').close());
+$('nuancierPrintAll').addEventListener('click',()=>void printNuancier(selectedNuancier));
+$('nuancierDialogContent').addEventListener('click',e=>{
+ const btn=e.target.closest('[data-nuancier-one]');
+ if(btn)void printNuancier(selectedNuancier,btn.dataset.nuancierOne);
+});
 $('printBatiBtn').addEventListener('click',()=>printBook('Matériaux'));
 $('printJardinBtn').addEventListener('click',()=>printBook('Jardin'));
 $('browseBatiBtn').addEventListener('click',()=>selectFilter('Matériaux'));
