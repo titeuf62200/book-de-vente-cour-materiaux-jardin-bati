@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-croquis-menu-v3">
+  <link rel="stylesheet" href="styles.css?v=20261109-zoom-lecture-v5">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -217,11 +217,39 @@
     <div class="nuancier-dialog-content" id="nuancierDialogContent"></div>
     <div class="nuancier-dialog-footer"><small>À imprimer sur A4, à 100 % sans ajustement. Vérifier la barre témoin de 50 mm. Les contours représentent les sections nominales, pas les rainures ni les chanfreins.</small><button type="button" class="btn btn-primary" id="nuancierPrintAll">↓ Imprimer / Enregistrer en PDF</button></div>
   </dialog>
+
+  <dialog id="imageZoomDialog" class="image-zoom-dialog" aria-labelledby="imageZoomTitle">
+    <header class="image-zoom-head">
+      <div class="image-zoom-heading"><span id="imageZoomKind">CROQUIS COTÉ</span><h2 id="imageZoomTitle">Agrandissement du produit</h2><small id="imageZoomRef"></small></div>
+      <button id="imageZoomClose" class="image-zoom-close" type="button" aria-label="Fermer l’agrandissement">×</button>
+    </header>
+    <div class="image-zoom-body">
+      <div id="imageZoomStage" class="image-zoom-stage" aria-label="Image agrandie : zoomez et déplacez-la au doigt ou à la souris">
+        <img id="imageZoomImg" alt="" draggable="false">
+      </div>
+      <aside class="image-zoom-info">
+        <h3 id="imageZoomSpecHeading">Dimensions</h3>
+        <div id="imageZoomSpecs" class="image-zoom-specs"></div>
+        <p id="imageZoomSpecHint"></p>
+        <p id="imageZoomEan" hidden></p>
+        <p id="imageZoomNotes" hidden></p>
+      </aside>
+    </div>
+    <footer class="image-zoom-bottom">
+      <div class="image-zoom-actions">
+        <button type="button" id="imageZoomOut" aria-label="Dézoomer">−</button>
+        <strong id="imageZoomPercent" aria-live="polite">100 %</strong>
+        <button type="button" id="imageZoomIn" aria-label="Zoomer">+</button>
+        <button type="button" id="imageZoomReset">Réinitialiser</button>
+      </div>
+      <small>PC : molette ou boutons · Mobile : pincez pour zoomer, glissez pour déplacer</small>
+    </footer>
+  </dialog>
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
-  <script src="app.js?v=20261109-vector-sketches-v4"></script>
+  <script src="app.js?v=20261109-zoom-lecture-v5"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
   <script src="croquis-editor.js?v=20261109-croquis-menu-v3"></script>
   <script src="sketch-atelier.js?v=20261109-croquis-menu-v3"></script>
