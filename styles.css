@@ -367,3 +367,11 @@
 @media(prefers-reduced-motion:reduce){
  .side-chapter .chapter-chevron{transition:none}
 }
+
+
+/* Choix progressif des croquis : aucune bibliothèque avant la sélection du mode. */
+#sketchEditor [hidden]{display:none!important}
+#sketchEditor .sketch-design-field{display:grid;gap:12px;background:#f7faf8;border:1px solid #cfe1d7;border-radius:12px;padding:13px}
+#sketchEditor .sketch-design-field>label{display:grid;gap:7px;font-weight:750}
+#sketchEditor #bookSketchCount{font-size:11px;color:#4d6c5a}
+#sketchEditor #bookSketchFilter{width:100%}
