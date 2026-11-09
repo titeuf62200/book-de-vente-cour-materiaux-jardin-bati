@@ -136,7 +136,20 @@ async function refresh(){
     ctx.fillStyle='#ad3f3f';ctx.font='18px Arial';ctx.fillText('Silhouette momentanément indisponible',310,360);
    }
   }
- }else ctx.clearRect(0,0,BW,BH);
+ }else{
+  ctx.clearRect(0,0,BW,BH);
+  if(mode==='upload'){
+   const length=field('dimensionLong'),width=field('dimensionWide'),height=field('dimensionHigh');
+   if(length||width||height){
+    const unit=field('dimensionUnit')||'cm';
+    const val=x=>/\b(?:mm|cm|m)$/i.test(x)?x:x+' '+unit;
+    ctx.strokeStyle='#126b50';ctx.lineWidth=2.5;
+    if(width){arrow(ctx,135,486,410,486,true);writeDimension(ctx,'Largeur : '+val(width),272,532);}
+    if(length){arrow(ctx,545,486,814,486,true);writeDimension(ctx,'Longueur : '+val(length),680,532);}
+    if(height){arrow(ctx,874,186,874,433,true);ctx.save();ctx.translate(925,308);ctx.rotate(-Math.PI/2);writeDimension(ctx,'Hauteur / ép. : '+val(height),0,0);ctx.restore();}
+   }
+  }
+ }
  if(generation!==paintGeneration)return;
  overlayOperations();
 }
@@ -184,7 +197,8 @@ window.BookSketchEditor.resolveCroquis=async function(){
   await refresh();
   return overlay.toDataURL('image/png');
  }
- if(!operations.length)return oldResolve();
+ const uploadHasDimensions=mode==='upload'&&['dimensionLong','dimensionWide','dimensionHigh'].some(id=>field(id));
+ if(!operations.length&&!uploadHasDimensions)return oldResolve();
  // Le dessin manuel s'ajoute au croquis standard, sans modifier ses anciennes cotes.
  await oldResolve();
  await refresh();
