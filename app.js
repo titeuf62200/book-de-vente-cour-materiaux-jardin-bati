@@ -234,7 +234,7 @@ async function submitProduct(event){event.preventDefault();if(!state.admin)retur
  try{await bookSaveItem(item,originalEditReference);}catch(err){toast('Erreur : '+err.message);return;}
  if(existing){products[products.indexOf(existing)]=cleanItem(item);}else{products.push(cleanItem(item));}
  $('editDialog').close();
- state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';
+ state.rayon=rayon;state.group=deptCode;state.search='';$('searchInput').value='';
  render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});
  const synced=typeof bookRefresh!=='function'||await bookRefresh();
  const confirmed=products.some(p=>p.reference===ref&&!p.archived&&p.rayon===rayon&&p.sousRayon===group&&productSectorCode(p)===deptCode);
