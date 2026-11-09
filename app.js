@@ -135,19 +135,27 @@ return `<article class="product-card${isArchived}">
  ${state.admin?`<div class="admin-actions"><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}">✎ Modifier</button><button class="btn ${p.archived?'btn-primary':'btn-danger'}" data-archive="${escapeHtml(p.reference)}">${p.archived?'↺ Restaurer':'🗑 Supprimer'}</button></div>`:''}</article>`;
 }
 
+const expandedChapters=new Set();
+function catalogSectorId(rayon,code){
+ return 'book-sector-'+(rayon==='Jardin'?'jardin':'bati')+'-'+String(code).replace(/[^A-Za-z0-9_-]/g,'-');
+}
 function buildSidebar(){
+ const activeProducts=products.filter(p=>!p.archived);
  const counts={};
- for(const rayon of UNIVERSES)counts[rayon]=products.filter(p=>p.rayon===rayon&&!p.archived).length;
- $('sideTotal').textContent=products.filter(p=>!p.archived).length;
+ for(const rayon of UNIVERSES)counts[rayon]=activeProducts.filter(p=>p.rayon===rayon).length;
+ $('sideTotal').textContent=activeProducts.length;
  document.querySelector('.nav-home').classList.toggle('active',state.rayon==='all'&&!state.group);
  $('sidebarChapters').innerHTML=UNIVERSES.map((rayon,i)=>{
-  const departments=sectorList(rayon,products.filter(p=>!p.archived),true);
+  const departments=sectorList(rayon,activeProducts,true);
+  const expanded=expandedChapters.has(rayon);
+  const groupId=i?'book-menu-jardin':'book-menu-bati';
   const buttons=departments.map(d=>{
-   const n=products.filter(p=>!p.archived&&p.rayon===rayon&&productSectorKey(p)===d.code).length;
+   const n=activeProducts.filter(p=>p.rayon===rayon&&productSectorKey(p)===d.code).length;
    const color=d.color;
-   return '<button class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>';
+   return '<button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>';
   }).join('');
-  return '<div class="side-chapter"><button class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon&&!state.group?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'"><span class="chap-name">'+(i?'009':'001')+' — '+escapeHtml(rayon)+'</span><span class="count">'+counts[rayon]+'</span></button><div class="group-list">'+buttons+'</div></div>';
+  const chapterTitle=i?'009 — Jardin':'001 — Matériaux / Bâti';
+  return '<div class="side-chapter"><button type="button" class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon?'active':'')+'" data-chapter-rayon="'+escapeHtml(rayon)+'" aria-expanded="'+expanded+'" aria-controls="'+groupId+'" aria-label="'+(expanded?'Replier':'Déplier')+' les sous-rayons '+(i?'Jardin':'Matériaux et Bâti')+'"><span class="chap-name">'+chapterTitle+'</span><span class="count">'+counts[rayon]+'</span><span class="chapter-chevron" aria-hidden="true">⌄</span></button><div class="group-list" id="'+groupId+'"'+(expanded?'':' hidden')+'>'+buttons+'</div></div>';
  }).join('');
 }
 function render(){
@@ -173,7 +181,7 @@ function render(){
   for(const d of departments){
    const entries=matching.filter(p=>productSectorKey(p)===d.code);
    if(!entries.length)continue;
-   out+='<section class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
+   out+='<section id="'+catalogSectorId(rayon,d.code)+'" class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
    out+='<div class="products-grid">'+sortProductsAlphabetically(entries).map(productMarkup).join('')+'</div>';
    out+='</section>';
   }
@@ -181,7 +189,13 @@ function render(){
  $('catalogue').innerHTML=out;
 }
 
-function selectFilter(rayon,group=''){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
+function selectFilter(rayon,group=''){
+ if(group&&UNIVERSES.includes(rayon))expandedChapters.add(rayon);
+ state.rayon=rayon;state.group=group;state.search='';
+ $('searchInput').value='';render();
+ const target=(group?document.getElementById(catalogSectorId(rayon,group))||document.querySelector('.result-meta'):$('toolSection'));
+ if(target)requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'start'}));
+}
 function toggleAdmin(){if(typeof bookCanEdit==='function'&&!bookCanEdit()){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',String(state.admin));$('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;render();toast(state.admin?'Modification des références activée':'Consultation activée');}
 
 function updateDatalist(rayon,code,preferred=''){
@@ -422,7 +436,19 @@ $('searchInput').addEventListener('input',e=>{state.search=e.target.value.trim()
 $('rayonSelect').addEventListener('change',e=>{state.rayon=e.target.value;state.group='';render();});
 $('clearFilters').addEventListener('click',()=>selectFilter('all'));
 document.querySelector('.nav-home').addEventListener('click',()=>selectFilter('all'));
-$('sidebarChapters').addEventListener('click',e=>{const b=e.target.closest('button[data-rayon]');if(b)selectFilter(b.dataset.rayon,b.dataset.group||'');});
+$('sidebarChapters').addEventListener('click',e=>{
+ const chapter=e.target.closest('button[data-chapter-rayon]');
+ if(chapter){
+  const rayon=chapter.dataset.chapterRayon;
+  if(expandedChapters.has(rayon))expandedChapters.delete(rayon);else expandedChapters.add(rayon);
+  buildSidebar();
+  const refreshed=Array.from($('sidebarChapters').querySelectorAll('[data-chapter-rayon]')).find(b=>b.dataset.chapterRayon===rayon);
+  if(refreshed)refreshed.focus({preventScroll:true});
+  return;
+ }
+ const sub=e.target.closest('button[data-rayon][data-group]');
+ if(sub)selectFilter(sub.dataset.rayon,sub.dataset.group||'');
+});
 $('editToggle').addEventListener('click',toggleAdmin);
 $('addBtn').addEventListener('click',()=>showForm());
 $('addTopBtn').addEventListener('click',()=>showForm());

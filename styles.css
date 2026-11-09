@@ -333,3 +333,37 @@
  .auth-card{max-height:calc(100dvh - 42px);overflow:auto;padding:23px}
 }
 @media print{.pwa-install-btn,.pwa-network-status,.pwa-install-help{display:none!important}}
+
+
+/* Navigation par rayons repliables et accès direct à chaque famille */
+.side-chapter .chapter-btn{
+ display:flex;align-items:center;gap:9px;min-height:46px;
+ border:1px solid transparent;cursor:pointer
+}
+.side-chapter .chapter-btn:hover,.side-chapter .chapter-btn:focus-visible{
+ background:#edf6ef;border-color:#c8decf
+}
+.side-chapter .chapter-btn .chap-name{line-height:1.3}
+.side-chapter .chapter-chevron{
+ flex:0 0 18px;text-align:center;display:inline-block;transition:transform .18s ease;
+ font-size:18px;font-weight:800;color:#145f45
+}
+.side-chapter .chapter-btn[aria-expanded="true"] .chapter-chevron{transform:rotate(180deg)}
+.side-chapter .group-list[hidden]{display:none!important}
+.side-chapter .group-list:not([hidden]){display:block}
+.side-chapter .official-group-btn{min-height:38px}
+.official-sector,.result-meta,#toolSection{scroll-margin-top:115px}
+@media(max-width:720px){
+ .sidebar{max-height:min(48dvh,400px);overflow-y:auto}
+ .side-chapter .chapter-btn{margin-top:6px;padding:10px 9px}
+ .side-chapter .group-list:not([hidden]){
+  display:grid;grid-template-columns:1fr;gap:4px;overflow:visible;
+  margin:0 0 0 12px;padding:6px 0 8px 9px
+ }
+ .side-chapter .group-btn{width:100%;max-width:none;text-align:left;white-space:normal;flex-shrink:1}
+ .side-chapter .group-btn .count{display:inline-flex}
+ .official-sector,.result-meta,#toolSection{scroll-margin-top:145px}
+}
+@media(prefers-reduced-motion:reduce){
+ .side-chapter .chapter-chevron{transition:none}
+}

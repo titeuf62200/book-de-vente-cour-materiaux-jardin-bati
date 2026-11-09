@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-pwa-mobile">
+  <link rel="stylesheet" href="styles.css?v=20261109-navigation-secure-v2">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -103,7 +103,7 @@
       <label>Confirmer le mot de passe<input id="newAuthPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required></label>
       <button id="authRecoveryBtn" type="submit" class="btn btn-primary">Enregistrer mon nouveau mot de passe</button>
     </form>
-    <p class="auth-help">Administrateurs : cedric.ledez@leroymerlin.fr et sylvie.ribery@leroymerlin.fr. Tous les autres profils : consultation et téléchargement des deux books uniquement. Chaque profil est créé directement dans le Book de vente et n'a aucun lien avec Organizeo. Les mots de passe sont gérés par l'authentification Supabase du Book.</p>
+    <p class="auth-help">Accès réservé aux adresses professionnelles @leroymerlin.fr. Coordinateurs : Cédric et Sylvie. Les autres collaborateurs peuvent consulter les produits, rechercher par EAN ou photo et générer les PDF, mais ne peuvent ni ajouter, ni modifier, ni supprimer de références. Authentification indépendante du Book.</p>
     <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -219,12 +219,12 @@
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
-  <script src="app.js?v=20261109-identification-croquis"></script>
+  <script src="app.js?v=20261109-navigation-secure-v2"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
   <script src="croquis-editor.js?v=20261109-atelier"></script>
   <script src="sketch-atelier.js?v=20261109"></script>
   <script src="product-finder.js?v=20261109"></script>
-  <script src="auth.js?v=20261106-nomenclatures"></script>
+  <script src="auth.js?v=20261109-domain-v2"></script>
   <script defer src="./pwa.js?v=20261109-1"></script>
 </body>
 </html>

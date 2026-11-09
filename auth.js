@@ -12,7 +12,7 @@ let bookAuthMode='signup';
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
-function bookCanEdit(){return !!bookClient&&bookRole==='admin';}
+function bookCanEdit(){return !!bookClient&&bookRole==='admin'&&BOOK_ADMIN_EMAILS.has(bookEmail);}
 function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,sous_rayon_code:p.sousRayonCode||null,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
 function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,sousRayonCode:p.sous_rayon_code,pageSource:p.page_source});}
 let bookRefreshTask=null;
@@ -58,6 +58,7 @@ async function bookGetRole(){
  if(userError)throw userError;
  if(!user)throw new Error('Session expirée');
  const email=String(user.email||'').trim().toLowerCase();
+ if(!email.endsWith('@leroymerlin.fr'))throw new Error('Accès réservé aux adresses professionnelles @leroymerlin.fr.');
  if(!user.email_confirmed_at)return {role:null,email};
  // Un profil non administrateur se déclare lecteur une fois l’adresse confirmée.
  // Cette fonction ne peut jamais créer un compte administrateur.
@@ -109,7 +110,7 @@ function bookSwitchAuthMode(mode){
  $('authLoginBtn').textContent=signup?'Créer mon profil':'Se connecter';
  $('authSwitchMode').textContent=signup?'Déjà inscrit ? Se connecter':'Créer un profil';
  $('authIntro').textContent=signup?
-   'Choisissez votre adresse e-mail et votre mot de passe personnel. Cédric et Sylvie disposent des droits administrateur ; les autres collaborateurs ont accès à la consultation.':
+   'Utilisez votre adresse professionnelle @leroymerlin.fr. Cédric et Sylvie sont coordinateurs ; tous les autres collaborateurs ont un accès en lecture seule, avec recherche EAN et photo.':
    'Connectez-vous avec votre adresse professionnelle et votre mot de passe.';
  uiAuthStatus(signup?'Un e-mail de confirmation peut être nécessaire pour activer votre profil.':'');
 }
@@ -136,6 +137,7 @@ async function bookLogin(ev){
  const email=$('authEmail').value.trim().toLowerCase();
  const password=$('authPassword').value;
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return uiAuthStatus('Adresse e-mail incorrecte.',true);
+ if(!email.endsWith('@leroymerlin.fr'))return uiAuthStatus('Utilisez une adresse professionnelle @leroymerlin.fr.',true);
  if(password.length<8)return uiAuthStatus('Le mot de passe doit contenir au moins 8 caractères.',true);
  if(bookAuthMode==='signup'){
   const check=$('authConfirmPassword').value;
@@ -164,6 +166,7 @@ async function bookForgotPassword(){
  if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
  const email=$('authEmail').value.trim().toLowerCase();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return uiAuthStatus('Indiquez votre adresse e-mail.',true);
+ if(!email.endsWith('@leroymerlin.fr'))return uiAuthStatus('Utilisez une adresse professionnelle @leroymerlin.fr.',true);
  const button=$('authForgotBtn');button.disabled=true;
  try{
   const {error}=await bookClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});

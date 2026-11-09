@@ -85,3 +85,12 @@ Le site est désormais une **Progressive Web App (PWA)** : icônes 180/192/512 p
 - **Mises à jour** : le service worker renouvelle les ressources statiques lors du chargement ; les utilisateurs peuvent refermer/réouvrir l’application pour récupérer la dernière version. Après publication GitHub Pages, une nouvelle installation peut être proposée par le navigateur.
 
 Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo locale, croquis, PDF) n’est pas modifié par cette mise en application.
+
+
+## Coordinateurs et navigation directe — novembre 2026
+
+- **Cédric** et **Sylvie** : seuls coordinateurs/administrateurs habilités à ajouter, modifier, archiver ou supprimer des références. Le serveur confirme leur identité par l'e-mail vérifié.
+- **Autres comptes `@leroymerlin.fr`** : accès lecture seule à toutes les références et aux deux PDF, recherche EAN et comparaison de photos depuis le téléphone. La reconnaissance photo locale propose des correspondances et ne garantit pas l'identification exacte.
+- **Adresses hors domaine** : aucun accès au catalogue, imposé par la fonction `book_catalog_role()` et par les règles RLS sur `book_catalog_products`. Une inscription Supabase extérieure peut être techniquement créée, mais ne confère aucun accès au Book.
+- Menu latéral : les rayons **001 Matériaux / Bâti** et **009 Jardin** démarrent repliés. Un clic sur le rayon affiche ou masque les sous-rayons ; cliquer sur un sous-rayon affiche uniquement ses références, puis amène directement à son entête, sans défilement manuel.
+- Les deux niveaux sont accessibles au clavier et sur l'application PWA. L'impression, les intercalaires et le catalogue partagé ne changent pas.
