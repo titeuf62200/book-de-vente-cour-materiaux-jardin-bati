@@ -4,9 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0a5c45">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Book de vente">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-identification-croquis">
+  <link rel="stylesheet" href="styles.css?v=20261109-pwa-mobile">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -100,6 +107,14 @@
     <p id="authMessage" role="status" aria-live="polite"></p></div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="pwaNetworkStatus" class="pwa-network-status" role="status" aria-live="polite" hidden>Connexion indisponible : les mises à jour du catalogue nécessitent Internet.</div>
+  <button type="button" id="pwaInstallBtn" class="pwa-install-btn" hidden aria-label="Installer le Book de vente sur ce téléphone">📲 Installer l’appli</button>
+  <dialog id="pwaInstallHelp" class="pwa-install-help" aria-labelledby="pwaHelpTitle">
+    <h2 id="pwaHelpTitle">Installer le Book de vente</h2>
+    <p id="pwaHelpText">Ouvrez le menu de votre navigateur et choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p>
+    <p class="pwa-help-note">La connexion Internet reste nécessaire pour accéder au catalogue partagé et aux comptes sécurisés.</p>
+    <form method="dialog"><button type="submit" class="btn btn-primary">Compris</button></form>
+  </dialog>
   <dialog id="editDialog" class="edit-dialog">
     <form id="productForm">
       <header class="dialog-head"><div><span>ESPACE CONTRIBUTEUR</span><h2 id="dialogTitle">Modifier la référence</h2></div><button type="button" id="dialogClose" class="dialog-close" aria-label="Fermer">×</button></header>
@@ -210,5 +225,6 @@
   <script src="sketch-atelier.js?v=20261109"></script>
   <script src="product-finder.js?v=20261109"></script>
   <script src="auth.js?v=20261106-nomenclatures"></script>
+  <script defer src="./pwa.js?v=20261109-1"></script>
 </body>
 </html>

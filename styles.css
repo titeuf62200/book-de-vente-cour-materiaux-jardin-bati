@@ -295,3 +295,41 @@
 @media(max-width:750px){.sketch-toolbar{grid-template-columns:1fr 1fr}.sketch-toolbar button{min-height:37px}}
 @media(max-width:540px){.finder-header,.finder-content{padding:14px}.finder-result-image{width:53px;height:53px;flex-basis:53px}.finder-result .btn{font-size:10px;padding:6px}}
 @media print{.finder-dialog,.sketch-drawing-tools{display:none!important}}
+
+
+/* Installation PWA mobile — boutons indépendants des droits administrateur. */
+.pwa-install-btn[hidden],.pwa-network-status[hidden]{display:none!important}
+.pwa-install-btn{
+  position:fixed;right:calc(14px + env(safe-area-inset-right,0px));
+  bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  z-index:960;min-height:46px;max-width:calc(100vw - 28px);
+  border:1px solid #a5d99a;border-radius:999px;
+  padding:11px 18px;background:#dff16d;color:#123d2d;
+  box-shadow:0 7px 25px #092d2780;font:800 13px system-ui,sans-serif;
+  cursor:pointer;
+}
+.pwa-install-btn:focus-visible{outline:3px solid #207d5c;outline-offset:2px}
+.pwa-install-btn:disabled{opacity:.65;cursor:wait}
+.pwa-network-status{
+  position:fixed;z-index:950;left:12px;right:12px;
+  bottom:calc(73px + env(safe-area-inset-bottom,0px));
+  padding:11px 13px;background:#ffefc5;color:#73500e;border:1px solid #dabb61;
+  border-radius:10px;box-shadow:0 5px 15px #0002;font-size:13px;text-align:center
+}
+.pwa-install-help{
+  border:0;border-radius:17px;padding:25px;width:min(420px,calc(100% - 24px));
+  max-height:85dvh;box-shadow:0 25px 70px #0006;color:#194735
+}
+.pwa-install-help::backdrop{background:#0a2924a8}
+.pwa-install-help h2{margin:0 0 12px;font-size:22px}
+.pwa-install-help p{font-size:15px;line-height:1.55}
+.pwa-install-help .pwa-help-note{font-size:12px;color:#60796b}
+.pwa-install-help form{display:flex;justify-content:flex-end;margin-top:16px}
+@media(max-width:720px){
+ .main{padding-bottom:calc(83px + env(safe-area-inset-bottom,0px))}
+ .topactions .btn,.tools .btn,.door-actions .btn{min-height:42px;white-space:normal}
+ .search-wrap input{font-size:16px}
+ .auth-gate{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+ .auth-card{max-height:calc(100dvh - 42px);overflow:auto;padding:23px}
+}
+@media print{.pwa-install-btn,.pwa-network-status,.pwa-install-help{display:none!important}}

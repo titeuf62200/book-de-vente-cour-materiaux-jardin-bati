@@ -71,3 +71,17 @@ Les 36 fiches sont reconstruites d'après les nuanciers A4 du 08/11/2026 dans `n
 Le bouton **Identifier un produit** recherche une référence du book par code EAN-13 ou référence LM. Une caméra peut scanner l'EAN automatiquement si le navigateur supporte l'API locale `BarcodeDetector`. Sinon, l'utilisateur peut saisir le code ou importer une photo. La recherche visuelle utilise des signatures de couleur/contours calculées dans le navigateur pour classer les photos existantes : **les suggestions ne sont pas une identification exacte**. Aucune photo à comparer n'est transmise à une API d'IA payante.
 
 Pour ajouter ou modifier un produit, l'atelier de croquis propose en plus des modèles précédents **32 silhouettes SVG** (brouette, outils, bois, clôtures, pavés, etc.), un mode **dessin libre** au doigt/souris, flèches, lignes, rectangles, gomme, annulation et cotations manuelles positionnables. La nouvelle image PNG du croquis est sauvegardée via le mécanisme de la fiche et utilisée dans les prochains books PDF. Les silhouettes sont indicatives et ne garantissent pas la géométrie exacte des produits.
+
+
+## Version PWA pour mobiles — 9 novembre 2026
+
+Le site est désormais une **Progressive Web App (PWA)** : icônes 180/192/512 px, `manifest.webmanifest`, service worker limité aux ressources statiques, page informative hors connexion, bouton mobile « Installer l’appli » et interface tactile améliorée. **Aucune application APK ni installation via un store n’est nécessaire.**
+
+- **Android / Chrome** : ouvrir https://titeuf62200.github.io/book-de-vente-cour-materiaux-jardin-bati/ et choisir « Installer l’appli » (ou menu ⋮ > Installer l’application / Ajouter à l’écran d’accueil).
+- **iPhone / Safari** : ouvrir l’adresse dans Safari, bouton Partager > Sur l’écran d’accueil > Ajouter.
+- **Usage** : l’icône « Book de vente » ouvre une fenêtre dédiée, sans barre d’adresse, sur le catalogue commun.
+- **Sécurité** : authentification et droits Supabase existants conservés. Les données produits, photos, sessions et réponses réseau de Supabase ne sont **pas mises en cache par le service worker**.
+- **Connexion requise** : l’installation est possible sur mobile ; la consultation authentifiée, la synchronisation, les photos et les PDF issus du catalogue restent dépendants du réseau. La page hors connexion explique cette limite.
+- **Mises à jour** : le service worker renouvelle les ressources statiques lors du chargement ; les utilisateurs peuvent refermer/réouvrir l’application pour récupérer la dernière version. Après publication GitHub Pages, une nouvelle installation peut être proposée par le navigateur.
+
+Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo locale, croquis, PDF) n’est pas modifié par cette mise en application.
