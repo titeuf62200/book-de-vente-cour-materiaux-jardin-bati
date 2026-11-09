@@ -240,3 +240,58 @@
  .nuancier-print-length{position:absolute;left:114mm;top:270mm;font-size:8pt;color:#62796a}
  .nuancier-paves .nuancier-print-length{left:100mm;top:274mm}
 }
+
+
+/* Identification EAN et recherche photo dans le navigateur, sans API payante */
+.btn-identify{background:#e3f0e7;border:1px solid #a3c8b6;color:#165d45;white-space:nowrap}
+.btn-identify:hover{background:#d3e8d9}
+.finder-dialog{border:0;border-radius:16px;padding:0;width:min(760px,96vw);max-height:90vh;overflow:auto;box-shadow:0 25px 80px #0018}
+.finder-dialog::backdrop{background:#142d25a8}
+.finder-header{background:#f0f8f2;border-bottom:1px solid #d9e9df;display:flex;justify-content:space-between;gap:15px;padding:23px}
+.finder-header span{font-size:10px;letter-spacing:.12em;font-weight:900;color:#267e59}
+.finder-header h2{margin:5px 0;font-size:25px;color:#195139}
+.finder-header p{margin:0;font-size:12px;color:#667d6e}
+.finder-content{display:grid;gap:15px;padding:17px 23px 28px}
+.finder-method{border:1px solid #dfebe1;border-radius:11px;padding:13px;display:grid;gap:10px}
+.finder-method h3{margin:0;font-size:14px}
+.finder-method small{font-size:11px;color:#6b7c70}
+.finder-inline{display:flex;gap:8px}
+.finder-inline input{min-width:0;flex:1;border:1px solid #bcd3c5;border-radius:8px;padding:9px}
+.finder-camera{display:grid;gap:9px}
+.finder-camera[hidden]{display:none!important}
+.finder-camera video{width:100%;max-height:320px;object-fit:cover;background:#172e25;border-radius:9px}
+.finder-file{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12px;font-weight:800}
+.finder-file input{font-size:12px;max-width:100%}
+.finder-status{margin:0;background:#eef8f0;border-left:3px solid #3f9e68;padding:12px;border-radius:7px;font-size:12px}
+.finder-status.finder-error{background:#fff0ec;border-color:#c45949;color:#a2322b}
+.finder-results{display:grid;gap:8px}
+.finder-results h3{margin:7px 0 1px;font-size:16px}
+.finder-warning{background:#fff6de;color:#806223;margin:0;padding:9px;font-size:12px;border-radius:8px}
+.finder-result{display:flex;gap:11px;align-items:center;border:1px solid #dfe8e1;border-radius:10px;padding:9px}
+.finder-result-image{width:68px;height:68px;flex:0 0 68px;background:#f2f5f2;border-radius:7px;display:grid;place-items:center;font-size:10px;overflow:hidden}
+.finder-result-image img{width:100%;height:100%;object-fit:contain}
+.finder-result-meta{flex:1;min-width:0;display:grid;gap:3px}
+.finder-result-meta strong{font-size:12px;line-height:1.3}
+.finder-result-meta span{font-size:11px;font-weight:800;color:#177854}
+.finder-result-meta small{font-size:10px;color:#658170}
+.finder-result .btn{font-size:11px;padding:7px 9px}
+
+/* Dessin et silhouettes : calques synchronisés, positionnement tactile précis */
+.sketch-drawing-tools{background:#edf6f0;border:1px solid #cddfd4;border-radius:11px;padding:13px;display:grid;gap:9px}
+.sketch-drawing-tools>strong{font-size:13px;color:#12543a}
+.sketch-drawing-tools>small{font-size:11px;color:#5a7b69}
+.sketch-toolbar{display:grid;grid-template-columns:1.3fr 80px 105px 1.2fr;gap:9px;align-items:end}
+.sketch-toolbar label{font-size:11px;min-width:0}
+.sketch-toolbar select,.sketch-toolbar input{height:39px;padding:7px}
+.sketch-toolbar input[type=color]{padding:3px}
+.sketch-toolbar button{white-space:normal;padding:8px;font-size:11px}
+.sketch-canvas-stage{position:relative;aspect-ratio:4/3;width:100%;max-width:960px;overflow:hidden;background:#fff;border-radius:9px}
+.sketch-preview .sketch-canvas-stage canvas{position:absolute;inset:0;display:block;width:100%!important;height:100%!important;max-height:none!important;object-fit:fill!important;border:0!important;border-radius:0!important}
+.sketch-preview #sketchDrawCanvas{background:transparent!important;touch-action:none;cursor:crosshair}
+.sketch-clipart-gallery{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));max-height:290px!important;overflow:auto}
+.sketch-clipart-gallery .book-sketch-tile{min-height:104px}
+.sketch-clipart-gallery .book-sketch-tile svg{height:73px}
+.sketch-library-empty{font-size:11px;color:#6a7b70}
+@media(max-width:750px){.sketch-toolbar{grid-template-columns:1fr 1fr}.sketch-toolbar button{min-height:37px}}
+@media(max-width:540px){.finder-header,.finder-content{padding:14px}.finder-result-image{width:53px;height:53px;flex-basis:53px}.finder-result .btn{font-size:10px;padding:6px}}
+@media print{.finder-dialog,.sketch-drawing-tools{display:none!important}}
