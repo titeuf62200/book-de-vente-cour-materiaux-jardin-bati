@@ -59,3 +59,9 @@ Le Book de vente utilise son propre projet Supabase `zxxnvmbcambdnaeeqcyq` (dist
 - Tous les sous-rayons (y compris sans produits) sont visibles dans la navigation et dans le formulaire de création.
 - Les PDF sont reconstitués avec un sommaire et des intercalaires numérotés colorés, uniquement pour les sous-rayons contenant des références actives. Les nouveaux articles se placent automatiquement au bon endroit et les pages sont renumérotées.
 - Les anciennes références sans classement officiel apparaissent sous « À classer » pour éviter un rangement arbitraire : elles sont visibles et imprimables et peuvent être reclassées en mode administrateur.
+
+## Nuanciers de contrôle dimensionnel — novembre 2026
+
+Deux boutons discrets dans le menu ouvrent les nuanciers **Bâti** (11 coupes de charpente) et **Jardin** (7 coupes de terrasses/lambourdes, 8 pavés et 10 bordures).
+Les 36 fiches sont reconstruites d'après les nuanciers A4 du 08/11/2026 dans `nuanciers-data.js`. Le site propose un aperçu avec références, puis une impression A4 par profil (1:1, barrette témoin 50 mm) ou l'enregistrement en PDF via l'impression du navigateur.
+**Attention :** il s'agit de sections/gabarits nominaux. Rainures, chanfreins et reliefs ne sont pas représentés précisément. Éviter toute mise à l'échelle ; imprimer à 100 % sans ajustement. La présente version affiche les photos et EAN uniquement si la référence existe dans le catalogue actif. Les fichiers PDF originaux ne sont pas déposés dans GitHub.
