@@ -10,6 +10,7 @@ Site public : https://titeuf62200.github.io/book-de-vente-cour-materiaux-jardin-
 - 28 sous-rayons : 11 Bâti / Matériaux, 17 Jardin.
 - Photos produits, croquis cotés et codes-barres EAN-13 reconstruits à partir de chaque EAN.
 - Recherche par référence, EAN et désignation, navigation par sous-rayon.
+- À l'intérieur de chaque sous-rayon officiel, produits triés alphabétiquement selon leur désignation et leur nom principal (ex. Liteau : L, Madrier : M), y compris pour les PDF générés et les exports Excel.
 - Deux éditions A4 distinctes : **PDF Bâti** et **PDF Jardin**.
 - Sommaire de chaque book avec repères couleur et page de début de chaque sous-rayon.
 - Onglet vertical coloré sur **toute la hauteur** du bord droit de chaque page de produits.
