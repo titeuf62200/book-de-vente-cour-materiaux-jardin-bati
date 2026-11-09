@@ -29,10 +29,11 @@ function gallery(){
   +'<span>'+escape(c.label)+'</span></button>').join('')
  ||'<p class="sketch-library-empty">Aucun modèle trouvé. Vous pouvez toujours dessiner librement ou importer votre propre dessin.</p>';
 }
+function isClipart(){return field('sketchMode')==='design'&&field('sketchDesignType')==='clipart';}
 function visibility(){
  const mode=field('sketchMode');
- Q('sketchClipartField').hidden=mode!=='clipart';
- Q('sketchDimensionFields').hidden=mode==='none'?true:false;
+ Q('sketchClipartField').hidden=!isClipart();
+ overlay.style.pointerEvents=mode==='draw'?'auto':'none';
 }
 function loadClipart(){
  const item=library.find(x=>x.id===chosen);
@@ -74,7 +75,7 @@ function drawTemplate(){
  ctx.fillStyle='#244d3d';ctx.font='bold 23px Arial';ctx.textAlign='left';
  ctx.fillText('CROQUIS COTÉ · LEROY MERLIN CALAIS',26,49);
  ctx.fillStyle='#657c70';ctx.textAlign='center';ctx.font='19px Arial';
- ctx.fillText(field('sketchMode')==='clipart'?'SILHOUETTE PRODUIT':'DESSIN LIBRE · VUE PRINCIPALE',480,120);
+ ctx.fillText(isClipart()?'SILHOUETTE PRODUIT':'DESSIN LIBRE · VUE PRINCIPALE',480,120);
  ctx.strokeStyle='#176a51';ctx.lineWidth=2.5;
  const unit=field('dimensionUnit')||'cm';
  const val=s=>/\b(?:mm|cm|m)$/i.test(s)?s:s+' '+unit;
@@ -124,9 +125,9 @@ function overlayOperations(){
 async function refresh(){
  const generation=++paintGeneration,mode=field('sketchMode');
  visibility();
- if(mode==='draw'||mode==='clipart'){
+ if(mode==='draw'||isClipart()){
   drawTemplate();
-  if(mode==='clipart'){
+  if(isClipart()){
    try{
     const icon=await loadClipart();
     if(generation!==paintGeneration)return;
@@ -151,16 +152,15 @@ async function refresh(){
   }
  }
  if(generation!==paintGeneration)return;
- overlayOperations();
+ if(mode==='draw')overlayOperations();
 }
 function coordinates(e){
  const rect=overlay.getBoundingClientRect();
  return {x:Math.max(0,Math.min(BW,(e.clientX-rect.left)*BW/rect.width)),y:Math.max(0,Math.min(BH,(e.clientY-rect.top)*BH/rect.height))};
 }
 function start(e){
- if(pointer!==null||(e.pointerType==='mouse'&&e.button!==0))return;
+ if(field('sketchMode')!=='draw'||pointer!==null||(e.pointerType==='mouse'&&e.button!==0))return;
  e.preventDefault();
- if(field('sketchMode')==='none'){Q('sketchMode').value='draw';Q('sketchMode').dispatchEvent(new Event('change',{bubbles:true}));}
  pointer=e.pointerId;
  draft={tool:field('sketchDrawTool')||'pen',color:field('sketchDrawColor')||'#17463b',
   width:Number(field('sketchDrawWidth'))||5,label:field('sketchMeasureText')||'Cote',points:[coordinates(e)]};
@@ -193,7 +193,7 @@ window.BookSketchEditor.open=function(item){oldOpen(item);reset();};
 window.BookSketchEditor.refreshGroup=function(){oldRefresh();chosen=defaultClipart();gallery();void refresh();};
 window.BookSketchEditor.resolveCroquis=async function(){
  const mode=field('sketchMode');
- if(mode==='clipart'||mode==='draw'){
+ if(isClipart()||mode==='draw'){
   await refresh();
   return overlay.toDataURL('image/png');
  }
@@ -208,11 +208,13 @@ window.BookSketchEditor.resolveCroquis=async function(){
  return combined.toDataURL('image/png');
 };
 Q('sketchMode').addEventListener('change',()=>void refresh());
+Q('sketchDesignType').addEventListener('change',()=>void refresh());
 Q('sketchClipartFilter').addEventListener('input',gallery);
 Q('sketchClipartGallery').addEventListener('click',event=>{
  const btn=event.target.closest('[data-clipart]');if(!btn||!library.some(x=>x.id===btn.dataset.clipart))return;
  chosen=btn.dataset.clipart;gallery();
- Q('sketchMode').value='clipart';
+ Q('sketchDesignType').value='clipart';
+ Q('sketchMode').value='design';
  Q('sketchMode').dispatchEvent(new Event('change',{bubbles:true}));
  void refresh();
 });
