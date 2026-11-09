@@ -51,6 +51,54 @@ let toastTimer = null;
 
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function normalize(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/lit[eé]aux|liteau/g,'lito');}
+
+// Tri unique pour l'affichage, les exports Excel et les PDF : sous-rayon officiel,
+// puis nom principal du produit (jamais par numéro de référence).
+const PRODUCT_SORT_COLLATOR = new Intl.Collator('fr', {sensitivity:'base',numeric:true,ignorePunctuation:true});
+const PRODUCT_SORT_TERMS = [
+ ['liteau',/\b(?:liteau|liteaux|lito|litos)\b/],
+ ['madrier',/\bmadriers?\b/],
+ ['bastaing',/\bbastaings?\b/],
+ ['chevron',/\bchevrons?\b/],
+ ['lambourde',/\blambourdes?\b/],
+ ['lame',/\blames?\b/],
+ ['latte',/\blattes?\b/],
+ ['poutre',/\bpoutres?\b/],
+ ['panneau',/\bpanneau(?:x)?\b/],
+ ['poteau',/\bpoteau(?:x)?\b/],
+ ['portillon',/\bportillons?\b/],
+ ['bordure',/\bbordures?\b/],
+ ['dalle',/\bdalles?\b/],
+ ['pave',/\bpaves?\b/],
+ ['gravier',/\bgraviers?\b/],
+ ['galet',/\bgalets?\b/],
+ ['gazon',/\bgazons?\b/],
+ ['plot',/\bplots?\b/],
+ ['traverse',/\btraverses?\b/],
+ ['chapeau',/\bchapeaux?\b/],
+ ['couvre-mur',/\bcouvre[\s-]?murs?\b/],
+ ['osb',/\bosb\b/]
+];
+const PRODUCT_SORT_PREFIXES = new Set('bois brut brute charpente construction pin sapin epicea traite traitee traites traitees autoclave classe rabote rabotee rabotes rabotees interieur exterieur de du des d le la les un une en pour avec sans jardin cloture terrasse materiaux lot lots pack paquet jeu sachet piece pieces section longueur largeur epaisseur dimension profil produit'.split(' '));
+function productAlphabeticKey(p){
+ const full=String(p.designation||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ let primary=null;
+ for(const [name,pattern] of PRODUCT_SORT_TERMS){
+  const match=pattern.exec(full);
+  if(!match)continue;
+  const prefix=full.slice(0,match.index).match(/[a-z]+/g)||[];
+  if(prefix.every(word=>PRODUCT_SORT_PREFIXES.has(word))&&(!primary||match.index<primary.index))primary={name,index:match.index};
+ }
+ if(primary)return primary.name+' '+full;
+ return full.replace(/^(?:(?:lot|pack|jeu|sachet|boite)\s+(?:de|des|d)?\s*|\d+\s+|(?:un|une|le|la|les|de|du|des)\s+)+/g,'').trim()||full;
+}
+function compareProductsAlphabetically(a,b){
+ return PRODUCT_SORT_COLLATOR.compare(productAlphabeticKey(a),productAlphabeticKey(b))
+  ||PRODUCT_SORT_COLLATOR.compare(a.designation,b.designation)
+  ||PRODUCT_SORT_COLLATOR.compare(a.reference,b.reference);
+}
+function sortProductsAlphabetically(items){return items.slice().sort(compareProductsAlphabetically);}
+
 function safeImage(s){s=String(s||'');return /^(?:assets\/[a-z0-9_-]+_(?:photo|croquis|ean)\.(?:webp|png|jpe?g)|data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+)$/i.test(s)?s:'';}
 function cleanItem(p){return {reference:String(p.reference??'').trim(),designation:String(p.designation??'').trim(),ean:String(p.ean??'').trim(),rayon:UNIVERSES.includes(p.rayon)?p.rayon:'Jardin',sousRayon:String(p.sousRayon??'Divers').trim(),sousRayonCode:officialSector(p.rayon,p.sousRayonCode)?p.sousRayonCode:inferOfficialCode(p.rayon,p.sousRayon),photo:safeImage(p.photo),croquis:safeImage(p.croquis),barcode:safeImage(p.barcode),notes:String(p.notes??'').trim(),pageSource:Number(p.pageSource)||null,archived:!!p.archived};}
 function loadProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)return INITIAL.map(cleanItem);try{const saved=JSON.parse(localStorage.getItem(STORAGE));if(Array.isArray(saved)&&saved.length)return saved.map(cleanItem);}catch(e){console.warn('Sauvegarde locale indisponible',e)}return INITIAL.map(cleanItem);}
@@ -80,7 +128,7 @@ function getShown(){
 
 function productMarkup(p){let isArchived=p.archived?' archived':'';let barcode=barcodeDataURL(p.ean);
 return `<article class="product-card${isArchived}">
- <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4></div>
+ <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4><div class="catalogue-product-family">${escapeHtml(p.sousRayon)}</div></div>
  <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain">${imageMarkup(p.photo,p.designation)}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain">${imageMarkup(p.croquis,'Croquis coté '+p.designation)}</div></figure></div>
  <figure class="barcode-box"><figcaption>EAN-13${!p.ean?' non renseigné':''}</figcaption>${barcode?`<img src="${escapeHtml(barcode)}" loading="lazy" alt="Code-barres ${escapeHtml(p.ean)}">`:`<span class="ean-numeric">EAN à saisir</span>`}</figure>
  ${p.notes?`<div class="product-notes">⚠ ${escapeHtml(p.notes)}</div>`:''}
@@ -114,7 +162,7 @@ function render(){
  $('resultCount').textContent=shown.length+' produit'+(shown.length>1?'s':'');
  const selectedSector=state.rayon==='all'?null:sectorList(state.rayon,products,true).find(d=>d.code===state.group);
  $('resultTitle').textContent=selectedSector?(selectedSector.code==='UNASSIGNED'?'?':selectedSector.code)+' — '+selectedSector.name:(state.rayon==='all'?'Catalogue complet':state.rayon);
- $('resultSub').textContent=state.search?'Résultat de recherche : « '+state.search+' »':(selectedSector?state.rayon+' · Sous-rayon officiel':'Parcourir les sous-rayons numérotés');
+ $('resultSub').textContent=(state.search?'Résultat de recherche : « '+state.search+' »':(selectedSector?state.rayon+' · Sous-rayon officiel':'Parcourir les sous-rayons numérotés'))+' · Produits classés de A à Z';
  $('emptyState').hidden=shown.length>0;
  let out='';
  for(const rayon of UNIVERSES){
@@ -126,18 +174,14 @@ function render(){
    const entries=matching.filter(p=>productSectorKey(p)===d.code);
    if(!entries.length)continue;
    out+='<section class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
-   const families=[...new Set(entries.map(p=>p.sousRayon))].sort((a,b)=>a.localeCompare(b,'fr'));
-   for(const family of families){
-    const subset=entries.filter(p=>p.sousRayon===family);
-    out+='<div class="official-family"><div class="official-family-heading">'+escapeHtml(family)+' <small>· '+subset.length+' réf.</small></div><div class="products-grid">'+subset.map(productMarkup).join('')+'</div></div>';
-   }
+   out+='<div class="products-grid">'+sortProductsAlphabetically(entries).map(productMarkup).join('')+'</div>';
    out+='</section>';
   }
  }
  $('catalogue').innerHTML=out;
 }
 
-function selectFilter(rayon,group=''){state.rayon=rayon;state.group=deptCode;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
+function selectFilter(rayon,group=''){state.rayon=rayon;state.group=group;state.search='';$('searchInput').value='';render();$('toolSection').scrollIntoView({behavior:'smooth',block:'start'});}
 function toggleAdmin(){if(typeof bookCanEdit==='function'&&!bookCanEdit()){toast('Modification réservée aux administrateurs');return;}state.admin=!state.admin;$('app').classList.toggle('admin-on',state.admin);$('editToggle').setAttribute('aria-pressed',String(state.admin));$('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;render();toast(state.admin?'Modification des références activée':'Consultation activée');}
 
 function updateDatalist(rayon,code,preferred=''){
@@ -225,7 +269,7 @@ function exportXlsx(){
   'xl/_rels/workbook.xml.rels':base+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>'
  };
  for(let i=0;i<UNIVERSES.length;i++){
- const rayon=UNIVERSES[i];const sorted=products.filter(p=>p.rayon===rayon&&!p.archived).sort((a,b)=>productSectorKey(a).localeCompare(productSectorKey(b))||a.sousRayon.localeCompare(b.sousRayon,'fr'));
+ const rayon=UNIVERSES[i];const sorted=products.filter(p=>p.rayon===rayon&&!p.archived).sort((a,b)=>PRODUCT_SORT_COLLATOR.compare(productSectorKey(a),productSectorKey(b))||compareProductsAlphabetically(a,b));
  const rows=[headers,...sorted.map(p=>[p.rayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'À CLASSER',p.sousRayon,p.reference,p.designation,p.ean,p.notes])];
  const rowxml=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${col(c)}${r+1}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`).join('')}</row>`).join('');
  files['xl/worksheets/sheet'+(i+1)+'.xml']=base+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:H'+rows.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="42" customWidth="1"/><col min="3" max="3" width="18" customWidth="1"/><col min="4" max="4" width="65" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="65" customWidth="1"/><col min="7" max="7" width="22" customWidth="1"/><col min="8" max="8" width="40" customWidth="1"/></cols><sheetData>'+rowxml+'</sheetData><autoFilter ref="A1:H'+rows.length+'"/></worksheet>';
@@ -253,7 +297,7 @@ function makePrintHTML(rayon){
  const sectors=sectorList(rayon,active,false);
  const pages=[{kind:'cover'},{kind:'intro'}],toc={};
  for(const d of sectors){
-  const entries=active.filter(p=>productSectorKey(p)===d.code).sort((a,b)=>a.sousRayon.localeCompare(b.sousRayon,'fr')||a.reference.localeCompare(b.reference,'fr'));
+  const entries=sortProductsAlphabetically(active.filter(p=>productSectorKey(p)===d.code));
   toc[d.code]=pages.length+1;
   for(let i=0;i<entries.length;i+=3)pages.push({kind:'products',sector:d,continued:i>0,entries:entries.slice(i,i+3)});
  }
