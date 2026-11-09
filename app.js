@@ -117,6 +117,14 @@ function barcodeDataURL(ean){if(!validEan(ean))return '';
 }
 function imageMarkup(src,description){return src?`<img src="${escapeHtml(src)}" alt="${escapeHtml(description)}" loading="lazy" decoding="async">`:`<div class="media-empty" role="img" aria-label="Illustration indisponible">Photo non disponible</div>`;}
 
+function imageZoomMarkup(p,kind){
+ const src=safeImage(p[kind]);
+ if(!src)return '<div class="media-empty" role="img" aria-label="'+(kind==='croquis'?'Croquis':'Photo')+' indisponible">'+(kind==='croquis'?'Croquis non disponible':'Photo non disponible')+'</div>';
+ const title=kind==='croquis'?'croquis coté':'photo du produit';
+ return '<button type="button" class="media-zoom-trigger" data-view-image="'+escapeHtml(p.reference)+'" data-view-kind="'+kind+'" title="Agrandir le '+title+'" aria-label="Agrandir le '+title+' de la référence '+escapeHtml(p.reference)+'"><img src="'+escapeHtml(src)+'" loading="lazy" decoding="async" alt="'+escapeHtml(title+' '+p.designation)+'"><span class="media-zoom-label" aria-hidden="true">⤢ Agrandir</span></button>';
+}
+
+
 function getShown(){
  return products.filter(p=>
   (!p.archived||state.showArchived)
@@ -129,7 +137,7 @@ function getShown(){
 function productMarkup(p){let isArchived=p.archived?' archived':'';let barcode=barcodeDataURL(p.ean);
 return `<article class="product-card${isArchived}">
  <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4><div class="catalogue-product-family">${escapeHtml(p.sousRayon)}</div></div>
- <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain">${imageMarkup(p.photo,p.designation)}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain">${imageMarkup(p.croquis,'Croquis coté '+p.designation)}</div></figure></div>
+ <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain">${imageZoomMarkup(p,'photo')}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain">${imageZoomMarkup(p,'croquis')}</div></figure></div>
  <figure class="barcode-box"><figcaption>EAN-13${!p.ean?' non renseigné':''}</figcaption>${barcode?`<img src="${escapeHtml(barcode)}" loading="lazy" alt="Code-barres ${escapeHtml(p.ean)}">`:`<span class="ean-numeric">EAN à saisir</span>`}</figure>
  ${p.notes?`<div class="product-notes">⚠ ${escapeHtml(p.notes)}</div>`:''}
  ${state.admin?`<div class="admin-actions"><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}">✎ Modifier</button><button class="btn ${p.archived?'btn-primary':'btn-danger'}" data-archive="${escapeHtml(p.reference)}">${p.archived?'↺ Restaurer':'🗑 Supprimer'}</button></div>`:''}</article>`;
@@ -454,7 +462,148 @@ $('addBtn').addEventListener('click',()=>showForm());
 $('addTopBtn').addEventListener('click',()=>showForm());
 $('inputPhoto').addEventListener('change',()=>{const file=$('inputPhoto').files[0],preview=$('inputPhotoPreview');if(preview.dataset.url){URL.revokeObjectURL(preview.dataset.url);delete preview.dataset.url;}if(file&&file.type.startsWith('image/')){const url=URL.createObjectURL(file);preview.dataset.url=url;preview.src=url;preview.hidden=false;}else{preview.removeAttribute('src');preview.hidden=true;}});
 $('catalogue').before($('adminPanel'));
-$('catalogue').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
+
+/* Consultation du Book : agrandissement tactile des photos et croquis, sans modification de données. */
+const zoomView={scale:1,x:0,y:0,pointers:new Map(),lastTap:0,hadPinch:false};
+function zoomDimensions(p){
+ const description=String(p.designation||''),notes=String(p.notes||'');
+ const source=(description+' · '+notes).replace(/\s+/g,' ');
+ const patterns=[
+  /\b\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?(?:\s*[x×]\s*\d+(?:[.,]\d+)?)?\s*(?:mm|cm|ml|m)?\b/gi,
+  /(?:\b(?:ép(?:aisseur)?|ep(?:aisseur)?|diam(?:ètre|etre)?|longueur|largeur|hauteur|prof(?:ondeur)?|Ø)\s*[:.]?\s*)\d+(?:[.,]\d+)?\s*(?:mm|cm|m)?\b/gi,
+  /\b(?:\d+(?:[.,]\d+)?\s*(?:mm|cm|m|ml|kg|litres?|l|m³|m3))\b/gi
+ ];
+ const found=[],seen=new Set();
+ for(const pattern of patterns){
+  for(const match of source.matchAll(pattern)){
+   const label=match[0].trim().replace(/\s+/g,' ');
+   const key=label.toLowerCase().replace(/\s+/g,'');
+   if(label.length>2&&!seen.has(key)){seen.add(key);found.push(label);}
+  }
+ }
+ return found.slice(0,12);
+}
+function zoomConstrain(){
+ const stage=$('imageZoomStage'),img=$('imageZoomImg'),scale=zoomView.scale;
+ const w=img.clientWidth,h=img.clientHeight;
+ const maxX=Math.max(0,(w*scale-stage.clientWidth)/2);
+ const maxY=Math.max(0,(h*scale-stage.clientHeight)/2);
+ zoomView.x=Math.max(-maxX,Math.min(maxX,zoomView.x));
+ zoomView.y=Math.max(-maxY,Math.min(maxY,zoomView.y));
+}
+function zoomApply(){
+ zoomConstrain();
+ $('imageZoomImg').style.transform='translate3d('+zoomView.x+'px,'+zoomView.y+'px,0) scale('+zoomView.scale+')';
+ $('imageZoomPercent').textContent=Math.round(zoomView.scale*100)+' %';
+ $('imageZoomOut').disabled=zoomView.scale<=1.005;
+ $('imageZoomIn').disabled=zoomView.scale>=5.995;
+}
+function zoomAt(newScale,clientX,clientY){
+ const stage=$('imageZoomStage'),r=stage.getBoundingClientRect(),old=zoomView.scale;
+ const value=Math.min(6,Math.max(1,newScale));
+ const anchorX=Number.isFinite(clientX)?clientX-(r.left+r.width/2):0;
+ const anchorY=Number.isFinite(clientY)?clientY-(r.top+r.height/2):0;
+ zoomView.x=anchorX-(anchorX-zoomView.x)*value/old;
+ zoomView.y=anchorY-(anchorY-zoomView.y)*value/old;
+ zoomView.scale=value;
+ if(value===1){zoomView.x=0;zoomView.y=0;}
+ zoomApply();
+}
+function zoomReset(){zoomView.scale=1;zoomView.x=0;zoomView.y=0;zoomView.pointers.clear();zoomView.lastTap=0;zoomView.hadPinch=false;zoomApply();}
+function showZoomImage(ref,kind){
+ const p=products.find(x=>x.reference===ref),src=p&&safeImage(p[kind]);
+ if(!p||!src)return;
+ const dialog=$('imageZoomDialog'),img=$('imageZoomImg'),croquis=kind==='croquis';
+ $('imageZoomKind').textContent=croquis?'CROQUIS COTÉ':'PHOTO DU PRODUIT';
+ $('imageZoomTitle').textContent=p.designation;
+ $('imageZoomRef').textContent='Réf. '+p.reference+' · '+p.rayon+' · '+(officialSector(p.rayon,productSectorCode(p))?.name||p.sousRayon);
+ $('imageZoomEan').textContent=p.ean?'EAN-13 : '+p.ean:'';
+ $('imageZoomEan').hidden=!p.ean;
+ $('imageZoomNotes').textContent=p.notes?'Notes : '+p.notes:'';
+ $('imageZoomNotes').hidden=!p.notes;
+ const specs=zoomDimensions(p),specArea=$('imageZoomSpecs');specArea.replaceChildren();
+ if(specs.length){
+  for(const spec of specs){const el=document.createElement('span');el.className='image-zoom-spec';el.textContent=spec;specArea.append(el);}
+  $('imageZoomSpecHeading').textContent='Cotes et formats indiqués';
+  $('imageZoomSpecHint').textContent='Données reprises du libellé ou des notes. Vérifiez les cotes sur le produit réel.';
+ }else{
+  $('imageZoomSpecHeading').textContent='Dimensions';
+  $('imageZoomSpecHint').textContent='Aucune dimension chiffrée identifiable dans la fiche. Le croquis peut contenir des annotations supplémentaires.';
+ }
+ img.alt=(croquis?'Croquis agrandi : ':'Photo agrandie : ')+p.designation;
+ img.src=src;
+ dialog.showModal();
+ zoomReset();
+}
+const imageZoomDialog=$('imageZoomDialog');
+imageZoomDialog.addEventListener('close',()=>{
+ $('imageZoomImg').removeAttribute('src');
+ zoomView.pointers.clear();
+});
+$('imageZoomClose').addEventListener('click',()=>imageZoomDialog.close());
+imageZoomDialog.addEventListener('click',e=>{if(e.target===imageZoomDialog)imageZoomDialog.close();});
+$('imageZoomIn').addEventListener('click',()=>zoomAt(zoomView.scale*1.5));
+$('imageZoomOut').addEventListener('click',()=>zoomAt(zoomView.scale/1.5));
+$('imageZoomReset').addEventListener('click',zoomReset);
+$('imageZoomImg').addEventListener('load',()=>{if(imageZoomDialog.open)zoomApply();});
+imageZoomDialog.addEventListener('keydown',e=>{
+ if(e.key==='+'||e.key==='='){e.preventDefault();zoomAt(zoomView.scale*1.5);}
+ else if(e.key==='-'){e.preventDefault();zoomAt(zoomView.scale/1.5);}
+ else if(e.key==='0'){e.preventDefault();zoomReset();}
+});
+const zoomStage=$('imageZoomStage');
+zoomStage.addEventListener('wheel',e=>{
+ if(!imageZoomDialog.open)return;
+ e.preventDefault();zoomAt(zoomView.scale*(e.deltaY<0?1.22:1/1.22),e.clientX,e.clientY);
+},{passive:false});
+function zoomPointerMid(){
+ const pts=[...zoomView.pointers.values()];
+ return {x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2,d:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y)};
+}
+let previousPinch=null;
+zoomStage.addEventListener('pointerdown',e=>{
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ e.preventDefault();
+ zoomView.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
+ try{zoomStage.setPointerCapture(e.pointerId);}catch(_){}
+ if(zoomView.pointers.size===2){zoomView.hadPinch=true;previousPinch=zoomPointerMid();}
+});
+zoomStage.addEventListener('pointermove',e=>{
+ const old=zoomView.pointers.get(e.pointerId);if(!old)return;
+ const dx=e.clientX-old.x,dy=e.clientY-old.y;
+ zoomView.pointers.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});
+ if(zoomView.pointers.size===2){
+  const now=zoomPointerMid();
+  if(previousPinch&&previousPinch.d>5){
+   zoomAt(zoomView.scale*now.d/previousPinch.d,previousPinch.x,previousPinch.y);
+   zoomView.x+=now.x-previousPinch.x;zoomView.y+=now.y-previousPinch.y;zoomApply();
+  }
+  previousPinch=now;
+ }else if(zoomView.pointers.size===1&&zoomView.scale>1){
+  zoomView.x+=dx;zoomView.y+=dy;zoomApply();
+ }
+});
+function zoomPointerEnd(e){
+ const p=zoomView.pointers.get(e.pointerId);
+ if(!p)return;
+ zoomView.pointers.delete(e.pointerId);
+ if(zoomView.pointers.size<2)previousPinch=null;
+ if(zoomView.pointers.size===0){
+  if(e.type==='pointerup'&&e.pointerType==='touch'&&!zoomView.hadPinch&&Math.hypot(e.clientX-p.startX,e.clientY-p.startY)<13){
+   const now=Date.now();
+   if(now-zoomView.lastTap<330){zoomAt(zoomView.scale>1.3?1:2.4,e.clientX,e.clientY);zoomView.lastTap=0;}
+   else zoomView.lastTap=now;
+  }
+  zoomView.hadPinch=false;
+ }
+}
+zoomStage.addEventListener('pointerup',zoomPointerEnd);
+zoomStage.addEventListener('pointercancel',zoomPointerEnd);
+zoomStage.addEventListener('lostpointercapture',zoomPointerEnd);
+zoomStage.addEventListener('dblclick',e=>zoomAt(zoomView.scale>1.3?1:2.4,e.clientX,e.clientY));
+window.addEventListener('resize',()=>{if(imageZoomDialog.open)zoomApply();});
+
+$('catalogue').addEventListener('click',e=>{const view=e.target.closest('[data-view-image]'),edit=e.target.closest('[data-edit]'),archive=e.target.closest('[data-archive]');if(view){showZoomImage(view.dataset.viewImage,view.dataset.viewKind);return;}if(edit)showForm(edit.dataset.edit);else if(archive){setArchive(archive.dataset.archive);}});
 $('dialogClose').addEventListener('click',()=>$('editDialog').close());
 $('dialogCancel').addEventListener('click',()=>$('editDialog').close());
 $('inputRayon').addEventListener('change',e=>{updateDepartmentOptions(e.target.value);if(window.BookSketchEditor)window.BookSketchEditor.refreshGroup();});
