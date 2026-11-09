@@ -59,7 +59,7 @@ const VISUAL_TEMPLATES=[
  {value:'bloc',label:'Bloc / parpaing',drawing:'<polygon points="24,45 65,22 146,37 108,58" fill="#dde2e4"/><polygon points="24,45 108,58 108,93 24,80" fill="#c7d1d3"/><polygon points="108,58 146,37 146,71 108,93" fill="#aebdc0"/><path d="M58 46L76 37L93 41L75 51Z M92 52L110 44L126 48L109 57Z" fill="#82989b"/>'}
 ];
 function templateGallery(){
- const selected=field('sketchMode')==='template'?field('sketchTemplate'):'';
+ const selected=field('sketchMode')==='design'&&field('sketchDesignType')==='template'?field('sketchTemplate'):'';
  Q('sketchTemplateGallery').innerHTML=VISUAL_TEMPLATES.map(t=>'<button type="button" class="book-sketch-tile sketch-template-tile'+(t.value===selected?' selected':'')+'" data-sketch-template="'+t.value+'" aria-pressed="'+(t.value===selected?'true':'false')+'" title="Choisir '+t.label+'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 108" aria-hidden="true" focusable="false"><g stroke="#46646b" stroke-width="2" stroke-linejoin="round">'+t.drawing+'</g></svg><span>'+t.label+'</span></button>').join('');
 }
 let current=null,generation=0,ready=false,lastError='',chosenBookRef='';
@@ -68,6 +68,8 @@ function field(id){return trim(Q(id).value);}
 function hasDimensions(){return ['dimensionLong','dimensionWide','dimensionHigh'].some(id=>field(id));}
 function currentGroup(){return Q('inputSousRayon').value;}
 function sourcesForGroup(){const rayon=Q('inputRayon').value,group=currentGroup();return products.filter(p=>!p.archived&&p.rayon===rayon&&p.sousRayon===group&&p.croquis);}
+function allSources(){return products.filter(p=>!p.archived&&p.croquis);}
+function isRecommendedCrop(){return field('bookSketchSource')===recommended()?.ref&&!!CROP[MODELS[currentGroup()]?.type];}
 function recommended(){const model=MODELS[currentGroup()];if(!model)return null;const p=products.find(p=>p.reference===model.ref&&p.rayon===Q('inputRayon').value&&p.croquis&&!p.archived);return p?{...model,product:p}:null;}
 function escapeText(s){return String(s||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function optionRef(ref){const p=products.find(p=>p.reference===ref);return p&&p.croquis?p:null;}
@@ -162,27 +164,38 @@ function setHint(text,error=false){
  const el=Q('sketchPreviewStatus');el.textContent=text;el.classList.toggle('sketch-error',error);
 }
 function updateVisibility(){
- const mode=field('sketchMode');
- Q('bookSourceField').hidden=!sourcesForGroup().length;
- Q('sketchTemplateField').hidden=false;
- Q('sketchReuseField').hidden=mode!=='reuse';
- Q('sketchUploadField').hidden=mode!=='upload';
- Q('sketchDimensionFields').hidden=mode==='none';
+ const mode=field('sketchMode'),isDesign=mode==='design',designType=field('sketchDesignType');
+ Q('bookSourceField').hidden=mode!=='existing';
+ Q('sketchDesignField').hidden=!isDesign;
+ Q('sketchTemplateField').hidden=!(isDesign&&designType==='template');
+ Q('sketchClipartField').hidden=!(isDesign&&designType==='clipart');
+ Q('sketchDrawingTools').hidden=mode!=='draw';
+ Q('sketchPreview').hidden=mode==='none';
+ Q('sketchReuseField').hidden=true;
+ Q('sketchUploadField').hidden=true;
+ Q('sketchDimensionFields').hidden=mode==='none'||(mode==='existing'&&!isRecommendedCrop());
 }
 function gallery(){
- const selected=field('bookSketchSource'),list=sourcesForGroup().sort((a,b)=>Number(a.reference!==selected)-Number(b.reference!==selected)||a.reference.localeCompare(b.reference,'fr')),area=Q('bookSketchGallery');
- area.innerHTML=list.map(p=>'<button type="button" class="book-sketch-tile'+(p.reference===selected?' selected':'')+'" data-book-ref="'+escapeText(p.reference)+'" aria-pressed="'+(p.reference===selected?'true':'false')+'" title="'+escapeText(p.designation)+'"><img loading="lazy" alt="Croquis '+escapeText(p.designation)+'" src="'+escapeText(p.croquis)+'"><span>Réf. '+escapeText(p.reference)+'</span><small>'+escapeText(p.designation.slice(0,35))+'</small></button>').join('');
+ const selected=field('bookSketchSource'),rayon=field('inputRayon'),group=currentGroup();
+ const search=trim(field('bookSketchFilter')).toLocaleLowerCase('fr');
+ const list=allSources().filter(p=>!search||(p.reference+' '+p.designation+' '+p.rayon+' '+p.sousRayon).toLocaleLowerCase('fr').includes(search))
+   .sort((a,b)=>Number(b.reference===selected)-Number(a.reference===selected)
+    ||Number(b.rayon===rayon&&b.sousRayon===group)-Number(a.rayon===rayon&&a.sousRayon===group)
+    ||a.designation.localeCompare(b.designation,'fr')||a.reference.localeCompare(b.reference,'fr'));
+ Q('bookSketchCount').textContent=list.length+' croquis disponible'+(list.length>1?'s':'')+' · références de ce sous-rayon en premier';
+ Q('bookSketchGallery').innerHTML=list.map(p=>'<button type="button" class="book-sketch-tile'+(p.reference===selected?' selected':'')+'" data-book-ref="'+escapeText(p.reference)+'" aria-pressed="'+(p.reference===selected?'true':'false')+'" title="'+escapeText(p.designation)+'"><img loading="lazy" alt="Croquis '+escapeText(p.designation)+'" src="'+escapeText(p.croquis)+'"><span>Réf. '+escapeText(p.reference)+'</span><small>'+escapeText(p.designation.slice(0,45))+'</small></button>').join('')
+  ||'<p class="sketch-library-empty">Aucun croquis correspondant. Essayez une autre référence ou désignation.</p>';
 }
 function populateGroup(autopick){
- const sources=sourcesForGroup(),pref=recommended(),sel=Q('bookSketchSource');
+ const sources=allSources(),pref=recommended(),sel=Q('bookSketchSource');
  const prev=autopick?'':(chosenBookRef||field('bookSketchSource'));
- const ordered=sources.slice().sort((a,b)=>Number(a.reference!==pref?.ref)-Number(b.reference!==pref?.ref)||a.reference.localeCompare(b.reference,'fr'));
- sel.innerHTML='<option value="">Choisir une référence comme modèle…</option>'+ordered.map(p=>'<option value="'+escapeText(p.reference)+'">'+escapeText(p.reference+' — '+p.designation.slice(0,78))+'</option>').join('');
+ const ordered=sources.slice().sort((a,b)=>Number(b.reference===pref?.ref)-Number(a.reference===pref?.ref)||a.designation.localeCompare(b.designation,'fr'));
+ sel.innerHTML='<option value="">Sélectionnez un croquis existant…</option>'+ordered.map(p=>'<option value="'+escapeText(p.reference)+'">'+escapeText(p.rayon+' · '+p.reference+' — '+p.designation.slice(0,78))+'</option>').join('');
  chosenBookRef=prev&&sources.some(p=>p.reference===prev)?prev:(pref?.ref||'');
  sel.value=chosenBookRef;
  Q('bookSketchInfo').textContent=pref
-   ?'Modèle conseillé : '+pref.name+' — dessin issu de la référence '+pref.ref+'. Seules ses formes sont reprises : les anciens chiffres et la référence d’origine sont écartés.'
-   :'Choisissez un dessin. Les croquis copiés à l’identique conservent leurs anciennes cotes, les gabarits permettent de saisir de nouvelles dimensions.';
+   ?'Pour le modèle conseillé de ce sous-rayon, les anciennes cotes sont retirées et vous pouvez indiquer de nouvelles dimensions. Pour les autres références, le croquis original est repris avec ses anciennes cotes.'
+   :'Choisissez un dessin parmi tous les croquis existants. Une copie à l’identique conserve les anciennes dimensions ; pour créer de nouvelles cotes, utilisez « Choisir un croquis par son dessin ».';
  gallery();
  return !!pref;
 }
@@ -197,53 +210,39 @@ function genericKind(group){
 }
 function unitByGroup(){return /Bois|OSB/.test(currentGroup())?'mm':'cm';}
 function refreshGroup(){
- const had=field('sketchMode');
- const hasBook=populateGroup(true);
- if(!current){
-  const candidate=hasBook?'book':(genericKind(currentGroup())?'template':'none');
-  Q('sketchMode').value=candidate;
-  if(candidate==='template')Q('sketchTemplate').value=genericKind(currentGroup());
-  Q('dimensionUnit').value=unitByGroup();
- }else if(had==='book'&&!hasBook){
-  Q('sketchMode').value='keep';
- }
+ populateGroup(true);
+ Q('dimensionUnit').value=unitByGroup();
  void paint();
 }
 async function paint(){
  const n=++generation;ready=false;lastError='';updateVisibility();templateGallery();paintBase();
- const mode=field('sketchMode');
+ const mode=field('sketchMode'),designType=field('sketchDesignType');
  try{
-  if(mode==='book'){
-   const ref=field('bookSketchSource');
-   if(!ref)throw new Error('Ce sous-rayon ne dispose pas d’un modèle graphique réutilisable. Choisissez un gabarit.');
-   await drawOriginalModel(ref);
+  if(mode==='existing'){
+   const ref=field('bookSketchSource'),source=optionRef(ref);
+   if(!source)throw new Error('Choisissez un croquis existant parmi les références disponibles.');
+   if(isRecommendedCrop())await drawOriginalModel(ref);
+   else {const image=await imageLoad(source.croquis);if(n!==generation)return;drawWhole(image);}
    if(n!==generation)return;
-  }else if(mode==='template')drawGeneric(field('sketchTemplate'));
-  else if(mode==='reuse'||mode==='keep'){
-   const source=mode==='keep'?current?.croquis:optionRef(field('reuseCroquis'))?.croquis;
-   if(source){const image=await imageLoad(source);if(n!==generation)return;drawWhole(image);}
-   else throw new Error('Sélectionnez un croquis existant.');
-  }else if(mode==='upload'){
-   const file=Q('inputCroquis').files?.[0];
-   if(!file)throw new Error('Sélectionnez une image de croquis.');
-   if(!/^image\/(?:png|jpeg|webp)$/.test(file.type))throw new Error('Utilisez un fichier PNG, JPG ou WebP.');
-   const url=URL.createObjectURL(file);
-   try{const image=await imageLoad(url);if(n!==generation)return;drawWhole(image);}
-   finally{URL.revokeObjectURL(url);}
+  }else if(mode==='design'&&designType==='template')drawGeneric(field('sketchTemplate'));
+  else if(mode==='design'&&designType==='clipart'||mode==='draw'){
+   // Le fond, les silhouettes et le dessin libre sont produits sur le calque de l’atelier.
+   ctx.clearRect(0,0,960,720);
   }else{
    ctx.fillStyle='#6b7b82';ctx.textAlign='center';ctx.font='22px Arial';
    ctx.fillText('Aucun croquis sélectionné',480,292);
   }
-  if(mode==='book'||mode==='template')drawDimensions();
-  else if(mode==='reuse'||mode==='keep'||mode==='upload'){
-   ctx.fillStyle='#ad6b19';ctx.textAlign='center';ctx.font='18px Arial';
-   ctx.fillText('Image originale : elle peut déjà contenir des cotes. Vérifiez-la avant de la copier.',480,592);
+  if(mode==='existing'&&isRecommendedCrop()||mode==='design'&&designType==='template')drawDimensions();
+  else if(mode==='existing'){
+   ctx.fillStyle='#ad6b19';ctx.textAlign='center';ctx.font='17px Arial';
+   ctx.fillText('Croquis original : les anciennes cotes sont conservées.',480,592);
   }
   ready=true;
-  if(n===generation)setHint(mode==='book'
-    ?'Forme issue d’un vrai croquis du book, sans anciennes dimensions. Saisissez les nouvelles cotes.'
-    :mode==='reuse'?'Copie intégrale du croquis choisi : les anciennes cotes ne sont pas modifiées.'
-    :'Aperçu du croquis avant enregistrement.');
+  if(n===generation)setHint(mode==='existing'
+   ?(isRecommendedCrop()?'Modèle conseillé sans anciennes cotes : indiquez vos dimensions.':'Copie du croquis existant : ses cotes d’origine sont conservées.')
+   :mode==='design'?'Choisissez votre dessin et renseignez ses dimensions.'
+   :mode==='draw'?'Dessinez directement dans la zone blanche, à la souris ou au doigt.'
+   :'Aucun croquis ne sera associé à cette référence.');
  }catch(e){
   if(n!==generation)return;
   lastError=e.message;ctx.fillStyle='#b42331';ctx.textAlign='center';ctx.font='18px Arial';ctx.fillText(lastError.slice(0,75),480,275);
@@ -252,54 +251,50 @@ async function paint(){
 }
 function open(item){
  current=item||null;
- const all=products.filter(p=>!p.archived&&p.croquis).sort((a,b)=>a.rayon.localeCompare(b.rayon,'fr')||a.sousRayon.localeCompare(b.sousRayon,'fr'));
+ const all=allSources().sort((a,b)=>a.rayon.localeCompare(b.rayon,'fr')||a.sousRayon.localeCompare(b.sousRayon,'fr'));
  Q('reuseCroquis').innerHTML='<option value="">Sélectionner un ancien croquis…</option>'+all.map(p=>'<option value="'+escapeText(p.reference)+'">'+escapeText(p.rayon+' • '+p.sousRayon+' • '+p.reference+' • '+p.designation.slice(0,40))+'</option>').join('');
  for(const id of ['dimensionLong','dimensionWide','dimensionHigh'])Q(id).value='';
  Q('dimensionUnit').value=unitByGroup();
  Q('inputCroquis').value='';
- const hasBook=populateGroup(true);
- if(item?.croquis)Q('sketchMode').value='keep';
- else if(hasBook)Q('sketchMode').value='book';
- else if(genericKind(currentGroup())){
-  Q('sketchMode').value='template';Q('sketchTemplate').value=genericKind(currentGroup());
- }else Q('sketchMode').value='none';
+ Q('bookSketchFilter').value='';
+ chosenBookRef=item?.croquis?item.reference:'';
+ populateGroup(false);
+ Q('sketchDesignType').value='template';
+ Q('sketchMode').value=item?.croquis?'existing':'none';
+ if(genericKind(currentGroup()))Q('sketchTemplate').value=genericKind(currentGroup());
  void paint();
 }
 async function resolveCroquis(){
- const mode=field('sketchMode');
+ const mode=field('sketchMode'),designType=field('sketchDesignType');
  if(mode==='none')return '';
- if(mode==='keep'&&!hasDimensions())return current?.croquis||'';
- if(mode==='reuse'&&!hasDimensions()){
-  const source=optionRef(field('reuseCroquis'))?.croquis;
+ if(mode==='existing'){
+  const source=optionRef(field('bookSketchSource'));
   if(!source)throw new Error('Sélectionnez un croquis existant.');
-  return source;
+  if(!isRecommendedCrop())return source.croquis;
  }
- if((mode==='reuse'||mode==='keep')&&hasDimensions())
-   throw new Error('Ce croquis contient ses anciennes cotes. Choisissez le modèle conseillé ou un gabarit pour les remplacer.');
- if(mode==='upload'&&!Q('inputCroquis').files?.[0])throw new Error('Importez une image.');
+ if(mode==='design'&&designType==='clipart'||mode==='draw')
+  throw new Error('Le dessin est en cours de préparation. Réessayez.');
  await paint();
  if(!ready||lastError)throw new Error(lastError||'Le croquis ne peut pas être créé.');
  return canvas.toDataURL('image/png');
 }
 Q('sketchTemplateGallery').addEventListener('click',e=>{
-  const button=e.target.closest('[data-sketch-template]');if(!button)return;
-  Q('sketchTemplate').value=button.dataset.sketchTemplate;
-  Q('sketchMode').value='template';void paint();
- });
- Q('sketchMode').addEventListener('change',()=>void paint());
+ const button=e.target.closest('[data-sketch-template]');if(!button)return;
+ Q('sketchTemplate').value=button.dataset.sketchTemplate;
+ Q('sketchDesignType').value='template';
+ Q('sketchMode').value='design';void paint();
+});
+Q('sketchMode').addEventListener('change',()=>void paint());
+Q('sketchDesignType').addEventListener('change',()=>void paint());
 Q('sketchTemplate').addEventListener('change',()=>void paint());
-Q('reuseCroquis').addEventListener('change',()=>void paint());
-Q('inputCroquis').addEventListener('change',()=>void paint());
+Q('bookSketchFilter').addEventListener('input',gallery);
 Q('bookSketchSource').addEventListener('change',()=>{
  chosenBookRef=field('bookSketchSource');gallery();void paint();
 });
 Q('bookSketchGallery').addEventListener('click',e=>{
  const button=e.target.closest('[data-book-ref]');if(!button)return;
- const ref=button.dataset.bookRef;if(!sourcesForGroup().some(p=>p.reference===ref))return;
- chosenBookRef=ref;Q('bookSketchSource').value=ref;gallery();
-  if(MODELS[currentGroup()])Q('sketchMode').value='book';
-  else{Q('reuseCroquis').value=ref;Q('sketchMode').value='reuse';}
-  void paint();
+ const ref=button.dataset.bookRef;if(!allSources().some(p=>p.reference===ref))return;
+ chosenBookRef=ref;Q('bookSketchSource').value=ref;gallery();void paint();
 });
 for(const id of ['dimensionLong','dimensionWide','dimensionHigh','dimensionUnit'])
  Q(id).addEventListener(id==='dimensionUnit'?'change':'input',()=>void paint());
