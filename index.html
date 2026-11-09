@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-navigation-secure-v2">
+  <link rel="stylesheet" href="styles.css?v=20261109-croquis-menu-v3">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -126,25 +126,26 @@
         <label>Sous-rayon officiel LM (numéro)<select name="deptCode" id="inputDept" required><option value="">Sélectionner le sous-rayon officiel…</option></select><small>Numéros 001 à 099 selon le rayon sélectionné.</small></label><label>Famille / détail du produit<select name="sousRayon" id="inputSousRayon" required></select><small>Familles existantes conservées, ou « Autres références » pour une nouvelle activité.</small></label>
         <label class="full-width">Photo du produit<input id="inputPhoto" type="file" accept="image/*"><small>Prendre une photo ou sélectionner une image depuis le téléphone ou le PC. La photo est incorporée au book.</small><img id="inputPhotoPreview" class="form-photo-preview" alt="Aperçu de la photo choisie" hidden></label>
         <div class="full-width sketch-editor" id="sketchEditor">
-          <div class="sketch-heading"><strong>✎ Croquis coté et dimensions</strong><small>Touchez le dessin ressemblant à votre produit, puis saisissez longueur, largeur et épaisseur. Vous pouvez aussi importer votre croquis.</small></div>
+          <div class="sketch-heading"><strong>✎ Croquis du produit</strong><small>Choisissez une seule méthode. Les dessins et les outils ne s’affichent qu’après votre sélection.</small></div>
           <label>Source du croquis<select id="sketchMode">
             <option value="none">Pas de croquis</option>
-            <option value="book">Modèle réel du book conseillé pour ce sous-rayon</option>
-            <option value="keep">Conserver le croquis actuel</option>
-            <option value="template">Gabarit schématique personnalisable</option>
-             <option value="clipart">Silhouette / clipart de produit (32 modèles)</option>
-             <option value="draw">Dessiner librement mon produit</option>
-            <option value="reuse">Copier un croquis original à l’identique</option>
-            <option value="upload">Importer mon propre croquis</option>
+            <option value="existing">Croquis existant</option>
+            <option value="design">Choisir un croquis par son dessin</option>
+            <option value="draw">Dessiner un croquis à la souris ou au doigt</option>
           </select></label>
           <div id="bookSourceField" class="book-source-field" hidden>
-            <strong>Croquis existants de ce sous-rayon — toucher le dessin pour le choisir</strong>
+            <strong>Croquis existants du Book — choisir un modèle</strong><label>Rechercher une référence ou une désignation<input type="search" id="bookSketchFilter" placeholder="Ex. liteau, brouette, 74649176…"></label><small id="bookSketchCount" aria-live="polite"></small>
             <label class="sr-only" for="bookSketchSource">Sélectionner un croquis existant</label>
             <select id="bookSketchSource" class="sr-only"><option value="">Aucun modèle disponible</option></select>
             <div id="bookSketchGallery" class="book-sketch-gallery" aria-label="Vignettes des croquis de cette sous-famille"></div>
             <p id="bookSketchInfo" class="book-sketch-info"></p>
           </div>
-          <div id="sketchTemplateField" class="sketch-model-field">
+          <div id="sketchDesignField" class="sketch-design-field" hidden>
+            <label>Famille de dessins<select id="sketchDesignType">
+              <option value="template">Formes et profils (liteau, poteau, dalle…)</option>
+              <option value="clipart">Silhouettes de produits (32 modèles)</option>
+            </select></label>
+          <div id="sketchTemplateField" class="sketch-model-field" hidden>
             <strong>Choisir un croquis directement par son dessin</strong>
             <label class="sr-only" for="sketchTemplate">Type de croquis schématique</label>
             <select id="sketchTemplate" class="sr-only">
@@ -165,6 +166,7 @@
             <div id="sketchClipartGallery" class="book-sketch-gallery sketch-clipart-gallery" aria-label="Bibliothèque de silhouettes"></div>
             <small>Silhouettes vectorielles indicatives. Vous pouvez compléter le dessin au doigt et ajouter des cotes.</small>
           </div>
+          </div>
           <label id="sketchReuseField" hidden>Croquis à reprendre<select id="reuseCroquis"><option value="">Choisir un croquis existant…</option></select></label>
           <label id="sketchUploadField" hidden>Image du croquis<input id="inputCroquis" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <div id="sketchDimensionFields" class="dimension-grid" hidden>
@@ -174,7 +176,7 @@
             <label>Hauteur / épaisseur<input id="dimensionHigh" maxlength="28" placeholder="Ex. 6"></label>
             <label>Unité par défaut<select id="dimensionUnit"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option></select></label>
           </div>
-          <div class="sketch-drawing-tools">
+          <div class="sketch-drawing-tools" id="sketchDrawingTools" hidden>
             <strong>Atelier de dessin au doigt ou à la souris</strong>
             <div class="sketch-toolbar">
               <label>Outil<select id="sketchDrawTool"><option value="pen">Crayon libre</option><option value="line">Ligne droite</option><option value="rectangle">Rectangle</option><option value="arrow">Flèche</option><option value="measure">Cote personnalisée ↔</option><option value="eraser">Gomme</option></select></label>
@@ -186,7 +188,7 @@
             </div>
             <small>Sélectionnez un gabarit, une silhouette ou « Dessiner librement ». Dessinez sur l’aperçu ; pour positionner une dimension, choisissez « Cote personnalisée » et tracez entre deux points.</small>
           </div>
-          <div class="sketch-preview"><div class="sketch-canvas-stage"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><canvas id="sketchDrawCanvas" width="960" height="720" aria-label="Zone de dessin tactile" title="Dessiner ici au doigt ou à la souris"></canvas></div><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
+          <div class="sketch-preview" id="sketchPreview" hidden><div class="sketch-canvas-stage"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><canvas id="sketchDrawCanvas" width="960" height="720" aria-label="Zone de dessin tactile" title="Dessiner ici au doigt ou à la souris"></canvas></div><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
         </div>
         <label class="full-width">Notes / points à vérifier<textarea name="notes" rows="3" placeholder="Dimensions, particularités, vérifications..."></textarea></label>
       </div>
@@ -221,8 +223,8 @@
   <script src="nuanciers-data.js?v=20261109"></script>
   <script src="app.js?v=20261109-navigation-secure-v2"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
-  <script src="croquis-editor.js?v=20261109-atelier"></script>
-  <script src="sketch-atelier.js?v=20261109"></script>
+  <script src="croquis-editor.js?v=20261109-croquis-menu-v3"></script>
+  <script src="sketch-atelier.js?v=20261109-croquis-menu-v3"></script>
   <script src="product-finder.js?v=20261109"></script>
   <script src="auth.js?v=20261109-domain-v2"></script>
   <script defer src="./pwa.js?v=20261109-1"></script>
