@@ -35,8 +35,9 @@ function makeResult(p){
   +'<button type="button" class="btn btn-outline" data-finder-ref="'+escape(p.reference)+'">Voir la fiche</button></article>';
 }
 function showExact(query){
- const input=String(query||'').replace(/\s/g,'');
- const matches=catalog().filter(p=>p.ean===input||p.reference===input);
+ const input=String(query||'').replace(/\s/g,'').trim();
+ if(!input){el('finderResults').innerHTML='';status('Saisissez un EAN ou une référence Leroy Merlin.',true);return false;}
+ const matches=catalog().filter(p=>(p.ean&&p.ean===input)||(p.reference&&p.reference===input));
  const results=el('finderResults');
  if(!matches.length){
   results.innerHTML='';
@@ -204,7 +205,7 @@ function capture(){
 }
 el('identifyProductBtn').addEventListener('click',open);
 el('finderClose').addEventListener('click',close);
-dialog.addEventListener('close',stopCamera);
+dialog.addEventListener('close',()=>{runId++;stopCamera();});
 el('finderCameraBtn').addEventListener('click',()=>void toggleCamera());
 el('finderCaptureBtn').addEventListener('click',capture);
 el('finderEanBtn').addEventListener('click',()=>showExact(el('finderEan').value));
