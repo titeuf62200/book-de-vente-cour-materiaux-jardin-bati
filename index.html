@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a5c45">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-tri-alphabetique">
+  <link rel="stylesheet" href="styles.css?v=20261109-nuanciers">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -28,6 +28,12 @@
         <div class="side-caption">LE BOOK DE VENTE</div>
         <button class="nav-home active" data-filter="all">⌂ &nbsp; Tous les produits <span id="sideTotal">190</span></button>
         <div id="sidebarChapters"></div>
+        <div class="nuancier-nav" aria-label="Outils nuanciers">
+          <div class="nuancier-nav-title">OUTILS DE COMPARAISON</div>
+          <button type="button" class="nuancier-nav-btn" data-nuancier="Matériaux"><span class="nuancier-nav-dot"></span> Nuancier Bâti <span class="nuancier-nav-count">11</span></button>
+          <button type="button" class="nuancier-nav-btn" data-nuancier="Jardin"><span class="nuancier-nav-dot"></span> Nuancier Jardin <span class="nuancier-nav-count">25</span></button>
+          <small>Gabarits A4 à échelle réelle · impression 100 %</small>
+        </div>
         <div class="side-footer">
           <button id="editToggle" class="btn btn-outline" aria-pressed="false">✎ Mode contributeur</button>
           <span>Les administrateurs ajoutent, modifient et archivent des références. Les sous-rayons 001 (Matériaux) et 009 (Jardin), leurs couleurs et les PDF sont recalculés à chaque impression.</span>
@@ -152,10 +158,16 @@
     </form>
   </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
+  <dialog id="nuancierDialog" class="nuancier-dialog" aria-labelledby="nuancierDialogTitle">
+    <div class="nuancier-dialog-header"><div><span class="nuancier-dialog-kicker">OUTIL COMPLÉMENTAIRE · CALAIS</span><h2 id="nuancierDialogTitle">Nuancier</h2><p id="nuancierDialogSubtitle"></p></div><button type="button" class="nuancier-close" id="nuancierClose" aria-label="Fermer">×</button></div>
+    <div class="nuancier-dialog-content" id="nuancierDialogContent"></div>
+    <div class="nuancier-dialog-footer"><small>À imprimer sur A4, à 100 % sans ajustement. Vérifier la barre témoin de 50 mm. Les contours représentent les sections nominales, pas les rainures ni les chanfreins.</small><button type="button" class="btn btn-primary" id="nuancierPrintAll">↓ Imprimer / Enregistrer en PDF</button></div>
+  </dialog>
   <div id="printArea" aria-hidden="true"></div>
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
-  <script src="app.js?v=20261109-tri-alphabetique"></script>
+  <script src="nuanciers-data.js?v=20261109"></script>
+  <script src="app.js?v=20261109-nuanciers"></script>
   <script src="croquis-editor.js?v=20261106-nomenclatures"></script>
   <script src="auth.js?v=20261106-nomenclatures"></script>
 </body>
