@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a5c45">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261109-nuanciers">
+  <link rel="stylesheet" href="styles.css?v=20261109-identification-croquis">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -68,6 +68,7 @@
           <div class="search-wrap"><label for="searchInput" class="sr-only">Chercher une référence</label><span>⌕</span><input id="searchInput" type="search" placeholder="Rechercher une référence, une désignation, un EAN..." autocomplete="off"></div>
           <select id="rayonSelect" aria-label="Filtrer par rayon"><option value="all">Tous les rayons</option><option value="Matériaux">Matériaux</option><option value="Jardin">Jardin</option></select>
           <button id="clearFilters" class="btn btn-simple">Effacer</button>
+          <button id="identifyProductBtn" type="button" class="btn btn-identify" title="Identifier un produit par EAN ou par photo, sans IA payante">▣ Identifier un produit</button>
           <button id="addBtn" class="btn btn-primary admin-only" hidden>＋ Ajouter une référence</button>
         </section>
         <section class="result-meta"><div><strong id="resultTitle">Catalogue complet</strong><span id="resultSub">Parcourir les sous-rayons numérotés</span></div><span id="resultCount" class="result-count">190 produits</span></section>
@@ -116,6 +117,8 @@
             <option value="book">Modèle réel du book conseillé pour ce sous-rayon</option>
             <option value="keep">Conserver le croquis actuel</option>
             <option value="template">Gabarit schématique personnalisable</option>
+             <option value="clipart">Silhouette / clipart de produit (32 modèles)</option>
+             <option value="draw">Dessiner librement mon produit</option>
             <option value="reuse">Copier un croquis original à l’identique</option>
             <option value="upload">Importer mon propre croquis</option>
           </select></label>
@@ -141,6 +144,12 @@
             <div id="sketchTemplateGallery" class="book-sketch-gallery sketch-template-gallery" aria-label="Choisir la forme du croquis en cliquant sur son dessin"></div>
             <small>Touchez une silhouette, puis renseignez les dimensions du produit.</small>
           </div>
+          <div id="sketchClipartField" class="sketch-model-field" hidden>
+            <strong>Silhouettes de produits — choisir un dessin</strong>
+            <label>Rechercher une silhouette<input type="search" id="sketchClipartFilter" placeholder="Ex. brouette, clôture, dalle, pelle…"></label>
+            <div id="sketchClipartGallery" class="book-sketch-gallery sketch-clipart-gallery" aria-label="Bibliothèque de silhouettes"></div>
+            <small>Silhouettes vectorielles indicatives. Vous pouvez compléter le dessin au doigt et ajouter des cotes.</small>
+          </div>
           <label id="sketchReuseField" hidden>Croquis à reprendre<select id="reuseCroquis"><option value="">Choisir un croquis existant…</option></select></label>
           <label id="sketchUploadField" hidden>Image du croquis<input id="inputCroquis" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <div id="sketchDimensionFields" class="dimension-grid" hidden>
@@ -150,7 +159,19 @@
             <label>Hauteur / épaisseur<input id="dimensionHigh" maxlength="28" placeholder="Ex. 6"></label>
             <label>Unité par défaut<select id="dimensionUnit"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option></select></label>
           </div>
-          <div class="sketch-preview"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
+          <div class="sketch-drawing-tools">
+            <strong>Atelier de dessin au doigt ou à la souris</strong>
+            <div class="sketch-toolbar">
+              <label>Outil<select id="sketchDrawTool"><option value="pen">Crayon libre</option><option value="line">Ligne droite</option><option value="rectangle">Rectangle</option><option value="arrow">Flèche</option><option value="measure">Cote personnalisée ↔</option><option value="eraser">Gomme</option></select></label>
+              <label>Couleur<input id="sketchDrawColor" type="color" value="#17463b"></label>
+              <label>Épaisseur<select id="sketchDrawWidth"><option value="3">Fine</option><option value="5" selected>Normale</option><option value="9">Épaisse</option><option value="16">Très épaisse</option></select></label>
+              <label>Cote à écrire<input id="sketchMeasureText" maxlength="40" placeholder="Ex. 75 cm"></label>
+              <button type="button" id="sketchUndo" class="btn btn-simple">↶ Annuler un trait</button>
+              <button type="button" id="sketchClearDraw" class="btn btn-simple">Effacer mes traits</button>
+            </div>
+            <small>Sélectionnez un gabarit, une silhouette ou « Dessiner librement ». Dessinez sur l’aperçu ; pour positionner une dimension, choisissez « Cote personnalisée » et tracez entre deux points.</small>
+          </div>
+          <div class="sketch-preview"><div class="sketch-canvas-stage"><canvas id="sketchCanvas" width="960" height="720" role="img" aria-label="Aperçu du croquis coté"></canvas><canvas id="sketchDrawCanvas" width="960" height="720" aria-label="Zone de dessin tactile" title="Dessiner ici au doigt ou à la souris"></canvas></div><small id="sketchPreviewStatus">Aperçu du croquis.</small></div>
         </div>
         <label class="full-width">Notes / points à vérifier<textarea name="notes" rows="3" placeholder="Dimensions, particularités, vérifications..."></textarea></label>
       </div>
@@ -158,6 +179,22 @@
     </form>
   </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
+  <dialog id="finderDialog" class="finder-dialog" aria-labelledby="finderTitle">
+    <div class="finder-header"><div><span>RECHERCHE SUR LE CATALOGUE · SANS IA PAYANTE</span><h2 id="finderTitle">Identifier un produit</h2><p>Scanner le code EAN ou comparer une photo avec celles du Book de vente.</p></div><button type="button" id="finderClose" class="nuancier-close" aria-label="Fermer">×</button></div>
+    <div class="finder-content">
+      <div class="finder-method"><h3>1 · Scanner ou saisir un code</h3>
+        <div class="finder-inline"><input type="search" inputmode="numeric" id="finderEan" maxlength="35" placeholder="EAN-13 ou référence LM" aria-label="EAN ou référence Leroy Merlin"><button type="button" class="btn btn-primary" id="finderEanBtn">Rechercher</button></div>
+        <button type="button" class="btn btn-outline" id="finderCameraBtn">Activer la caméra</button>
+        <div id="finderCameraBox" class="finder-camera" hidden><video id="finderVideo" autoplay playsinline muted aria-label="Caméra pour scanner un code ou photographier un produit"></video><button type="button" class="btn btn-accent" id="finderCaptureBtn">Prendre la photo du produit</button></div>
+      </div>
+      <div class="finder-method"><h3>2 · Comparer une photo</h3>
+        <label class="finder-file">Choisir / prendre une photo<input id="finderPhoto" type="file" accept="image/jpeg,image/png,image/webp,image/*"></label>
+        <small>Analyse locale de l’image sur cet appareil. La photo n’est pas envoyée à un service d’IA.</small>
+      </div>
+      <p id="finderStatus" class="finder-status" role="status" aria-live="polite">Saisissez un code ou choisissez une photo.</p>
+      <div id="finderResults" class="finder-results" aria-live="polite"></div>
+    </div>
+  </dialog>
   <dialog id="nuancierDialog" class="nuancier-dialog" aria-labelledby="nuancierDialogTitle">
     <div class="nuancier-dialog-header"><div><span class="nuancier-dialog-kicker">OUTIL COMPLÉMENTAIRE · CALAIS</span><h2 id="nuancierDialogTitle">Nuancier</h2><p id="nuancierDialogSubtitle"></p></div><button type="button" class="nuancier-close" id="nuancierClose" aria-label="Fermer">×</button></div>
     <div class="nuancier-dialog-content" id="nuancierDialogContent"></div>
@@ -167,8 +204,10 @@
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
-  <script src="app.js?v=20261109-nuanciers"></script>
-  <script src="croquis-editor.js?v=20261106-nomenclatures"></script>
+  <script src="app.js?v=20261109-identification-croquis"></script>
+  <script src="sketch-cliparts.js?v=20261109"></script>
+  <script src="croquis-editor.js?v=20261109-atelier"></script>
+  <script src="product-finder.js?v=20261109"></script>
   <script src="auth.js?v=20261106-nomenclatures"></script>
 </body>
 </html>
