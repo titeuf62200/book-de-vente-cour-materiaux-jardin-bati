@@ -65,3 +65,9 @@ Le Book de vente utilise son propre projet Supabase `zxxnvmbcambdnaeeqcyq` (dist
 Deux boutons discrets dans le menu ouvrent les nuanciers **Bâti** (11 coupes de charpente) et **Jardin** (7 coupes de terrasses/lambourdes, 8 pavés et 10 bordures).
 Les 36 fiches sont reconstruites d'après les nuanciers A4 du 08/11/2026 dans `nuanciers-data.js`. Le site propose un aperçu avec références, puis une impression A4 par profil (1:1, barrette témoin 50 mm) ou l'enregistrement en PDF via l'impression du navigateur.
 **Attention :** il s'agit de sections/gabarits nominaux. Rainures, chanfreins et reliefs ne sont pas représentés précisément. Éviter toute mise à l'échelle ; imprimer à 100 % sans ajustement. La présente version affiche les photos et EAN uniquement si la référence existe dans le catalogue actif. Les fichiers PDF originaux ne sont pas déposés dans GitHub.
+
+## Reconnaissance EAN/photo et atelier de croquis — 9 novembre 2026
+
+Le bouton **Identifier un produit** recherche une référence du book par code EAN-13 ou référence LM. Une caméra peut scanner l'EAN automatiquement si le navigateur supporte l'API locale `BarcodeDetector`. Sinon, l'utilisateur peut saisir le code ou importer une photo. La recherche visuelle utilise des signatures de couleur/contours calculées dans le navigateur pour classer les photos existantes : **les suggestions ne sont pas une identification exacte**. Aucune photo à comparer n'est transmise à une API d'IA payante.
+
+Pour ajouter ou modifier un produit, l'atelier de croquis propose en plus des modèles précédents **32 silhouettes SVG** (brouette, outils, bois, clôtures, pavés, etc.), un mode **dessin libre** au doigt/souris, flèches, lignes, rectangles, gomme, annulation et cotations manuelles positionnables. La nouvelle image PNG du croquis est sauvegardée via le mécanisme de la fiche et utilisée dans les prochains books PDF. Les silhouettes sont indicatives et ne garantissent pas la géométrie exacte des produits.
