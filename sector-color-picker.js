@@ -32,7 +32,7 @@
   el('sectorColorCursor').style.top=((1-selected.v)*100)+'%';
   el('sectorHueInput').value=String(Math.round(selected.h)%360);
   el('sectorColorSample').style.backgroundColor=hex;
-  if(changeText!==false)el('sectorColorHexInput').value=hex;
+  if(changeText!==false){el('sectorColorHexInput').value=hex;el('sectorColorHexInput').setCustomValidity('');}
   square.setAttribute('aria-label','Nuance choisie '+hex+'. Flèches gauche et droite : saturation, haut et bas : luminosité.');
   if(typeof updateSectorPreview==='function')updateSectorPreview();
  }
@@ -64,7 +64,7 @@
   square.addEventListener('pointercancel',endDrag);
   square.addEventListener('lostpointercapture',()=>{dragId=null;});
   square.addEventListener('keydown',event=>{
-   const step=event.shiftKey?.1:.02;
+   const step=event.shiftKey?0.1:0.02;
    if(event.key==='ArrowLeft')selected.s=clamp(selected.s-step);
    else if(event.key==='ArrowRight')selected.s=clamp(selected.s+step);
    else if(event.key==='ArrowUp')selected.v=clamp(selected.v+step);
