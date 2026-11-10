@@ -185,7 +185,7 @@ function openSectorConfig(rayon,code){
  $('sectorConfigRayon').value=rayon;
  $('sectorConfigOriginalCode').value=code;
  $('sectorCodeInput').value=d.displayCode;
- $('sectorColorInput').value=d.color;
+ window.setSectorColorPicker(d.color);
  updateSectorPreview();$('sectorConfigDialog').showModal();
 }
 async function submitSectorConfig(event){
@@ -512,7 +512,7 @@ $('sidebarChapters').addEventListener('click',e=>{
 });
 $('sectorConfigForm').addEventListener('submit',submitSectorConfig);
 $('sectorCodeInput').addEventListener('input',updateSectorPreview);
-$('sectorColorInput').addEventListener('input',updateSectorPreview);
+window.initSectorColorPicker();
 $('sectorConfigCancel').addEventListener('click',()=>$('sectorConfigDialog').close());
 $('sectorConfigReset').addEventListener('click',resetSectorConfig);
 $('editToggle').addEventListener('click',toggleAdmin);
