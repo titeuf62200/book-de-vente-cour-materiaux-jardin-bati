@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261110-config-sous-rayons-v1">
+  <link rel="stylesheet" href="styles.css?v=20261110-palette-v1">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -201,7 +201,25 @@
       <input type="hidden" id="sectorConfigRayon"><input type="hidden" id="sectorConfigOriginalCode">
       <div class="sector-config-fields">
         <label>Numéro affiché du sous-rayon<input id="sectorCodeInput" type="text" inputmode="numeric" pattern="[0-9]{3}" maxlength="3" autocomplete="off" required aria-describedby="sectorCodeHelp"><small id="sectorCodeHelp">3 chiffres, unique dans ce rayon. Exemple : 056.</small></label>
-        <label>Couleur de la famille / de l’intercalaire<input id="sectorColorInput" type="color" required><small id="sectorConfigColorValue">#547FAD</small></label>
+        <div class="sector-config-color-field">
+          <div class="sector-color-heading">Couleur de la famille / de l’intercalaire</div>
+          <div class="sector-color-workspace">
+            <div class="sector-color-main">
+              <div id="sectorColorSquare" class="sector-color-square" role="group" tabindex="0" aria-label="Choisir une couleur : déplacer le curseur dans le carré" aria-describedby="sectorColorHelp"><span id="sectorColorCursor" class="sector-color-cursor" aria-hidden="true"></span></div>
+              <label class="sector-hue-field" for="sectorHueInput">Teinte : rouge, orange, jaune, vert, bleu, violet…
+                <input id="sectorHueInput" type="range" min="0" max="359" step="1" value="220" aria-label="Choisir la teinte de la couleur">
+              </label>
+              <small id="sectorColorHelp" class="sector-color-help">Déplacez le curseur dans le grand carré pour régler l’intensité et la luminosité. Utilisable à la souris, au doigt ou avec les flèches du clavier.</small>
+            </div>
+            <div class="sector-color-side">
+              <div id="sectorColorSample" class="sector-color-sample" role="img" aria-label="Aperçu de la couleur"></div>
+              <div><label for="sectorColorHexInput">Code couleur précis (HEX)
+                <input id="sectorColorHexInput" type="text" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#547FAD" aria-describedby="sectorConfigColorValue">
+              </label><small id="sectorConfigColorValue">#547FAD</small></div>
+            </div>
+          </div>
+          <input id="sectorColorInput" type="hidden" value="#547FAD">
+        </div>
       </div>
       <div class="sector-config-preview" id="sectorConfigPreview"><span class="sector-preview-swatch"></span><strong id="sectorConfigPreviewCode">056</strong><span>Aperçu de l’intercalaire</span></div>
       <div class="sector-config-actions"><button id="sectorConfigReset" type="button" class="btn btn-simple">Réinitialiser</button><span class="sector-config-spacer"></span><button id="sectorConfigCancel" type="button" class="btn btn-outline">Annuler</button><button id="sectorConfigSave" type="submit" class="btn btn-primary">Enregistrer les modifications</button></div>
@@ -261,7 +279,8 @@
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
-  <script src="app.js?v=20261110-config-sous-rayons-v1"></script>
+  <script src="sector-color-picker.js?v=20261110-palette-v1"></script>
+  <script src="app.js?v=20261110-palette-v1"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
   <script src="croquis-editor.js?v=20261109-croquis-menu-v3"></script>
   <script src="sketch-atelier.js?v=20261109-croquis-menu-v3"></script>
