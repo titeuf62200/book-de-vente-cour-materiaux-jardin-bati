@@ -26,6 +26,11 @@ async function bookRefresh(){
     .select('reference,designation,ean,rayon,sous_rayon,sous_rayon_code,photo,croquis,notes,page_source,archived')
     .order('rayon').order('sous_rayon').order('reference');
    if(error)throw error;
+   const {data:settings,error:settingsError}=await bookClient.from('book_catalog_sections')
+    .select('rayon,sector_code,display_code,color');
+   if(settingsError)throw settingsError;
+   sectorOverrides=Object.create(null);
+   for(const section of (settings||[]))sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
    products=(data||[]).map(fromRemote);
    render();$('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
    return true;
@@ -36,6 +41,20 @@ async function bookRefresh(){
   }finally{loadingBook=false;}
  })();
  try{return await bookRefreshTask;}finally{bookRefreshTask=null;}
+}
+async function bookSaveSectorSettings(row){
+ if(!bookCanEdit())throw new Error('Configuration réservée aux administrateurs.');
+ const {data,error}=await bookClient.from('book_catalog_sections')
+   .upsert(row,{onConflict:'rayon,sector_code'})
+   .select('rayon,sector_code,display_code,color').single();
+ if(error)throw error;
+ if(!data||data.display_code!==row.display_code||data.color!==row.color)throw new Error('La configuration n’a pas été confirmée.');
+}
+async function bookDeleteSectorSettings(rayon,code){
+ if(!bookCanEdit())throw new Error('Configuration réservée aux administrateurs.');
+ const {error}=await bookClient.from('book_catalog_sections')
+   .delete().eq('rayon',rayon).eq('sector_code',code);
+ if(error)throw error;
 }
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
@@ -224,7 +243,7 @@ async function bookInit(){
   bookClient.auth.onAuthStateChange((event,session)=>{
    if(event==='PASSWORD_RECOVERY')setTimeout(bookShowRecovery,0);
    if(event==='SIGNED_IN'&&!bookRecovery)setTimeout(()=>{if(!bookRecovery&&!bookRole)void bookActivate();},0);
-   if(event==='SIGNED_OUT'){bookRole=null;products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
+   if(event==='SIGNED_OUT'){bookRole=null;products=[];sectorOverrides=Object.create(null);state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();
   if(error){
