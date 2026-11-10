@@ -94,3 +94,13 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - **Adresses hors domaine** : aucun accès au catalogue, imposé par la fonction `book_catalog_role()` et par les règles RLS sur `book_catalog_products`. Une inscription Supabase extérieure peut être techniquement créée, mais ne confère aucun accès au Book.
 - Menu latéral : les rayons **001 Matériaux / Bâti** et **009 Jardin** démarrent repliés. Un clic sur le rayon affiche ou masque les sous-rayons ; cliquer sur un sous-rayon affiche uniquement ses références, puis amène directement à son entête, sans défilement manuel.
 - Les deux niveaux sont accessibles au clavier et sur l'application PWA. L'impression, les intercalaires et le catalogue partagé ne changent pas.
+
+## Configuration des sous-rayons par les coordinateurs — 10 novembre 2026
+
+- Les administrateurs **Cédric** et **Sylvie** disposent d'une icône ⚙ à droite de chaque sous-rayon dans le menu latéral, lorsque le mode modification est actif.
+- Chaque fenêtre de configuration permet de changer le **numéro affiché (3 chiffres)** et la **couleur de l'intercalaire**, avec aperçu immédiat et possibilité de revenir aux valeurs d'origine.
+- Un même numéro ne peut pas être attribué à deux sous-rayons du même rayon. Les numéros Matériaux et Jardin restent indépendants.
+- Les modifications sont conservées dans `public.book_catalog_sections` de Supabase, avec les politiques RLS : lecture pour les utilisateurs habilités, écriture réservée au rôle administrateur via `book_catalog_role()`.
+- Le `sector_code` initial reste l'identifiant technique interne des références : changer le numéro visible **ne déplace ni ne supprime les produits** et ne modifie pas leurs croquis, photos ou EAN.
+- Les codes visibles et couleurs mis à jour s'appliquent au menu, aux en-têtes du catalogue, aux choix de sous-rayons du formulaire, aux exports Excel, au sommaire et aux liserés colorés des PDF actualisés.
+- Les lecteurs n'ont pas accès au bouton de configuration. Les changements sont partagés après synchronisation et visibles après actualisation.
