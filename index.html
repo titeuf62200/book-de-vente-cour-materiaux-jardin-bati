@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261110-quatre-colonnes-v8">
+  <link rel="stylesheet" href="styles.css?v=20261110-config-sous-rayons-v1">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -195,6 +195,18 @@
       <div class="dialog-bottom"><button type="button" id="dialogCancel" class="btn btn-simple">Annuler</button><button type="submit" id="saveProductBtn" class="btn btn-primary">Enregistrer le produit</button></div>
     </form>
   </dialog>
+  <dialog id="sectorConfigDialog" class="sector-config-dialog" aria-labelledby="sectorConfigTitle">
+    <form id="sectorConfigForm">
+      <div class="sector-config-header"><span class="sector-config-kicker">PARAMÉTRAGE ADMINISTRATEUR · NOMENCLATURE</span><h2 id="sectorConfigTitle">Configurer un sous-rayon</h2><p>Le changement s’applique au menu, aux fiches, au sommaire et aux intercalaires des PDF. Les produits restent dans leur sous-rayon.</p></div>
+      <input type="hidden" id="sectorConfigRayon"><input type="hidden" id="sectorConfigOriginalCode">
+      <div class="sector-config-fields">
+        <label>Numéro affiché du sous-rayon<input id="sectorCodeInput" type="text" inputmode="numeric" pattern="[0-9]{3}" maxlength="3" autocomplete="off" required aria-describedby="sectorCodeHelp"><small id="sectorCodeHelp">3 chiffres, unique dans ce rayon. Exemple : 056.</small></label>
+        <label>Couleur de la famille / de l’intercalaire<input id="sectorColorInput" type="color" required><small id="sectorConfigColorValue">#547FAD</small></label>
+      </div>
+      <div class="sector-config-preview" id="sectorConfigPreview"><span class="sector-preview-swatch"></span><strong id="sectorConfigPreviewCode">056</strong><span>Aperçu de l’intercalaire</span></div>
+      <div class="sector-config-actions"><button id="sectorConfigReset" type="button" class="btn btn-simple">Réinitialiser</button><span class="sector-config-spacer"></span><button id="sectorConfigCancel" type="button" class="btn btn-outline">Annuler</button><button id="sectorConfigSave" type="submit" class="btn btn-primary">Enregistrer les modifications</button></div>
+    </form>
+  </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
   <dialog id="finderDialog" class="finder-dialog" aria-labelledby="finderTitle">
     <div class="finder-header"><div><span>RECHERCHE SUR LE CATALOGUE · SANS IA PAYANTE</span><h2 id="finderTitle">Identifier un produit</h2><p>Scanner le code EAN ou comparer une photo avec celles du Book de vente.</p></div><button type="button" id="finderClose" class="nuancier-close" aria-label="Fermer">×</button></div>
@@ -249,12 +261,12 @@
   <script src="supabase.config.js?v=book-independent-20261023"></script>
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
-  <script src="app.js?v=20261109-zoom-lecture-v5"></script>
+  <script src="app.js?v=20261110-config-sous-rayons-v1"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
   <script src="croquis-editor.js?v=20261109-croquis-menu-v3"></script>
   <script src="sketch-atelier.js?v=20261109-croquis-menu-v3"></script>
   <script src="product-finder.js?v=20261109"></script>
-  <script src="auth.js?v=20261109-domain-v2"></script>
+  <script src="auth.js?v=20261110-config-sous-rayons-v1"></script>
   <script defer src="./pwa.js?v=20261109-1"></script>
 </body>
 </html>
