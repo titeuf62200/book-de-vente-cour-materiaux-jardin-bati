@@ -472,3 +472,27 @@
 .sector-config-spacer{flex:1}
 @media(max-width:530px){.sector-config-fields{grid-template-columns:1fr}.sector-config-dialog form{padding:18px}.sector-config-actions>.btn{font-size:11px;padding:10px}.sector-config-spacer{flex-basis:100%}}
 @media print{.sector-config-dialog{display:none!important}}
+
+
+/* Palette de couleur façon éditeur photo pour les administrateurs. */
+.sector-config-dialog{width:min(94vw,650px)}
+.sector-config-color-field{grid-column:1/-1;min-width:0}
+.sector-color-heading{font-size:13px;font-weight:850;margin:0 0 9px;color:#264d3b}
+.sector-color-workspace{display:grid;grid-template-columns:minmax(0,1fr) 164px;gap:18px;align-items:start}
+.sector-color-main{min-width:0;max-width:380px}
+.sector-color-square{position:relative;width:100%;aspect-ratio:1/1;min-height:220px;max-height:380px;border:1px solid #bcc7c3;border-radius:12px;overflow:hidden;cursor:crosshair;touch-action:none;user-select:none;background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),hsl(var(--picker-hue,220),100%,50%);box-shadow:0 2px 10px #1c38251c}
+.sector-color-square:focus-visible{outline:3px solid #167c55;outline-offset:3px}
+.sector-color-cursor{position:absolute;left:50%;top:50%;width:17px;height:17px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 1px #233830,0 1px 6px #0008;transform:translate(-50%,-50%);pointer-events:none}
+.sector-hue-field{display:grid;gap:6px;margin-top:14px;font-size:12px;font-weight:800;color:#426657}
+.sector-hue-field input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:20px;margin:3px 0 0;cursor:pointer;border-radius:999px;border:1px solid #c1cec6;background:linear-gradient(to right,#f00 0%,#ff0 16.67%,#0f0 33.33%,#0ff 50%,#00f 66.67%,#f0f 83.33%,#f00 100%)}
+.sector-hue-field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:19px;height:26px;border:3px solid white;border-radius:9px;background:transparent;box-shadow:0 0 0 1px #435a50,0 2px 6px #0005}
+.sector-hue-field input[type=range]::-moz-range-thumb{width:14px;height:21px;border:3px solid white;border-radius:9px;background:transparent;box-shadow:0 0 0 1px #435a50}
+.sector-color-help{display:block;font-weight:500;font-size:11px;line-height:1.5;color:#627c6d;margin-top:7px}
+.sector-color-side{display:grid;gap:12px;min-width:0}
+.sector-color-sample{height:94px;border-radius:12px;background:#547fad;border:1px solid #0002;box-shadow:inset 0 0 0 1px #fff7}
+.sector-color-side label{font-size:12px;font-weight:800;display:grid;gap:7px}
+.sector-color-side input{width:100%;min-width:0;border:1px solid #b8c9bf;border-radius:8px;padding:10px 9px;font-weight:800;text-transform:uppercase;letter-spacing:.025em;color:#244437}
+.sector-color-side input:invalid{border-color:#bf4646}
+.sector-color-side small{font-size:11px;color:#647c70;font-weight:500;overflow-wrap:anywhere}
+@media(max-width:530px){.sector-config-dialog{width:min(96vw,650px)}.sector-color-workspace{grid-template-columns:minmax(0,1fr)}.sector-color-main{max-width:none}.sector-color-square{min-height:0}.sector-color-side{grid-template-columns:72px minmax(0,1fr);align-items:center}.sector-color-sample{height:72px}.sector-color-help{margin-bottom:2px}}
+@media print{.sector-config-dialog{display:none!important}}
