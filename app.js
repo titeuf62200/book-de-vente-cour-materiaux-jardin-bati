@@ -12,7 +12,10 @@ const MASTER_GROUPS = {"Matériaux":["Maçonnerie - Chapeaux de piliers","Maçon
 /* Nomenclatures sous-rayons photographiées : numéros propres à chaque univers. */
 const OFFICIAL_SECTORS = {"Matériaux":[{"code":"001","name":"MATÉRIEL DE CONSTRUCTION","color":"#547FAD"},{"code":"005","name":"POUDRES","color":"#D7A23D"},{"code":"010","name":"ÉLÉMENTS DE CONSTRUCTION","color":"#D97B8B"},{"code":"015","name":"AGRÉGATS","color":"#83974D"},{"code":"016","name":"BOIS DE CHAUFFAGE ET PELLETS","color":"#BA8156"},{"code":"019","name":"PANNEAUX ET DALLES","color":"#5CA7A9"},{"code":"020","name":"BOIS BRUT","color":"#9675BA"},{"code":"021","name":"BARDAGES ET CLINS","color":"#D68C68"},{"code":"023","name":"TOITURE PRIMAIRE POUR MAISON","color":"#638FCD"},{"code":"024","name":"TOITURE SECONDAIRE POUR ANNEXE","color":"#B46FB4"},{"code":"025","name":"ÉVACUATION EAUX DE PLUIE/USÉES","color":"#47A28E"},{"code":"030","name":"ÉTANCHÉITÉ - PROTECTION","color":"#B78D4A"},{"code":"035","name":"ISOLATION DE L'HABITAT","color":"#77A457"},{"code":"040","name":"CLOISON - PLAFOND","color":"#6E89A6"},{"code":"094","name":"OBI","color":"#C27D97"},{"code":"099","name":"ARTICLES SERVICES","color":"#7B8B98"}],"Jardin":[{"code":"004","name":"VÉGÉTAL & SEMIS","color":"#64A65A"},{"code":"024","name":"OUTIL & MATÉRIEL DU JARDINIER","color":"#CA824B"},{"code":"032","name":"PRODUITS DE SOIN DU JARDIN","color":"#94B64F"},{"code":"036","name":"ARROSAGE & GESTION DE L'EAU","color":"#48A5C3"},{"code":"040","name":"OUTILLAGE MOTORISÉ & NHP","color":"#D77361"},{"code":"054","name":"CONTENANTS & DÉCORATION","color":"#B387B7"},{"code":"056","name":"SOL EXTÉRIEUR","color":"#D6AD47"},{"code":"060","name":"DÉLIMITATION DE TERRAIN","color":"#71AD8F"},{"code":"064","name":"PORTAIL","color":"#8294C2"},{"code":"068","name":"ABRI CARPORT & RANGEMENT","color":"#A0936D"},{"code":"071","name":"PERGOLA","color":"#8BA35D"},{"code":"072","name":"MOBILIER DE JARDIN & PARASOL","color":"#C39B74"},{"code":"074","name":"CUISSON EXTÉRIEURE","color":"#D68062"},{"code":"080","name":"PISCINE & SPA","color":"#53B3BE"},{"code":"096","name":"ANIMALERIE","color":"#A084BC"},{"code":"097","name":"JEUX DE PLEIN AIR","color":"#E0A76A"},{"code":"099","name":"ARTICLES SERVICES","color":"#82949A"}]};
 const UNASSIGNED_SECTOR={code:'UNASSIGNED',name:'À CLASSER — ANCIENNES RÉFÉRENCES',color:'#93A1A8'};
-function officialSector(rayon,code){return (OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code)||null;}
+let sectorOverrides=Object.create(null);
+function sectorOverrideKey(rayon,code){return rayon+'::'+code;}
+function sectorView(rayon,sector){const o=sectorOverrides[sectorOverrideKey(rayon,sector.code)];return {...sector,displayCode:o?.display_code||sector.code,color:o?.color||sector.color};}
+function officialSector(rayon,code){const d=(OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code);return d?sectorView(rayon,d):null;}
 function inferOfficialCode(rayon,family){
  const s=String(family||'');
  if(rayon==='Matériaux'){
@@ -29,8 +32,8 @@ function inferOfficialCode(rayon,family){
 function productSectorCode(p){return officialSector(p.rayon,p.sousRayonCode)?.code||inferOfficialCode(p.rayon,p.sousRayon)||'';}
 function productSectorKey(p){return productSectorCode(p)||'UNASSIGNED';}
 function sectorList(rayon,collection=products,includeEmpty=false){
- const known=OFFICIAL_SECTORS[rayon]||[];
- const departments=known.filter(d=>includeEmpty||collection.some(p=>p.rayon===rayon&&productSectorKey(p)===d.code));
+ const known=(OFFICIAL_SECTORS[rayon]||[]).map(d=>sectorView(rayon,d));
+ const departments=known.filter(d=>includeEmpty||collection.some(p=>p.rayon===rayon&&productSectorKey(p)===d.code)).sort((a,b)=>a.displayCode.localeCompare(b.displayCode,'fr',{numeric:true}));
  if(collection.some(p=>p.rayon===rayon&&productSectorKey(p)==='UNASSIGNED'))departments.push(UNASSIGNED_SECTOR);
  return departments;
 }
@@ -130,7 +133,7 @@ function getShown(){
   (!p.archived||state.showArchived)
   &&(state.rayon==='all'||p.rayon===state.rayon)
   &&(!state.group||productSectorKey(p)===state.group)
-  &&(!state.search||normalize([p.reference,p.designation,p.ean,p.sousRayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'',p.notes].join(' ')).includes(normalize(state.search)))
+  &&(!state.search||normalize([p.reference,p.designation,p.ean,p.sousRayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'',officialSector(p.rayon,productSectorCode(p))?.displayCode||'',p.notes].join(' ')).includes(normalize(state.search)))
  );
 }
 
@@ -160,11 +163,59 @@ function buildSidebar(){
   const buttons=departments.map(d=>{
    const n=activeProducts.filter(p=>p.rayon===rayon&&productSectorKey(p)===d.code).length;
    const color=d.color;
-   return '<button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>';
+    const gear=state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()&&d.code!=='UNASSIGNED'?'<button type="button" class="sector-config-btn" data-config-rayon="'+escapeHtml(rayon)+'" data-config-code="'+escapeHtml(d.code)+'" title="Configurer ce sous-rayon" aria-label="Configurer le numéro et la couleur de '+escapeHtml(d.name)+'">⚙</button>':'';
+    return '<div class="side-sector-row"><button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>'+gear+'</div>';
   }).join('');
   const chapterTitle=i?'009 — Jardin':'001 — Matériaux / Bâti';
   return '<div class="side-chapter"><button type="button" class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon?'active':'')+'" data-chapter-rayon="'+escapeHtml(rayon)+'" aria-expanded="'+expanded+'" aria-controls="'+groupId+'" aria-label="'+(expanded?'Replier':'Déplier')+' les sous-rayons '+(i?'Jardin':'Matériaux et Bâti')+'"><span class="chap-name">'+chapterTitle+'</span><span class="count">'+counts[rayon]+'</span><span class="chapter-chevron" aria-hidden="true">⌄</span></button><div class="group-list" id="'+groupId+'"'+(expanded?'':' hidden')+'>'+buttons+'</div></div>';
  }).join('');
+}
+
+function updateSectorPreview(){
+ const code=$('sectorCodeInput').value.trim(),color=$('sectorColorInput').value;
+ $('sectorConfigPreview').style.setProperty('--sector-preview-color',color);
+ $('sectorConfigPreviewCode').textContent=code||'000';
+ $('sectorConfigColorValue').textContent=color.toUpperCase();
+}
+function openSectorConfig(rayon,code){
+ if(!state.admin||typeof bookCanEdit!=='function'||!bookCanEdit())return toast('Accès administrateur requis');
+ const original=(OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code);if(!original)return;
+ const d=officialSector(rayon,code);
+ $('sectorConfigTitle').textContent='Configurer · '+original.name;
+ $('sectorConfigRayon').value=rayon;
+ $('sectorConfigOriginalCode').value=code;
+ $('sectorCodeInput').value=d.displayCode;
+ $('sectorColorInput').value=d.color;
+ updateSectorPreview();$('sectorConfigDialog').showModal();
+}
+async function submitSectorConfig(event){
+ event.preventDefault();
+ if(!state.admin||typeof bookCanEdit!=='function'||!bookCanEdit())return toast('Accès administrateur requis');
+ const rayon=$('sectorConfigRayon').value,original=$('sectorConfigOriginalCode').value;
+ const displayCode=$('sectorCodeInput').value.trim(),color=$('sectorColorInput').value.toUpperCase();
+ if(!/^\d{3}$/.test(displayCode))return toast('Saisissez 3 chiffres (ex. 056).');
+ if(!/^#[0-9A-F]{6}$/.test(color))return toast('Couleur invalide.');
+ if(sectorList(rayon,[],true).some(d=>d.code!==original&&d.displayCode===displayCode))return toast('Ce numéro est déjà utilisé dans ce rayon.');
+ const btn=$('sectorConfigSave');btn.disabled=true;btn.textContent='Enregistrement…';
+ try{
+  await bookSaveSectorSettings({rayon,sector_code:original,display_code:displayCode,color});
+  sectorOverrides[sectorOverrideKey(rayon,original)]={display_code:displayCode,color};
+  $('sectorConfigDialog').close();render();
+  const ok=await bookRefresh();toast(ok?'Sous-rayon '+displayCode+' enregistré et synchronisé':'Enregistré. Actualisez pour vérifier le catalogue.');
+ }catch(e){toast('Impossible d’enregistrer : '+e.message);}
+ finally{btn.disabled=false;btn.textContent='Enregistrer les modifications';}
+}
+async function resetSectorConfig(){
+ if(!state.admin||typeof bookCanEdit!=='function'||!bookCanEdit())return;
+ const rayon=$('sectorConfigRayon').value,original=$('sectorConfigOriginalCode').value;
+ const btn=$('sectorConfigReset');btn.disabled=true;
+ try{
+  await bookDeleteSectorSettings(rayon,original);
+  delete sectorOverrides[sectorOverrideKey(rayon,original)];
+  $('sectorConfigDialog').close();render();
+  const ok=await bookRefresh();toast(ok?'Numéro et couleur d’origine rétablis':'Réinitialisé. Actualisez pour vérifier.');
+ }catch(e){toast('Impossible de réinitialiser : '+e.message);}
+ finally{btn.disabled=false;}
 }
 function render(){
  buildSidebar();
@@ -177,7 +228,7 @@ function render(){
  $('rayonSelect').value=state.rayon;
  $('resultCount').textContent=shown.length+' produit'+(shown.length>1?'s':'');
  const selectedSector=state.rayon==='all'?null:sectorList(state.rayon,products,true).find(d=>d.code===state.group);
- $('resultTitle').textContent=selectedSector?(selectedSector.code==='UNASSIGNED'?'?':selectedSector.code)+' — '+selectedSector.name:(state.rayon==='all'?'Catalogue complet':state.rayon);
+ $('resultTitle').textContent=selectedSector?(selectedSector.code==='UNASSIGNED'?'?':selectedSector.displayCode)+' — '+selectedSector.name:(state.rayon==='all'?'Catalogue complet':state.rayon);
  $('resultSub').textContent=(state.search?'Résultat de recherche : « '+state.search+' »':(selectedSector?state.rayon+' · Sous-rayon officiel':'Parcourir les sous-rayons numérotés'))+' · Produits classés de A à Z';
  $('emptyState').hidden=shown.length>0;
  let out='';
@@ -189,7 +240,7 @@ function render(){
   for(const d of departments){
    const entries=matching.filter(p=>productSectorKey(p)===d.code);
    if(!entries.length)continue;
-   out+='<section id="'+catalogSectorId(rayon,d.code)+'" class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.code)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
+   out+='<section id="'+catalogSectorId(rayon,d.code)+'" class="subcategory official-sector" style="--department-color:'+d.color+'"><header class="subcategory-header official-sector-header" style="background:linear-gradient(90deg,'+d.color+'3b,#fff);border-left:8px solid '+d.color+'"><h3><span class="official-number">'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</span> '+escapeHtml(d.name)+'</h3><span>'+entries.length+' réf.</span></header>';
    out+='<div class="products-grid">'+sortProductsAlphabetically(entries).map(productMarkup).join('')+'</div>';
    out+='</section>';
   }
@@ -218,7 +269,7 @@ function updateDatalist(rayon,code,preferred=''){
 function updateDepartmentOptions(rayon,code='',preferredFamily=''){
  const sel=$('inputDept');
  sel.innerHTML='<option value="">Sélectionner le sous-rayon officiel…</option>'+
-   OFFICIAL_SECTORS[rayon].map(d=>'<option value="'+d.code+'">'+d.code+' — '+escapeHtml(d.name)+'</option>').join('');
+   sectorList(rayon,[],true).map(d=>'<option value="'+d.code+'">'+d.displayCode+' — '+escapeHtml(d.name)+'</option>').join('');
  sel.value=officialSector(rayon,code)?code:'';
  updateDatalist(rayon,sel.value,preferredFamily);
 }
@@ -292,7 +343,7 @@ function exportXlsx(){
  };
  for(let i=0;i<UNIVERSES.length;i++){
  const rayon=UNIVERSES[i];const sorted=products.filter(p=>p.rayon===rayon&&!p.archived).sort((a,b)=>PRODUCT_SORT_COLLATOR.compare(productSectorKey(a),productSectorKey(b))||compareProductsAlphabetically(a,b));
- const rows=[headers,...sorted.map(p=>[p.rayon,productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'À CLASSER',p.sousRayon,p.reference,p.designation,p.ean,p.notes])];
+ const rows=[headers,...sorted.map(p=>[p.rayon,officialSector(p.rayon,productSectorCode(p))?.displayCode||productSectorCode(p),officialSector(p.rayon,productSectorCode(p))?.name||'À CLASSER',p.sousRayon,p.reference,p.designation,p.ean,p.notes])];
  const rowxml=rows.map((row,r)=>`<row r="${r+1}">${row.map((v,c)=>`<c r="${col(c)}${r+1}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`).join('')}</row>`).join('');
  files['xl/worksheets/sheet'+(i+1)+'.xml']=base+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:H'+rows.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="42" customWidth="1"/><col min="3" max="3" width="18" customWidth="1"/><col min="4" max="4" width="65" customWidth="1"/><col min="5" max="5" width="22" customWidth="1"/><col min="6" max="6" width="65" customWidth="1"/><col min="7" max="7" width="22" customWidth="1"/><col min="8" max="8" width="40" customWidth="1"/></cols><sheetData>'+rowxml+'</sheetData><autoFilter ref="A1:H'+rows.length+'"/></worksheet>';
  }
@@ -311,7 +362,7 @@ function coverGallery(active,sectors){
  const representative=sectors.map(d=>active.find(p=>productSectorKey(p)===d.code&&safeImage(p.photo))).filter(Boolean);
  const positions=[0,Math.floor((representative.length-1)/2),representative.length-1];
  const samples=positions.map(i=>representative[i]).filter((p,i,arr)=>p&&arr.findIndex(other=>other.reference===p.reference)===i);
- return '<div class="cover-gallery">'+samples.map(p=>'<figure class="cover-tile"><img src="'+escapeHtml(safeImage(p.photo))+'" alt=""><figcaption>'+escapeHtml((officialSector(p.rayon,productSectorCode(p))?.code||'?')+' — '+(officialSector(p.rayon,productSectorCode(p))?.name||'À classer'))+'</figcaption></figure>').join('')+'</div>';
+ return '<div class="cover-gallery">'+samples.map(p=>'<figure class="cover-tile"><img src="'+escapeHtml(safeImage(p.photo))+'" alt=""><figcaption>'+escapeHtml((officialSector(p.rayon,productSectorCode(p))?.displayCode||'?')+' — '+(officialSector(p.rayon,productSectorCode(p))?.name||'À classer'))+'</figcaption></figure>').join('')+'</div>';
 }
 function makePrintHTML(rayon){
  if(!UNIVERSES.includes(rayon))throw new Error('Choisir Matériaux ou Jardin');
@@ -323,7 +374,7 @@ function makePrintHTML(rayon){
   toc[d.code]=pages.length+1;
   for(let i=0;i<entries.length;i+=3)pages.push({kind:'products',sector:d,continued:i>0,entries:entries.slice(i,i+3)});
  }
- const label=d=>((d.code==='UNASSIGNED'?'?':d.code)+' — '+d.name);
+ const label=d=>((d.code==='UNASSIGNED'?'?':d.displayCode)+' — '+d.name);
  const colorBar=d=>'<div class="p-tab" style="--tab-color:'+d.color+'"><span>'+escapeHtml(label(d))+'</span></div>';
  return pages.map((p,i)=>{
   if(p.kind==='cover'){
@@ -445,6 +496,8 @@ $('rayonSelect').addEventListener('change',e=>{state.rayon=e.target.value;state.
 $('clearFilters').addEventListener('click',()=>selectFilter('all'));
 document.querySelector('.nav-home').addEventListener('click',()=>selectFilter('all'));
 $('sidebarChapters').addEventListener('click',e=>{
+ const config=e.target.closest('[data-config-rayon][data-config-code]');
+ if(config){openSectorConfig(config.dataset.configRayon,config.dataset.configCode);return;}
  const chapter=e.target.closest('button[data-chapter-rayon]');
  if(chapter){
   const rayon=chapter.dataset.chapterRayon;
@@ -457,6 +510,11 @@ $('sidebarChapters').addEventListener('click',e=>{
  const sub=e.target.closest('button[data-rayon][data-group]');
  if(sub)selectFilter(sub.dataset.rayon,sub.dataset.group||'');
 });
+$('sectorConfigForm').addEventListener('submit',submitSectorConfig);
+$('sectorCodeInput').addEventListener('input',updateSectorPreview);
+$('sectorColorInput').addEventListener('input',updateSectorPreview);
+$('sectorConfigCancel').addEventListener('click',()=>$('sectorConfigDialog').close());
+$('sectorConfigReset').addEventListener('click',resetSectorConfig);
 $('editToggle').addEventListener('click',toggleAdmin);
 $('addBtn').addEventListener('click',()=>showForm());
 $('addTopBtn').addEventListener('click',()=>showForm());
