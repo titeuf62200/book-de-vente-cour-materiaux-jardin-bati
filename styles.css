@@ -496,3 +496,43 @@
 .sector-color-side small{font-size:11px;color:#647c70;font-weight:500;overflow-wrap:anywhere}
 @media(max-width:530px){.sector-config-dialog{width:min(96vw,650px)}.sector-color-workspace{grid-template-columns:minmax(0,1fr)}.sector-color-main{max-width:none}.sector-color-square{min-height:0}.sector-color-side{grid-template-columns:72px minmax(0,1fr);align-items:center}.sector-color-sample{height:72px}.sector-color-help{margin-bottom:2px}}
 @media print{.sector-config-dialog{display:none!important}}
+
+
+/* Gestion des sous-familles : nom, corbeille, transfert et restauration. */
+.sector-name-field{grid-column:1/-1}
+.sector-config-fields .sector-name-field input{letter-spacing:0;font-weight:650;font-size:15px}
+.sector-config-preview #sectorConfigPreviewName{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:750}
+.sector-config-preview .sector-preview-label{font-size:10px;color:#657a6d;text-align:right;max-width:95px}
+.sector-remove-btn{flex:0 0 29px;width:29px;height:30px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;color:#a34b47;font-size:15px;cursor:pointer}
+.sector-remove-btn:hover,.sector-remove-btn:focus-visible{background:#fff0ed;color:#982d2a;border-color:#e8b8b2;outline-offset:2px}
+.sector-remove-btn.restore{color:#19785a}
+.sector-remove-btn.restore:hover,.sector-remove-btn.restore:focus-visible{background:#e5f6ec;border-color:#a4d6b9}
+.side-sector-hidden{opacity:.74}
+.show-hidden-sector-btn{width:100%;margin-top:7px;padding:9px 10px;border:1px dashed #bacdc1;background:#f7faf8;border-radius:9px;color:#315e49;text-align:left;font-size:11px;font-weight:750;cursor:pointer}
+.show-hidden-sector-btn:hover{background:#eaf4ee}
+.sector-delete-dialog{border:0;border-radius:16px;width:min(95vw,720px);max-height:90dvh;padding:0;color:var(--ink);box-shadow:0 22px 80px #092f274d}
+.sector-delete-dialog::backdrop{background:#112e26a8}
+.sector-delete-inner{padding:24px;display:grid;gap:13px}
+.sector-delete-inner .sector-config-header h2{margin:5px 0}
+.sector-transfer-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 12px;background:#edf5ef;border-radius:9px}
+.sector-transfer-toolbar label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;cursor:pointer}
+.sector-transfer-toolbar input{accent-color:#16744f;width:17px;height:17px}
+.sector-transfer-toolbar strong{margin-left:auto;font-size:12px}
+.sector-transfer-toolbar small{font-size:11px;color:#536b5f}
+.sector-transfer-list{display:grid;align-content:start;max-height:34dvh;min-height:66px;overflow:auto;border:1px solid #d7e3db;border-radius:10px;background:#fff}
+.sector-transfer-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-bottom:1px solid #e7ede9;cursor:pointer;font-weight:500}
+.sector-transfer-item:last-child{border-bottom:0}
+.sector-transfer-item:hover{background:#f1f8f3}
+.sector-transfer-item input{accent-color:#16744f;width:18px;height:18px;flex:0 0 18px;margin:3px 0 0}
+.sector-transfer-item span{display:grid;gap:4px;min-width:0}
+.sector-transfer-item strong{font-size:13px;overflow-wrap:anywhere}
+.sector-transfer-item small{font-size:11px;color:#52685c}
+.sector-transfer-empty{padding:20px;text-align:center;color:#176c4a;font-weight:800}
+.sector-transfer-destination{display:grid;gap:7px;font-size:13px;font-weight:800}
+.sector-transfer-destination select{width:100%;padding:12px;border:1px solid #afc9b7;border-radius:8px;background:#fff;color:var(--ink);font-size:14px}
+.sector-delete-status{margin:0;min-height:15px;color:#2b6049;font-size:12px;font-weight:750;overflow-wrap:anywhere}
+.sector-delete-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px}
+.sector-delete-hint{font-size:11px;color:#6c7b72}
+.sector-delete-inner .btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:520px){.sector-delete-inner{padding:15px;gap:11px}.sector-transfer-toolbar strong{margin-left:0}.sector-transfer-list{max-height:33dvh}.sector-delete-actions{flex-wrap:wrap}.sector-delete-actions .btn{flex:1;min-width:120px}.sector-config-preview .sector-preview-label{display:none}}
+@media print{.sector-delete-dialog{display:none!important}}

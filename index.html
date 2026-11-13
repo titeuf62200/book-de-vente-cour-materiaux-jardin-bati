@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261110-palette-v1">
+  <link rel="stylesheet" href="styles.css?v=20261113-sector-management-v1">
 </head>
 <body class="login-locked">
   <div id="app">
@@ -200,6 +200,7 @@
       <div class="sector-config-header"><span class="sector-config-kicker">PARAMÉTRAGE ADMINISTRATEUR · NOMENCLATURE</span><h2 id="sectorConfigTitle">Configurer un sous-rayon</h2><p>Le changement s’applique au menu, aux fiches, au sommaire et aux intercalaires des PDF. Les produits restent dans leur sous-rayon.</p></div>
       <input type="hidden" id="sectorConfigRayon"><input type="hidden" id="sectorConfigOriginalCode">
       <div class="sector-config-fields">
+        <label class="sector-name-field">Titre de la sous-famille<input id="sectorNameInput" type="text" maxlength="100" minlength="2" autocomplete="off" required aria-label="Titre de la sous-famille"><small>Nom visible dans le menu, les fiches, les sommaires et les intercalaires PDF.</small></label>
         <label>Numéro affiché du sous-rayon<input id="sectorCodeInput" type="text" inputmode="numeric" pattern="[0-9]{3}" maxlength="3" autocomplete="off" required aria-describedby="sectorCodeHelp"><small id="sectorCodeHelp">3 chiffres, unique dans ce rayon. Exemple : 056.</small></label>
         <div class="sector-config-color-field">
           <div class="sector-color-heading">Couleur de la famille / de l’intercalaire</div>
@@ -221,9 +222,21 @@
           <input id="sectorColorInput" type="hidden" value="#547FAD">
         </div>
       </div>
-      <div class="sector-config-preview" id="sectorConfigPreview"><span class="sector-preview-swatch"></span><strong id="sectorConfigPreviewCode">056</strong><span>Aperçu de l’intercalaire</span></div>
+      <div class="sector-config-preview" id="sectorConfigPreview"><span class="sector-preview-swatch"></span><strong id="sectorConfigPreviewCode">056</strong><span id="sectorConfigPreviewName">Nom de la sous-famille</span><span class="sector-preview-label">Aperçu de l’intercalaire</span></div>
       <div class="sector-config-actions"><button id="sectorConfigReset" type="button" class="btn btn-simple">Réinitialiser</button><span class="sector-config-spacer"></span><button id="sectorConfigCancel" type="button" class="btn btn-outline">Annuler</button><button id="sectorConfigSave" type="submit" class="btn btn-primary">Enregistrer les modifications</button></div>
     </form>
+  </dialog>
+  <dialog id="sectorDeleteDialog" class="sector-delete-dialog" aria-labelledby="sectorDeleteTitle">
+    <div class="sector-delete-inner">
+      <div class="sector-config-header"><span class="sector-config-kicker">ADMINISTRATEUR · RÉORGANISATION DU BOOK</span><h2 id="sectorDeleteTitle">Supprimer une sous-famille</h2><p id="sectorDeleteMessage" role="alert">La suppression sera possible uniquement après réaffectation de toutes les références.</p></div>
+      <div class="sector-transfer-toolbar"><label><input type="checkbox" id="sectorTransferAll"> Tout sélectionner</label><strong id="sectorDeleteCount">0 référence</strong><small id="sectorTransferSelected">0 sélectionnée</small></div>
+      <div id="sectorDeleteProducts" class="sector-transfer-list" aria-label="Liste des références à réaffecter"></div>
+      <label class="sector-transfer-destination">Nouvelle sous-famille des références sélectionnées<select id="sectorTransferDestination"><option value="">Choisir une sous-famille…</option></select></label>
+      <button type="button" id="sectorTransferBtn" class="btn btn-primary" disabled>Transférer la sélection</button>
+      <p id="sectorDeleteStatus" class="sector-delete-status" role="status" aria-live="polite"></p>
+      <div class="sector-delete-actions"><button type="button" id="sectorDeleteCancel" class="btn btn-outline">Annuler</button><button type="button" id="sectorDeleteConfirm" class="btn btn-danger" disabled>🗑 Supprimer la sous-famille</button></div>
+      <small class="sector-delete-hint">Aucun produit n’est supprimé. Les références archivées doivent aussi être transférées. La sous-famille restera récupérable par les administrateurs.</small>
+    </div>
   </dialog>
   <div id="adminPanel" class="admin-panel" hidden><strong>Mode administrateur activé</strong><div><button id="exportJsonBtn" class="btn btn-simple">Sauvegarder le catalogue</button><button id="refreshBtn" class="btn btn-simple">↻ Actualiser</button><button id="showArchivedBtn" class="btn btn-simple">Afficher les archivées</button></div><p>Catalogue partagé : toute modification validée est visible aux autres utilisateurs après actualisation.</p><p class="book-access-notice">Les deux administrateurs peuvent modifier les références et les PDF. Les autres comptes ont uniquement accès à la consultation.</p></div>
   <dialog id="finderDialog" class="finder-dialog" aria-labelledby="finderTitle">
@@ -280,12 +293,13 @@
   <script src="donnees_catalogue.js"></script>
   <script src="nuanciers-data.js?v=20261109"></script>
   <script src="sector-color-picker.js?v=20261110-palette-v1"></script>
-  <script src="app.js?v=20261110-palette-v1"></script>
+  <script src="app.js?v=20261113-sector-management-v1"></script>
+  <script src="sector-management.js?v=20261113-sector-management-v1"></script>
   <script src="sketch-cliparts.js?v=20261109"></script>
   <script src="croquis-editor.js?v=20261109-croquis-menu-v3"></script>
   <script src="sketch-atelier.js?v=20261109-croquis-menu-v3"></script>
   <script src="product-finder.js?v=20261109"></script>
-  <script src="auth.js?v=20261110-config-sous-rayons-v1"></script>
+  <script src="auth.js?v=20261113-sector-management-v1"></script>
   <script defer src="./pwa.js?v=20261109-1"></script>
 </body>
 </html>

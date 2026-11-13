@@ -14,7 +14,7 @@ const OFFICIAL_SECTORS = {"Matériaux":[{"code":"001","name":"MATÉRIEL DE CONST
 const UNASSIGNED_SECTOR={code:'UNASSIGNED',name:'À CLASSER — ANCIENNES RÉFÉRENCES',color:'#93A1A8'};
 let sectorOverrides=Object.create(null);
 function sectorOverrideKey(rayon,code){return rayon+'::'+code;}
-function sectorView(rayon,sector){const o=sectorOverrides[sectorOverrideKey(rayon,sector.code)];return {...sector,displayCode:o?.display_code||sector.code,color:o?.color||sector.color};}
+function sectorView(rayon,sector){const o=sectorOverrides[sectorOverrideKey(rayon,sector.code)];return {...sector,displayCode:o?.display_code||sector.code,name:o?.display_name||sector.name,color:o?.color||sector.color,hidden:!!o?.is_hidden};}
 function officialSector(rayon,code){const d=(OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code);return d?sectorView(rayon,d):null;}
 function inferOfficialCode(rayon,family){
  const s=String(family||'');
@@ -31,8 +31,8 @@ function inferOfficialCode(rayon,family){
 }
 function productSectorCode(p){return officialSector(p.rayon,p.sousRayonCode)?.code||inferOfficialCode(p.rayon,p.sousRayon)||'';}
 function productSectorKey(p){return productSectorCode(p)||'UNASSIGNED';}
-function sectorList(rayon,collection=products,includeEmpty=false){
- const known=(OFFICIAL_SECTORS[rayon]||[]).map(d=>sectorView(rayon,d));
+function sectorList(rayon,collection=products,includeEmpty=false,includeHidden=false){
+ const known=(OFFICIAL_SECTORS[rayon]||[]).map(d=>sectorView(rayon,d)).filter(d=>includeHidden||!d.hidden);
  const departments=known.filter(d=>includeEmpty||collection.some(p=>p.rayon===rayon&&productSectorKey(p)===d.code)).sort((a,b)=>a.displayCode.localeCompare(b.displayCode,'fr',{numeric:true}));
  if(collection.some(p=>p.rayon===rayon&&productSectorKey(p)==='UNASSIGNED'))departments.push(UNASSIGNED_SECTOR);
  return departments;
@@ -147,6 +147,7 @@ return `<article class="product-card${isArchived}">
 }
 
 const expandedChapters=new Set();
+let showHiddenSectors=false;
 function catalogSectorId(rayon,code){
  return 'book-sector-'+(rayon==='Jardin'?'jardin':'bati')+'-'+String(code).replace(/[^A-Za-z0-9_-]/g,'-');
 }
@@ -157,31 +158,34 @@ function buildSidebar(){
  $('sideTotal').textContent=activeProducts.length;
  document.querySelector('.nav-home').classList.toggle('active',state.rayon==='all'&&!state.group);
  $('sidebarChapters').innerHTML=UNIVERSES.map((rayon,i)=>{
-  const departments=sectorList(rayon,activeProducts,true);
+  const departments=sectorList(rayon,activeProducts,true,showHiddenSectors&&state.admin);
   const expanded=expandedChapters.has(rayon);
   const groupId=i?'book-menu-jardin':'book-menu-bati';
   const buttons=departments.map(d=>{
    const n=activeProducts.filter(p=>p.rayon===rayon&&productSectorKey(p)===d.code).length;
-   const color=d.color;
-    const gear=state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()&&d.code!=='UNASSIGNED'?'<button type="button" class="sector-config-btn" data-config-rayon="'+escapeHtml(rayon)+'" data-config-code="'+escapeHtml(d.code)+'" title="Configurer ce sous-rayon" aria-label="Configurer le numéro et la couleur de '+escapeHtml(d.name)+'">⚙</button>':'';
-    return '<div class="side-sector-row"><button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</b> — '+escapeHtml(d.name)+'</span><span class="count">'+n+'</span></button>'+gear+'</div>';
+   const color=d.color,editable=state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()&&d.code!=='UNASSIGNED';
+   const gear=editable?'<button type="button" class="sector-config-btn" data-config-rayon="'+escapeHtml(rayon)+'" data-config-code="'+escapeHtml(d.code)+'" title="Configurer cette sous-famille" aria-label="Modifier le titre, le numéro et la couleur de '+escapeHtml(d.name)+'">⚙</button>':'';
+   const trash=editable?'<button type="button" class="sector-remove-btn'+(d.hidden?' restore':'')+'" '+(d.hidden?'data-restore-rayon':'data-delete-rayon')+'="'+escapeHtml(rayon)+'" '+(d.hidden?'data-restore-code':'data-delete-code')+'="'+escapeHtml(d.code)+'" title="'+(d.hidden?'Restaurer cette sous-famille':'Supprimer cette sous-famille après transfert de ses références')+'" aria-label="'+(d.hidden?'Restaurer':'Supprimer')+' '+escapeHtml(d.name)+'">'+(d.hidden?'↶':'🗑')+'</button>':'';
+   return '<div class="side-sector-row'+(d.hidden?' side-sector-hidden':'')+'"><button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</b> — '+escapeHtml(d.name)+(d.hidden?' · masqué':'')+'</span><span class="count">'+n+'</span></button>'+gear+trash+'</div>';
   }).join('');
   const chapterTitle=i?'009 — Jardin':'001 — Matériaux / Bâti';
   return '<div class="side-chapter"><button type="button" class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon?'active':'')+'" data-chapter-rayon="'+escapeHtml(rayon)+'" aria-expanded="'+expanded+'" aria-controls="'+groupId+'" aria-label="'+(expanded?'Replier':'Déplier')+' les sous-rayons '+(i?'Jardin':'Matériaux et Bâti')+'"><span class="chap-name">'+chapterTitle+'</span><span class="count">'+counts[rayon]+'</span><span class="chapter-chevron" aria-hidden="true">⌄</span></button><div class="group-list" id="'+groupId+'"'+(expanded?'':' hidden')+'>'+buttons+'</div></div>';
- }).join('');
+ }).join('')+(state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()?'<button type="button" class="show-hidden-sector-btn" data-toggle-hidden="true">'+(showHiddenSectors?'Masquer les sous-familles supprimées':'Afficher les sous-familles supprimées')+'</button>':'');
 }
 
 function updateSectorPreview(){
  const code=$('sectorCodeInput').value.trim(),color=$('sectorColorInput').value;
  $('sectorConfigPreview').style.setProperty('--sector-preview-color',color);
  $('sectorConfigPreviewCode').textContent=code||'000';
+ $('sectorConfigPreviewName').textContent=$('sectorNameInput').value.trim()||'Sans titre';
  $('sectorConfigColorValue').textContent=color.toUpperCase();
 }
 function openSectorConfig(rayon,code){
  if(!state.admin||typeof bookCanEdit!=='function'||!bookCanEdit())return toast('Accès administrateur requis');
  const original=(OFFICIAL_SECTORS[rayon]||[]).find(d=>d.code===code);if(!original)return;
  const d=officialSector(rayon,code);
- $('sectorConfigTitle').textContent='Configurer · '+original.name;
+ $('sectorConfigTitle').textContent='Configurer · '+d.name;
+ $('sectorNameInput').value=d.name;
  $('sectorConfigRayon').value=rayon;
  $('sectorConfigOriginalCode').value=code;
  $('sectorCodeInput').value=d.displayCode;
@@ -192,16 +196,19 @@ async function submitSectorConfig(event){
  event.preventDefault();
  if(!state.admin||typeof bookCanEdit!=='function'||!bookCanEdit())return toast('Accès administrateur requis');
  const rayon=$('sectorConfigRayon').value,original=$('sectorConfigOriginalCode').value;
- const displayCode=$('sectorCodeInput').value.trim(),color=$('sectorColorInput').value.toUpperCase();
+ const displayCode=$('sectorCodeInput').value.trim(),color=$('sectorColorInput').value.toUpperCase(),name=$('sectorNameInput').value.trim().replace(/\s+/g,' ');
  if(!/^\d{3}$/.test(displayCode))return toast('Saisissez 3 chiffres (ex. 056).');
  if(!/^#[0-9A-F]{6}$/.test(color))return toast('Couleur invalide.');
+ if(name.length<2||name.length>100)return toast('Le titre doit contenir entre 2 et 100 caractères.');
+ if(sectorList(rayon,[],true,true).some(d=>d.code!==original&&normalize(d.name)===normalize(name)))return toast('Ce titre est déjà utilisé dans ce rayon.');
  if(sectorList(rayon,[],true).some(d=>d.code!==original&&d.displayCode===displayCode))return toast('Ce numéro est déjà utilisé dans ce rayon.');
  const btn=$('sectorConfigSave');btn.disabled=true;btn.textContent='Enregistrement…';
  try{
-  await bookSaveSectorSettings({rayon,sector_code:original,display_code:displayCode,color});
-  sectorOverrides[sectorOverrideKey(rayon,original)]={display_code:displayCode,color};
+  const hidden=!!officialSector(rayon,original)?.hidden;
+  await bookSaveSectorSettings({rayon,sector_code:original,display_code:displayCode,color,display_name:name,is_hidden:hidden});
+  sectorOverrides[sectorOverrideKey(rayon,original)]={display_code:displayCode,color,display_name:name,is_hidden:hidden};
   $('sectorConfigDialog').close();render();
-  const ok=await bookRefresh();toast(ok?'Sous-rayon '+displayCode+' enregistré et synchronisé':'Enregistré. Actualisez pour vérifier le catalogue.');
+  const ok=await bookRefresh();toast(ok?'Sous-famille « '+name+' » enregistrée et synchronisée':'Enregistré. Actualisez pour vérifier le catalogue.');
  }catch(e){toast('Impossible d’enregistrer : '+e.message);}
  finally{btn.disabled=false;btn.textContent='Enregistrer les modifications';}
 }
@@ -210,10 +217,12 @@ async function resetSectorConfig(){
  const rayon=$('sectorConfigRayon').value,original=$('sectorConfigOriginalCode').value;
  const btn=$('sectorConfigReset');btn.disabled=true;
  try{
-  await bookDeleteSectorSettings(rayon,original);
-  delete sectorOverrides[sectorOverrideKey(rayon,original)];
+  const base=OFFICIAL_SECTORS[rayon].find(s=>s.code===original);
+  const isHidden=!!officialSector(rayon,original)?.hidden;
+  await bookSaveSectorSettings({rayon,sector_code:original,display_code:base.code,color:base.color,display_name:base.name,is_hidden:isHidden});
+  sectorOverrides[sectorOverrideKey(rayon,original)]={display_code:base.code,color:base.color,display_name:base.name,is_hidden:isHidden};
   $('sectorConfigDialog').close();render();
-  const ok=await bookRefresh();toast(ok?'Numéro et couleur d’origine rétablis':'Réinitialisé. Actualisez pour vérifier.');
+  const ok=await bookRefresh();toast(ok?'Titre, numéro et couleur d’origine rétablis':'Réinitialisé. Actualisez pour vérifier.');
  }catch(e){toast('Impossible de réinitialiser : '+e.message);}
  finally{btn.disabled=false;}
 }
@@ -498,6 +507,11 @@ document.querySelector('.nav-home').addEventListener('click',()=>selectFilter('a
 $('sidebarChapters').addEventListener('click',e=>{
  const config=e.target.closest('[data-config-rayon][data-config-code]');
  if(config){openSectorConfig(config.dataset.configRayon,config.dataset.configCode);return;}
+ const del=e.target.closest('[data-delete-rayon][data-delete-code]');
+ if(del){void openSectorDeletion(del.dataset.deleteRayon,del.dataset.deleteCode);return;}
+ const restore=e.target.closest('[data-restore-rayon][data-restore-code]');
+ if(restore){void restoreHiddenSector(restore.dataset.restoreRayon,restore.dataset.restoreCode);return;}
+ if(e.target.closest('[data-toggle-hidden]')){showHiddenSectors=!showHiddenSectors;buildSidebar();return;}
  const chapter=e.target.closest('button[data-chapter-rayon]');
  if(chapter){
   const rayon=chapter.dataset.chapterRayon;
@@ -512,6 +526,7 @@ $('sidebarChapters').addEventListener('click',e=>{
 });
 $('sectorConfigForm').addEventListener('submit',submitSectorConfig);
 $('sectorCodeInput').addEventListener('input',updateSectorPreview);
+$('sectorNameInput').addEventListener('input',updateSectorPreview);
 window.initSectorColorPicker();
 $('sectorConfigCancel').addEventListener('click',()=>$('sectorConfigDialog').close());
 $('sectorConfigReset').addEventListener('click',resetSectorConfig);

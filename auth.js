@@ -27,7 +27,7 @@ async function bookRefresh(){
     .order('rayon').order('sous_rayon').order('reference');
    if(error)throw error;
    const {data:settings,error:settingsError}=await bookClient.from('book_catalog_sections')
-    .select('rayon,sector_code,display_code,color');
+    .select('rayon,sector_code,display_code,color,display_name,is_hidden');
    if(settingsError)throw settingsError;
    sectorOverrides=Object.create(null);
    for(const section of (settings||[]))sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
@@ -46,15 +46,35 @@ async function bookSaveSectorSettings(row){
  if(!bookCanEdit())throw new Error('Configuration réservée aux administrateurs.');
  const {data,error}=await bookClient.from('book_catalog_sections')
    .upsert(row,{onConflict:'rayon,sector_code'})
-   .select('rayon,sector_code,display_code,color').single();
+   .select('rayon,sector_code,display_code,color,display_name,is_hidden').single();
  if(error)throw error;
- if(!data||data.display_code!==row.display_code||data.color!==row.color)throw new Error('La configuration n’a pas été confirmée.');
+ if(!data||data.display_code!==row.display_code||data.color!==row.color||data.display_name!==row.display_name||data.is_hidden!==row.is_hidden)throw new Error('La configuration n’a pas été confirmée.');
 }
 async function bookDeleteSectorSettings(rayon,code){
  if(!bookCanEdit())throw new Error('Configuration réservée aux administrateurs.');
  const {error}=await bookClient.from('book_catalog_sections')
    .delete().eq('rayon',rayon).eq('sector_code',code);
  if(error)throw error;
+}
+async function bookSetSectorVisibility(rayon,code,hidden,d){
+ if(!bookCanEdit())throw new Error('Action réservée aux administrateurs.');
+ const {data,error}=await bookClient.rpc('book_catalog_set_section_visibility',{
+  p_rayon:rayon,p_sector_code:code,p_hidden:hidden,
+  p_display_code:d.displayCode,p_color:d.color,p_display_name:d.name
+ });
+ if(error)throw error;
+ if(data!==true)throw new Error('Le changement de visibilité n’a pas été confirmé.');
+}
+async function bookReassignSectorProducts(sourceRayon,sourceCode,destRayon,destCode,destName,refs){
+ if(!bookCanEdit())throw new Error('Transfert réservé aux administrateurs.');
+ const {data,error}=await bookClient.rpc('book_catalog_reassign_products',{
+  p_source_rayon:sourceRayon,p_source_code:sourceCode,
+  p_destination_rayon:destRayon,p_destination_code:destCode,
+  p_destination_name:destName,p_refs:refs
+ });
+ if(error)throw error;
+ if(Number(data)!==refs.length)throw new Error('Le nombre de références transférées est incorrect.');
+ return Number(data);
 }
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
