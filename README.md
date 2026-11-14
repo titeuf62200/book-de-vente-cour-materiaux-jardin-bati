@@ -14,7 +14,7 @@ Site public : https://titeuf62200.github.io/book-de-vente-cour-materiaux-jardin-
 - Deux éditions A4 distinctes : **PDF Bâti** et **PDF Jardin**.
 - Sommaire de chaque book avec repères couleur et page de début de chaque sous-rayon.
 - Onglet vertical coloré sur **toute la hauteur** du bord droit de chaque page de produits.
-- Couverture distincte par univers. La couverture Bâti comprend une scène illustrée de cour matériaux (et non une photographie authentifiée du magasin de Calais) et des statistiques calculées à chaque génération ; la couverture Jardin conserve la sélection de photos produits.
+- Couverture distincte par univers. La couverture Bâti reprend exactement la maquette photoréaliste validée via un fichier JPEG local (`assets/covers/couverture-bati-calais.jpg`) dont seule la zone des compteurs a été blanchie. Les compteurs sont superposés en HTML à chaque génération du PDF ; la couverture Jardin conserve la sélection de photos produits.
 - Ajout, édition, archivage et restauration des références par un administrateur.
 
 ## Données et accès
@@ -37,7 +37,7 @@ Activer les **graphiques d'arrière-plan** lorsqu'une imprimante ou un navigateu
 
 Les PDF sont préparés à la demande à partir des références actives du rayon sélectionné, à raison de **cinq articles au maximum par page de produits** (dans un même sous-rayon). Les nouvelles références apparaissent dans leur sous-rayon et les numéros de pages du sommaire sont recalculés automatiquement. Le nombre de références et de sous-rayons actifs représentés est recalculé sur la couverture et dans les vignettes des univers à chaque actualisation.
 
-Le visuel de cour matériaux de la couverture Bâti est une **illustration**. Il ne doit pas être présenté comme une photographie réelle du magasin de Calais. Les visuels de la couverture Jardin sont des photos produits du catalogue.
+Le visuel photoréaliste de la couverture Bâti est une **création illustrative**, pas une photographie authentifiée du site de Calais. Sa trame est **figée en JPEG** : aucun dessin simplifié ne la remplace ; seules les deux valeurs « références actives » et « sous-rayons représentés » sont calculées à l’export. Les visuels de la couverture Jardin sont des photos produits du catalogue.
 
 ## Déploiement
 
