@@ -922,3 +922,120 @@
  .book-doors{margin-top:5px}
  .book-door{border-radius:14px}
 }
+
+
+/* Commandes intégrées à la bannière JPEG : plus de fine barre supérieure.
+   Les boutons HTML restent interactifs, avec les mêmes IDs et droits. */
+@media screen {
+  .site-masthead { position:relative; }
+  .masthead-controls {
+    position:absolute;
+    right:clamp(17px,3vw,52px);
+    bottom:clamp(8px,1.3vw,18px);
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:7px;
+    width:min(830px,calc(100% - 48px));
+    padding:10px 12px;
+    background:rgba(255,255,255,.94);
+    border:1px solid rgba(208,227,212,.95);
+    border-radius:15px;
+    box-shadow:0 6px 24px rgba(4,49,28,.18);
+    color:#194f36;
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+  }
+  .masthead-status {
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:4px 12px;
+    width:100%;
+  }
+  .masthead-status .save-status {
+    display:inline-block;
+    margin:0;
+    color:#426f56;
+    font-size:10px;
+    line-height:1.3;
+    font-weight:650;
+    overflow-wrap:anywhere;
+  }
+  .masthead-status #saveStatus {
+    color:#246945;
+    font-weight:800;
+  }
+  .masthead-actions {
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:7px;
+    width:100%;
+  }
+  .masthead-actions .btn {
+    flex:0 1 auto;
+    min-height:37px;
+    padding:8px 10px;
+    font-size:11px;
+    border-radius:8px;
+    border:1px solid #cde3d2;
+    box-shadow:0 1px 2px rgba(10,55,36,.07);
+    white-space:nowrap;
+  }
+  .masthead-actions .btn-white{background:#fff;color:#155339}
+  .masthead-actions .btn-accent{
+    background:#e0f16d;
+    color:#153d24;
+    border-color:#c1de75;
+  }
+  .masthead-actions #logoutBtn {
+    background:#f3f7f4;
+    color:#456554;
+  }
+  .masthead-actions .btn[hidden]{display:none!important}
+  .masthead-actions .btn:focus-visible{
+    outline:3px solid #2e9960;
+    outline-offset:2px;
+  }
+  /* La barre haute n'existe plus : le panneau latéral peut rester fixé
+     en haut de l'écran sans laisser l'ancien décalage de 68 px. */
+  .sidebar{top:0;height:100vh}
+}
+@media screen and (max-width:1050px) {
+  /* Sur tablette le panneau reste attaché à la bannière, sans la masquer. */
+  .masthead-controls{
+    position:relative;
+    right:auto;
+    bottom:auto;
+    margin:-7px 10px 0;
+    width:auto;
+    padding:10px;
+    border-radius:0 0 13px 13px;
+    align-items:stretch;
+    box-shadow:0 5px 15px rgba(10,61,36,.08);
+  }
+  .masthead-status,.masthead-actions{justify-content:center}
+}
+@media screen and (max-width:720px) {
+  .site-masthead .masthead-controls{margin:-3px 0 0;padding:8px 9px;gap:7px}
+  .masthead-status .save-status{font-size:10px;max-width:100%;text-align:center}
+  .masthead-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .masthead-actions .btn{
+    width:100%;
+    min-width:0;
+    padding:8px 6px;
+    min-height:42px;
+    font-size:10px;
+    line-height:1.3;
+    white-space:normal;
+  }
+  .masthead-actions #exportExcelBtn:last-child{grid-column:auto}
+  .sidebar{top:auto;height:auto}
+}
+@media screen and (max-width:390px) {
+  .masthead-actions .btn{font-size:9.5px;padding:7px 4px}
+}
