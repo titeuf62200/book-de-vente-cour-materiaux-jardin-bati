@@ -234,8 +234,6 @@ function render(){
  $('bookJardinCount').textContent=shownActive.filter(p=>p.rayon==='Jardin').length;
  $('bookBatiSectorCount').textContent=sectorList('Matériaux',shownActive,false,true).length;
  $('bookJardinSectorCount').textContent=sectorList('Jardin',shownActive,false,true).length;
- $('heroTotal').textContent=shownActive.length;
- $('hero').hidden=!(state.rayon==='all'&&!state.group&&!state.search);
  $('rayonSelect').value=state.rayon;
  $('resultCount').textContent=shown.length+' produit'+(shown.length>1?'s':'');
  const selectedSector=state.rayon==='all'?null:sectorList(state.rayon,products,true).find(d=>d.code===state.group);
@@ -555,7 +553,6 @@ async function importJSON(file){if(!file)return;try{let j=JSON.parse(await file.
  products=rows;saveProducts();state.showArchived=false;selectFilter('all');toast(rows.length+' références importées');
  }catch(e){toast('Import impossible : '+e.message)}finally{$('importFile').value='';}}
 
-$('browseBtn').addEventListener('click',()=>$('toolSection').scrollIntoView({behavior:'smooth'}));
 $('searchInput').addEventListener('input',e=>{state.search=e.target.value.trim();render();});
 $('rayonSelect').addEventListener('change',e=>{state.rayon=e.target.value;state.group='';render();});
 $('clearFilters').addEventListener('click',()=>selectFilter('all'));
