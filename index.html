@@ -13,26 +13,26 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
   <meta name="description" content="Book de vente Jardin et Bâti — Leroy Merlin Calais. Consultation, intercalaires, photos, croquis et EAN-13.">
   <title>Book de vente • Cour matériaux, Jardin & Bâti | Calais</title>
-  <link rel="stylesheet" href="styles.css?v=20261114-accueil-pastel-v1">
+  <link rel="stylesheet" href="styles.css?v=20261114-controles-banniere-v1">
 </head>
 <body class="login-locked">
   <div id="app">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">◩</span>
-        <div><strong>BOOK DE VENTE</strong><small>CALAIS / COUR MATÉRIAUX · JARDIN · BÂTI</small></div>
-      </div>
-      <div class="topactions">
-        <span id="authBadge" class="save-status">Mode local · non partagé</span><span id="saveStatus" class="save-status">Catalogue local</span><button id="logoutBtn" class="btn btn-white auth-only" hidden>Déconnexion</button>
-        <button id="printBatiBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Matériaux">↻ PDF Bâti actualisé</button>
-        <button id="printJardinBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Jardin">↻ PDF Jardin actualisé</button>
-        <button id="addTopBtn" class="btn btn-accent admin-only" hidden>＋ Ajouter un produit</button>
-        <button id="exportExcelBtn" class="btn btn-accent">↓ Excel</button>
-      </div>
-    </header>
-    <section class="site-masthead" aria-label="Book de vente Leroy Merlin Calais : Cour matériaux, Jardin et Bâti">
+    <header class="site-masthead" aria-label="Book de vente Leroy Merlin Calais : Cour matériaux, Jardin et Bâti">
       <img src="./assets/banners/book-vente-calais.jpg" alt="Book de vente Leroy Merlin Calais — Cour matériaux, Jardin et Bâti" fetchpriority="high" decoding="async">
-    </section>
+      <nav class="masthead-controls" aria-label="Actions du Book de vente">
+        <div class="masthead-status">
+          <span id="authBadge" class="save-status">Mode local · non partagé</span>
+          <span id="saveStatus" class="save-status" role="status">Catalogue local</span>
+        </div>
+        <div class="masthead-actions">
+          <button id="printBatiBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Matériaux">↻ PDF Bâti actualisé</button>
+          <button id="printJardinBtn" class="btn btn-white" title="Recharge le catalogue partagé puis génère un nouveau PDF Jardin">↻ PDF Jardin actualisé</button>
+          <button id="addTopBtn" class="btn btn-accent admin-only" hidden>＋ Ajouter un produit</button>
+          <button id="exportExcelBtn" class="btn btn-accent">↓ Excel</button>
+          <button id="logoutBtn" class="btn btn-white auth-only" hidden>Déconnexion</button>
+        </div>
+      </nav>
+    </header>
     <div class="workspace">
       <aside id="sidebar" class="sidebar">
         <div class="side-caption">LE BOOK DE VENTE</div>
