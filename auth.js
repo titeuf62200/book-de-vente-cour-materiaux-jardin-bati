@@ -12,6 +12,23 @@ let bookAuthMode='signup';
 const roleLabel=r=>r==='admin'?'Administrateur':'Consultation';
 function uiAuthStatus(message,error=false){const el=$('authMessage');el.textContent=message;el.classList.toggle('auth-error',error);}
 function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggle('login-locked',on);$('logoutBtn').hidden=on;}
+function bookHideCatalogRetry(){
+ $('authRetryCatalogBtn').hidden=true;
+ if(!bookRecovery){
+  $('authForm').hidden=false;
+  $('authSwitchMode').hidden=false;
+  $('authForgotBtn').hidden=false;
+ }
+}
+function bookShowCatalogRetry(message){
+ bookShowGate(true);
+ $('authForm').hidden=true;
+ $('authSwitchMode').hidden=true;
+ $('authForgotBtn').hidden=true;
+ $('authRetryCatalogBtn').hidden=false;
+ $('authIntro').textContent='Votre session existe, mais le catalogue partagé ne répond pas.';
+ uiAuthStatus(message||'Le serveur est momentanément inaccessible. Réessayez le chargement sans ressaisir votre mot de passe.',true);
+}
 function bookCanEdit(){return !!bookClient&&bookRole==='admin'&&BOOK_ADMIN_EMAILS.has(bookEmail);}
 function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,sous_rayon_code:p.sousRayonCode||null,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
 function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,sousRayonCode:p.sous_rayon_code,pageSource:p.page_source});}
@@ -255,8 +272,12 @@ async function bookActivate(){
    // Ne découvrir l'accueil qu'une fois les familles et compteurs prêts :
    // évite l'affichage trompeur de « 0 référence » pendant la connexion.
    const ready=await bookRefresh();
-   bookShowGate(false);
-   if(!ready)$('saveStatus').textContent='Catalogue indisponible — utiliser Actualiser';
+   if(ready){
+    bookHideCatalogRetry();
+    bookShowGate(false);
+   }else{
+    bookShowCatalogRetry('Votre compte est connecté, mais le chargement des références a échoué. Réessayez sans ressaisir votre mot de passe.');
+   }
  }catch(e){
   bookRole=null;bookShowGate(true);
   const message=String(e?.message||'');
@@ -264,7 +285,7 @@ async function bookActivate(){
    try{await bookClient.auth.signOut({scope:'local'});}catch(_error){}
    bookSwitchAuthMode('signup');
    uiAuthStatus('Votre ancienne session n’est plus valable. Créez vos nouveaux identifiants pour accéder au Book de vente.');
-  }else uiAuthStatus('Impossible d’ouvrir le book : '+bookAuthErrorMessage(e),true);
+  }else bookShowCatalogRetry('Impossible de charger votre profil : '+bookAuthErrorMessage(e));
  }
 }
 /* Comptes utilisateurs gérés par Supabase Auth.
@@ -273,6 +294,7 @@ async function bookActivate(){
  */
 function bookSwitchAuthMode(mode){
  if(bookRecovery)return;
+ bookHideCatalogRetry();
  bookAuthMode=mode==='signup'?'signup':'login';
  const signup=bookAuthMode==='signup';
  $('authTitle').textContent=signup?'Créer mes identifiants':'Connexion au book de vente';
@@ -337,6 +359,23 @@ async function bookLogin(ev){
  }catch(error){
   uiAuthStatus('Impossible de '+(bookAuthMode==='signup'?'créer le compte':'se connecter')+' : '+bookAuthErrorMessage(error),true);
  }finally{btn.disabled=false;btn.textContent=bookAuthMode==='signup'?'Créer mon profil':'Se connecter';}
+}
+async function bookRetryCatalog(){
+ const btn=$('authRetryCatalogBtn');
+ if(btn.disabled)return;
+ btn.disabled=true;
+ btn.textContent='Vérification du serveur…';
+ try{
+  if(!bookClient)throw Error('Le service de connexion n’est pas initialisé.');
+  if(!bookRole){
+   await bookActivate();
+   return;
+  }
+  const ready=await bookRefresh();
+  if(ready){bookHideCatalogRetry();bookShowGate(false);}
+  else bookShowCatalogRetry('Le catalogue reste momentanément inaccessible. Vos références ne sont pas effacées ; vous pouvez réessayer.');
+ }catch(error){bookShowCatalogRetry('Nouvelle tentative impossible : '+bookAuthErrorMessage(error));}
+ finally{btn.disabled=false;btn.textContent='↻ Réessayer le chargement';}
 }
 async function bookForgotPassword(){
  if(!bookClient)return uiAuthStatus('Service de connexion indisponible.',true);
@@ -415,6 +454,7 @@ async function bookInit(){
  }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+bookAuthErrorMessage(e),true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
+$('authRetryCatalogBtn').addEventListener('click',bookRetryCatalog);
 $('authSwitchMode').addEventListener('click',()=>bookSwitchAuthMode(bookAuthMode==='login'?'signup':'login'));
 $('authForgotBtn').addEventListener('click',bookForgotPassword);
 $('authRecoveryForm').addEventListener('submit',bookCompleteRecovery);
