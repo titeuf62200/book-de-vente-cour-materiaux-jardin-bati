@@ -195,6 +195,11 @@ async function bookReassignSectorProducts(sourceRayon,sourceCode,destRayon,destC
 }
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
+ // Sécurité : ne jamais remplacer un média existant par une valeur vide
+ // simplement parce que la fiche n'avait pas encore été téléchargée.
+ const sourceRef=String(originalRef||item.reference);
+ if(products.some(p=>p.reference===sourceRef)&&!bookMediaLoaded.has(sourceRef))
+  throw new Error('Visuels originaux non chargés : réouvrez la fiche avant d’enregistrer.');
  const row=toRemote(item);
  if(row.ean&&!validEan(row.ean))throw new Error('EAN-13 incorrect : les barres doivent correspondre au numéro.');
  const {data:saved,error}=await bookClient.from('book_catalog_products')
