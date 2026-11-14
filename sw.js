@@ -1,7 +1,7 @@
 /* PWA Book de vente : seulement les ressources statiques publiques sont mises en cache.
    Le catalogue Supabase, les sessions et les réponses d'API ne sont jamais interceptés. */
 'use strict';
-const CACHE_NAME = 'book-vente-calais-shell-20261114-v13-photo-jardin';
+const CACHE_NAME = 'book-vente-calais-shell-20261114-v14-nuanciers';
 const CACHE_PREFIX = 'book-vente-calais-shell-';
 const ROOT = self.registration.scope;
 const STATIC_PATHS = [
@@ -15,6 +15,7 @@ const STATIC_PATHS = [
   './auth.js',
   './donnees_catalogue.js',
   './nuanciers-data.js',
+  './nuanciers-smart.js',
   './croquis-editor.js',
   './sketch-atelier.js',
   './sketch-cliparts.js',
