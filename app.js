@@ -389,27 +389,23 @@ function makePrintHTML(rayon){
  const colorBar=d=>'<div class="p-tab" style="--tab-color:'+d.color+'"><span>'+escapeHtml(label(d))+'</span></div>';
  return pages.map((p,i)=>{
   if(p.kind==='cover'){
-   // La couverture Bâti validée est une véritable image JPEG statique :
-   // seuls les deux compteurs du bandeau bas sont rendus en HTML.
-   if(rayon==='Matériaux'){
-    const referenceCount=active.length;
-    const sectorCount=sectors.length;
-    const referenceNumberSize=referenceCount>=10000?16:referenceCount>=1000?20:24;
-    const referenceLabelSize=referenceCount>=10000?13:referenceCount>=1000?15:17.4;
-    return '<div class="print-page p-cover p-cover-photo-bati">'
-     +'<img class="cover-photo-fixed" src="./assets/covers/couverture-bati-calais.jpg" alt="Couverture Bâti & Matériaux — illustration de la cour matériaux Leroy Merlin Calais">'
-     +'<div class="cover-photo-counter cover-photo-counter-refs" style="--counter-number-size:'+referenceNumberSize+'pt;--counter-label-size:'+referenceLabelSize+'pt">'
-     +'<strong>'+referenceCount+'</strong><span>RÉFÉRENCES</span></div>'
-     +'<div class="cover-photo-counter cover-photo-counter-sectors">'
-     +'<div class="cover-counter-line"><strong>'+sectorCount+'</strong><span>SOUS-RAYONS</span></div>'
-     +'<span class="cover-counter-label">REPRÉSENTÉS</span></div>'
-     +'</div>';
-   }
-   // Aucun changement de trame pour l'autre Book (Jardin).
-   return '<div class="print-page p-cover p-cover-jardin"><div class="cover-micro">LEROY MERLIN CALAIS · BOOK DE VENTE</div><h1>JARDIN</h1><p>Sous-rayons LM numérotés · Photos · Croquis · EAN-13</p>'
-    +coverGallery(active,sectors)
-    +'<div class="p-bottom">'+active.length+' RÉFÉRENCES<br>'+sectors.length+' sous-rayons représentés</div>'
-    +'<small>Les intercalaires et les numéros de pages se recalculent à partir du catalogue actif.</small></div>';
+   // Trames JPEG validées : la page entière reste une image fixe, sauf les
+   // deux compteurs qui suivent les références actives du rayon à l'export.
+   const isBati=rayon==='Matériaux';
+   const imagePath=isBati?'./assets/covers/couverture-bati-calais.jpg':'./assets/covers/couverture-jardin-calais.jpg';
+   const imageDescription=isBati?'Couverture Bâti & Matériaux':'Couverture Jardin';
+   const referenceCount=active.length;
+   const sectorCount=sectors.length;
+   const referenceNumberSize=referenceCount>=10000?16:referenceCount>=1000?20:24;
+   const referenceLabelSize=referenceCount>=10000?13:referenceCount>=1000?15:17.4;
+   return '<div class="print-page p-cover p-cover-photo '+(isBati?'p-cover-photo-bati':'p-cover-photo-jardin')+'">'
+    +'<img class="cover-photo-fixed" src="'+imagePath+'" alt="'+imageDescription+' — illustration de Leroy Merlin Calais">'
+    +'<div class="cover-photo-counter cover-photo-counter-refs" style="--counter-number-size:'+referenceNumberSize+'pt;--counter-label-size:'+referenceLabelSize+'pt">'
+    +'<strong>'+referenceCount+'</strong><span>RÉFÉRENCES</span></div>'
+    +'<div class="cover-photo-counter cover-photo-counter-sectors">'
+    +'<div class="cover-counter-line"><strong>'+sectorCount+'</strong><span>SOUS-RAYONS</span></div>'
+    +'<span class="cover-counter-label">REPRÉSENTÉS</span></div>'
+    +'</div>';
   }
   if(p.kind==='intro'){
    return '<div class="print-page p-intro">'+printHeader(rayon,i+1,pages.length)+'<div class="p-label">'+(rayon==='Matériaux'?'001':'009')+' — RAYON</div><h1>'+escapeHtml(rayon.toUpperCase())+'</h1><p>'+active.length+' références / '+sectors.length+' sous-rayons représentés</p><h2 class="p-toc-title">SOMMAIRE · SOUS-RAYONS NUMÉROTÉS & COULEURS</h2><ul class="p-toc">'+sectors.map(d=>'<li style="--tab-color:'+d.color+'"><span class="p-toc-swatch"></span><span class="p-toc-name">'+escapeHtml(label(d))+'</span><strong>p. '+toc[d.code]+'</strong></li>').join('')+'</ul><p class="p-toc-note">Le code et sa couleur sont identiques dans le sommaire et sur le liseré vertical des pages correspondantes.</p></div>';
