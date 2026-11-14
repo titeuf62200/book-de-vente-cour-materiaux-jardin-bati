@@ -171,6 +171,13 @@ async function inspectImage(source){
   }
   const input=signature(img);
   if(source instanceof File&&typeof img.close==='function')img.close();
+  // Les images du Book sont chargées à la demande : pour une comparaison
+  // photographique, préparer la bibliothèque complète sans appel d'IA.
+  if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookEnsureMedia==='function'){
+   status('Préparation des photos du catalogue pour la comparaison…');
+   await bookEnsureMedia(catalog().map(p=>p.reference));
+   if(currentRun!==runId)return;
+  }
   const entries=catalog().filter(p=>safeImage(p.photo));
   if(!entries.length)throw Error('Le catalogue ne dispose pas encore de photos comparables.');
   const matches=[],limit=6;let index=0,complete=0;
