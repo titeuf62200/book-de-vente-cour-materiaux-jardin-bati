@@ -1,13 +1,14 @@
 /* PWA Book de vente : seulement les ressources statiques publiques sont mises en cache.
    Le catalogue Supabase, les sessions et les réponses d'API ne sont jamais interceptés. */
 'use strict';
-const CACHE_NAME = 'book-vente-calais-shell-20261114-v12-photo';
+const CACHE_NAME = 'book-vente-calais-shell-20261114-v13-photo-jardin';
 const CACHE_PREFIX = 'book-vente-calais-shell-';
 const ROOT = self.registration.scope;
 const STATIC_PATHS = [
   './offline.html',
   './styles.css',
   './assets/covers/couverture-bati-calais.jpg',
+  './assets/covers/couverture-jardin-calais.jpg',
   './app.js',
   './sector-management.js',
   './sector-color-picker.js',
