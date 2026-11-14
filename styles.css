@@ -861,3 +861,64 @@
  .nuancier-refresh{font-size:11px;padding:7px 8px}
  .nuancier-close{flex-shrink:0}
 }
+
+
+/* Accueil 2026 : la bannière panoramique remplace l'ancien grand bloc hero.
+   Le vert pastel s'applique à la navigation et aux cartes, pas aux PDF imprimés. */
+@media screen {
+ :root{--back:#eef8ee;--line:#d8e9da}
+ html,body{background:#eef8ee}
+ #app{min-height:100vh;background:#eef8ee}
+ .site-masthead{
+   display:block;
+   width:100%;
+   max-width:1900px;
+   margin:0 auto;
+   padding:12px clamp(12px,2.1vw,30px) 0;
+   background:transparent;
+ }
+ .site-masthead img{
+   display:block;
+   width:100%;
+   height:auto;
+   aspect-ratio:5.55 / 1;
+   max-height:275px;
+   object-fit:cover;
+   object-position:center;
+   border-radius:16px;
+   border:1px solid #cbded0;
+   box-shadow:0 8px 28px rgba(16,66,40,.10);
+ }
+ .workspace{background:transparent}
+ .sidebar{background:#f3faf3;border-right-color:#d8e9da}
+ .main{padding-top:10px;background:transparent}
+ .book-doors{margin:7px 0 14px;gap:20px}
+ .book-door{
+   background:#fff;
+   border:1px solid #d2e7d5;
+   border-radius:18px;
+   box-shadow:0 9px 24px rgba(35,79,49,.09);
+ }
+ .book-door-body{background:#fff}
+ .book-hint{padding:3px 4px;color:#537461}
+ .tools{margin-top:21px}
+ .nav-home.active,.group-btn.active,.chapter-btn.active{background:#dff1e2}
+}
+@media screen and (max-width:950px){
+ .site-masthead{padding:10px 14px 0}
+ .site-masthead img{aspect-ratio:4.6 / 1;max-height:225px}
+ .book-doors{gap:14px}
+}
+@media screen and (max-width:720px){
+ .site-masthead{padding:8px 10px 0}
+ .site-masthead img{
+   height:137px;
+   aspect-ratio:auto;
+   object-position:23% center;
+   border-radius:11px;
+ }
+ .sidebar{background:#f3faf3;border-bottom:1px solid #d8e9da}
+ .main{padding-top:8px}
+ .book-doors{margin-top:5px}
+ .book-door{border-radius:14px}
+}
