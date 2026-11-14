@@ -846,5 +846,5 @@
   .nuancier-edge-title{position:absolute;left:25mm;font:900 7pt Arial,sans-serif;color:#164d37}
   .nuancier-edge-profile{position:absolute;left:25mm;border:.65mm solid #26352b;box-sizing:border-box!important;background:#e5e9e5!important;print-color-adjust:exact!important}
   .nuancier-edge-dim{position:absolute;left:25mm;font:700 7pt Arial,sans-serif;color:#53685b}
-  .nuancier-scale-warning{position:absolute;left:25mm;top:211mm;max-width:155mm;padding:1.1mm 3mm;background:#fff0cd!important;color:#754e0c;font:800 8pt Arial,sans-serif;print-color-adjust:exact!important}
+  .nuancier-scale-warning{position:absolute;left:25mm;top:50mm;max-width:155mm;padding:1.1mm 3mm;background:#fff0cd!important;color:#754e0c;font:800 8pt Arial,sans-serif;print-color-adjust:exact!important}
 }
