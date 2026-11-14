@@ -138,3 +138,13 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - Les cinq commandes existantes **PDF Bâti actualisé**, **PDF Jardin actualisé**, **Ajouter un produit**, **Excel** et **Déconnexion** restent des boutons HTML actifs dans une capsule blanche translucide, en bas à droite de la bannière `assets/banners/book-vente-calais.jpg`. Leurs identifiants et autorisations sont conservés (ajout de produit réservé aux administrateurs).
 - Les informations de connexion et de synchronisation sont conservées dans le même panneau. Sur tablette et mobile, le panneau reste à l'intérieur de l'en-tête et passe sous la photo pour conserver des boutons lisibles et accessibles.
 - Le décalage de la navigation latérale, auparavant prévu pour la barre fixe, est supprimé.
+
+
+## Chargement accéléré des familles et références (14/11/2026)
+
+- **Connexion rapide :** l'application récupère d'abord uniquement les champs légers (référence LM, désignation, EAN, rayon, sous-rayon, statut, notes) et les réglages de sous-rayons. Les **photos et croquis ne sont plus téléchargés en bloc** à la connexion (environ 30,81 Mo de médias pour 631 fiches lors de l'analyse précédente).
+- L'accès à l'accueil n'est autorisé qu'après le chargement effectif de ces données. Les compteurs des livres Bâti et Jardin affichent les **vraies valeurs** au lieu de montrer temporairement zéro ; si la base est indisponible, l'interface indique une erreur.
+- **Médias à la demande :** les photos et croquis de la zone visible sont chargés avec `IntersectionObserver` (maximum trois demandes concurrentes, groupes de 30, doublons évités). Les visuels absents restent identifiés comme tels après la tentative de chargement.
+- **Sécurité des éditions :** toute modification ou archivage récupère d'abord les images originales ; aucune sauvegarde ne peut écraser un visuel qui n'a pas été chargé. Les données métier ne sont pas mises en cache de manière persistante et les médias en mémoire sont supprimés à la déconnexion.
+- **Intégrité des fonctions :** l'impression PDF récupère toutes les photos/croquis du rayon concerné avant de construire les pages ; les nuanciers récupèrent leurs images utiles ; le JSON de sauvegarde charge toutes les images avant téléchargement. L'export Excel n'a besoin que des métadonnées. La recherche de photos charge les images uniquement lorsque la comparaison est demandée et la recherche EAN reste immédiate.
+- Les requêtes restent authentifiées et respectent les politiques RLS existantes. Aucun changement de structure ni de droits de la base Supabase.
