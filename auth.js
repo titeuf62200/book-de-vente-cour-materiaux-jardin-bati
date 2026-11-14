@@ -201,6 +201,7 @@ async function bookReassignSectorProducts(sourceRayon,sourceCode,destRayon,destC
 }
 async function bookSaveItem(item,originalRef=null){
  if(!bookCanEdit())throw new Error('Seuls les administrateurs peuvent modifier le catalogue.');
+ if(!bookCatalogReady)throw new Error('Le catalogue n’a pas été chargé : actualisez avant de modifier une référence.');
  // Sécurité : ne jamais remplacer un média existant par une valeur vide
  // simplement parce que la fiche n'avait pas encore été téléchargée.
  const sourceRef=String(originalRef||item.reference);
