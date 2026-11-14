@@ -122,3 +122,11 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - L'impression des nuanciers réutilise une synchronisation de moins de **10 minutes** ; au-delà, elle vérifie à nouveau le catalogue partagé avant d'imprimer.
 - La reprise de l'application après un changement d'onglet ne recharge plus les données si elles ont été synchronisées dans les **10 dernières minutes**.
 - Les compteurs de profils du menu sont actualisés après synchronisation pour refléter les nouveaux gabarits.
+
+
+## Accueil simplifié et bannière panoramique (14/11/2026)
+
+- Le gros bloc d'introduction « Book de vente / Cour matériaux · Jardin & Bâti » a été **supprimé**. Après la barre supérieure et la nouvelle bannière, les deux cartes **Book Bâti & Matériaux** et **Book Jardin** apparaissent directement.
+- Bannière JPEG validée : `assets/banners/book-vente-calais.jpg` (version optimisée pour le Web). Image fixe intégrée au dépôt et mise en cache par le service worker.
+- Fond principal **vert pastel** `#eef8ee`, avec deux cartes blanches et une navigation latérale vert très clair ; les règles d'impression PDF ne sont pas modifiées.
+- La barre d'actions conserve **Déconnexion**, **PDF Bâti**, **PDF Jardin**, **Ajouter un produit** et **Excel**. L'illustration de la bannière n'est pas une photographie authentifiée du magasin de Calais.
