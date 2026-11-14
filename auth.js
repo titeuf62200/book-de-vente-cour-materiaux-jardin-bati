@@ -158,6 +158,7 @@ async function bookRefresh(){
    return true;
   }catch(error){
    $('saveStatus').textContent='Erreur de synchronisation : réessayer';
+   if(!bookCatalogReady)render(); // « … » plutôt qu’un faux zéro si le serveur ne répond pas.
    toast('Impossible de charger les références : '+(error?.message||error));
    return false;
   }finally{loadingBook=false;}
