@@ -289,6 +289,10 @@ function bookSwitchAuthMode(mode){
 function bookAuthErrorMessage(error){
  const message=String(error?.message||error||'Erreur inconnue');
  const code=String(error?.code||'');
+ // En cas de 522/525 ou de « Failed to fetch », l'authentification n'a pas
+ // forcément pu atteindre le serveur. Ne jamais suggérer une erreur de mot de passe.
+ if(/failed to fetch|fetch failed|networkerror|network request failed|connection (terminated|timed? ?out)|timeout|timed out|\\b(?:502|503|504|520|522|524|525)\\b/i.test(code+' '+message))
+  return 'Le serveur du Book de vente est momentanément inaccessible. Il ne s’agit pas d’un refus de votre mot de passe. Vous pouvez réessayer avec « Se connecter » quand le service répond à nouveau. Si le problème persiste, les responsables doivent vérifier le projet Supabase.';
  if(/over_email_send_rate_limit|email rate limit exceeded|email rate limit/i.test(code+' '+message))
   return 'Envoi des e-mails temporairement bloqué : le quota de messages de Supabase est atteint (2 e-mails par heure avec le service intégré). Aucune demande n’a pu être envoyée. Évitez de renouveler les essais immédiatement. Pour une solution durable, il faut configurer un service SMTP dédié dans Supabase.';
  if(/email address not authorized|email not authorized/i.test(code+' '+message))
