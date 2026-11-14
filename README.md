@@ -120,5 +120,5 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - L'ouverture des menus **Nuancier Bâti** et **Nuancier Jardin** utilise les données déjà chargées en mémoire lors de la connexion. Elle ne relance plus un téléchargement complet des photos et croquis à chaque clic (environ **30,81 Mo** pour 631 fiches observées lors du diagnostic).
 - Le bouton **↻ Actualiser** dans la fenêtre du nuancier permet de forcer la synchronisation lorsque des coordinateurs ont ajouté ou modifié des références sur un autre poste.
 - L'impression des nuanciers réutilise une synchronisation de moins de **10 minutes** ; au-delà, elle vérifie à nouveau le catalogue partagé avant d'imprimer.
-- La reprise de l'application après un changement d'onglet ne recharge plus les données si elles ont été synchronisées dans les **2 dernières minutes**.
+- La reprise de l'application après un changement d'onglet ne recharge plus les données si elles ont été synchronisées dans les **10 dernières minutes**.
 - Les compteurs de profils du menu sont actualisés après synchronisation pour refléter les nouveaux gabarits.
