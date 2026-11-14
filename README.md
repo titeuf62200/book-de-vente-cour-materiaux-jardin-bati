@@ -104,3 +104,12 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - Le `sector_code` initial reste l'identifiant technique interne des références : changer le numéro visible **ne déplace ni ne supprime les produits** et ne modifie pas leurs croquis, photos ou EAN.
 - Les codes visibles et couleurs mis à jour s'appliquent au menu, aux en-têtes du catalogue, aux choix de sous-rayons du formulaire, aux exports Excel, au sommaire et aux liserés colorés des PDF actualisés.
 - Les lecteurs n'ont pas accès au bouton de configuration. Les changements sont partagés après synchronisation et visibles après actualisation.
+
+
+## Croquis et nuanciers enrichis (14/11/2026)
+
+- **154 références actives du Bâti ont été complétées dans la base partagée**, uniquement lorsqu'un croquis était vide. Aucun croquis existant ni photo produit n'a été remplacé. Les nouvelles images sont des **schémas indicatifs, non à l'échelle**, avec une silhouette par grande catégorie (toiture, gouttière, tube, regard, bois, caniveau, etc.) et les seules cotes clairement présentes dans la désignation. Ce ne sont pas des vues techniques certifiées : contrôler les géométries exactes sur les produits.
+- Les nuanciers restent liés au catalogue synchronisé. Le module `nuanciers-smart.js` complète les fiches historiques avec les **sections de bois**, **dalles minérales**, **pavés** et **pas japonais** dont les dimensions sont interprétables sans ambiguïté ; il ignore les références dont les mesures ne sont pas suffisamment fiables.
+- Les pavés et dalles présentent une **vue de dessus** (1:1 lorsque possible) et une **vue de tranche** distincte avec indication de l'épaisseur. La tranche est réduite, toujours signalée. Les grandes dalles dépassant le format disponible sont présentées à échelle réduite explicitement indiquée.
+- Le dessin des pas japonais correspond à une **enveloppe rectangulaire nominale** et non au contour irrégulier réel. Les fiches gardent photo, référence et EAN du catalogue.
+- La génération/visualisation du nuancier requiert une actualisation réussie du catalogue Supabase afin d'inclure les nouvelles références.
