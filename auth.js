@@ -16,6 +16,9 @@ function bookCanEdit(){return !!bookClient&&bookRole==='admin'&&BOOK_ADMIN_EMAIL
 function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,sous_rayon_code:p.sousRayonCode||null,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
 function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,sousRayonCode:p.sous_rayon_code,pageSource:p.page_source});}
 let bookRefreshTask=null;
+// Instant de la dernière synchronisation complète réussie.
+// Évite de transférer plusieurs fois les mêmes images lourdes.
+let bookLastSyncAt=0;
 async function bookRefresh(){
  if(!bookClient||!bookRole)return false;
  if(bookRefreshTask)return bookRefreshTask;
@@ -32,6 +35,7 @@ async function bookRefresh(){
    sectorOverrides=Object.create(null);
    for(const section of (settings||[]))sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
    products=(data||[]).map(fromRemote);
+   bookLastSyncAt=Date.now();
    render();$('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
    return true;
   }catch(error){
@@ -282,5 +286,7 @@ $('authSwitchMode').addEventListener('click',()=>bookSwitchAuthMode(bookAuthMode
 $('authForgotBtn').addEventListener('click',bookForgotPassword);
 $('authRecoveryForm').addEventListener('submit',bookCompleteRecovery);
 $('logoutBtn').addEventListener('click',bookLogout);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole)void bookRefresh();});
+// Au retour sur l'onglet, ne relancer le transfert de ~31 Mo que si
+// une synchronisation précédente date de plus de 2 minutes.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole&&Date.now()-bookLastSyncAt>120000)void bookRefresh();});
 void bookInit();
