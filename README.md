@@ -130,3 +130,11 @@ Le périmètre du Book (Matériaux / Jardin, nuanciers, identification EAN/photo
 - Bannière JPEG validée : `assets/banners/book-vente-calais.jpg` (version optimisée pour le Web). Image fixe intégrée au dépôt et mise en cache par le service worker.
 - Fond principal **vert pastel** `#eef8ee`, avec deux cartes blanches et une navigation latérale vert très clair ; les règles d'impression PDF ne sont pas modifiées.
 - La barre d'actions conserve **Déconnexion**, **PDF Bâti**, **PDF Jardin**, **Ajouter un produit** et **Excel**. L'illustration de la bannière n'est pas une photographie authentifiée du magasin de Calais.
+
+
+## Commandes dans la bannière (14/11/2026)
+
+- Suppression de l'ancienne barre supérieure `topbar` en doublon avec le titre du JPEG.
+- Les cinq commandes existantes **PDF Bâti actualisé**, **PDF Jardin actualisé**, **Ajouter un produit**, **Excel** et **Déconnexion** restent des boutons HTML actifs dans une capsule blanche translucide, en bas à droite de la bannière `assets/banners/book-vente-calais.jpg`. Leurs identifiants et autorisations sont conservés (ajout de produit réservé aux administrateurs).
+- Les informations de connexion et de synchronisation sont conservées dans le même panneau. Sur tablette et mobile, le panneau reste à l'intérieur de l'en-tête et passe sous la photo pour conserver des boutons lisibles et accessibles.
+- Le décalage de la navigation latérale, auparavant prévu pour la barre fixe, est supprimé.
