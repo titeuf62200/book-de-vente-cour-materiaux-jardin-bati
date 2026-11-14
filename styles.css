@@ -848,3 +848,16 @@
   .nuancier-edge-dim{position:absolute;left:25mm;font:700 7pt Arial,sans-serif;color:#53685b}
   .nuancier-scale-warning{position:absolute;left:25mm;top:50mm;max-width:155mm;padding:1.1mm 3mm;background:#fff0cd!important;color:#754e0c;font:800 8pt Arial,sans-serif;print-color-adjust:exact!important}
 }
+
+
+/* Nuanciers : ouverture immédiate + actualisation explicite. */
+.nuancier-header-actions{display:flex;align-items:center;gap:9px;flex:none}
+.nuancier-refresh{white-space:nowrap;font-size:12px;padding:8px 11px;min-height:35px}
+.nuancier-refresh:disabled{opacity:.55;cursor:progress}
+@media(max-width:540px){
+ .nuancier-dialog-header{padding:14px 13px 12px;gap:8px}
+ .nuancier-dialog-header h2{font-size:20px}
+ .nuancier-header-actions{gap:6px}
+ .nuancier-refresh{font-size:11px;padding:7px 8px}
+ .nuancier-close{flex-shrink:0}
+}
