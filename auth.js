@@ -240,7 +240,11 @@ async function bookActivate(){
    state.admin=bookCanEdit();$('app').classList.toggle('admin-on',state.admin);$('adminPanel').hidden=!state.admin;$('addBtn').hidden=!state.admin;$('addTopBtn').hidden=!state.admin;
    $('editToggle').setAttribute('aria-pressed',String(state.admin));
    $('editToggle').textContent=state.admin?'✓ Quitter le mode modification':'✎ Mode modification';
-   bookShowGate(false);await bookRefresh();
+   // Ne découvrir l'accueil qu'une fois les familles et compteurs prêts :
+   // évite l'affichage trompeur de « 0 référence » pendant la connexion.
+   const ready=await bookRefresh();
+   bookShowGate(false);
+   if(!ready)$('saveStatus').textContent='Catalogue indisponible — utiliser Actualiser';
  }catch(e){
   bookRole=null;bookShowGate(true);
   const message=String(e?.message||'');
@@ -366,7 +370,7 @@ async function bookCompleteRecovery(ev){
  finally{btn.disabled=false;}
 }
 async function bookLogout(){
- await bookClient?.auth.signOut();bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
+ await bookClient?.auth.signOut();bookResetMedia();bookCatalogReady=false;bookLastSyncAt=0;bookRole=null;bookEmail='';bookSessionUserId='';products=[];state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);uiAuthStatus('Vous êtes déconnecté.');
 }
 async function bookInit(){
  bookRecovery=location.hash.includes('type=recovery');
@@ -380,7 +384,7 @@ async function bookInit(){
   bookClient.auth.onAuthStateChange((event,session)=>{
    if(event==='PASSWORD_RECOVERY')setTimeout(bookShowRecovery,0);
    if(event==='SIGNED_IN'&&!bookRecovery)setTimeout(()=>{if(!bookRecovery&&!bookRole)void bookActivate();},0);
-   if(event==='SIGNED_OUT'){bookRole=null;products=[];sectorOverrides=Object.create(null);state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
+   if(event==='SIGNED_OUT'){bookResetMedia();bookCatalogReady=false;bookLastSyncAt=0;bookRole=null;products=[];sectorOverrides=Object.create(null);state.admin=false;$('adminPanel').hidden=true;$('addBtn').hidden=true;$('addTopBtn').hidden=true;$('printArea').innerHTML='';render();bookShowGate(true);}
   });
   const {data:{session},error}=await bookClient.auth.getSession();
   if(error){
