@@ -232,6 +232,8 @@ function render(){
  const shownActive=products.filter(p=>!p.archived);
  $('bookBatiCount').textContent=shownActive.filter(p=>p.rayon==='Matériaux').length;
  $('bookJardinCount').textContent=shownActive.filter(p=>p.rayon==='Jardin').length;
+ $('bookBatiSectorCount').textContent=sectorList('Matériaux',shownActive,false,true).length;
+ $('bookJardinSectorCount').textContent=sectorList('Jardin',shownActive,false,true).length;
  $('heroTotal').textContent=shownActive.length;
  $('hero').hidden=!(state.rayon==='all'&&!state.group&&!state.search);
  $('rayonSelect').value=state.rayon;
@@ -376,7 +378,7 @@ function coverGallery(active,sectors){
 function makePrintHTML(rayon){
  if(!UNIVERSES.includes(rayon))throw new Error('Choisir Matériaux ou Jardin');
  const active=products.filter(p=>!p.archived&&p.rayon===rayon);
- const sectors=sectorList(rayon,active,false);
+ const sectors=sectorList(rayon,active,false,true);
  const pages=[{kind:'cover'},{kind:'intro'}],toc={};
  for(const d of sectors){
   const entries=sortProductsAlphabetically(active.filter(p=>productSectorKey(p)===d.code));
