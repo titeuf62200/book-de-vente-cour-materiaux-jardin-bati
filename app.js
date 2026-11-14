@@ -122,7 +122,11 @@ function imageMarkup(src,description){return src?`<img src="${escapeHtml(src)}" 
 
 function imageZoomMarkup(p,kind){
  const src=safeImage(p[kind]);
- if(!src)return '<div class="media-empty" role="img" aria-label="'+(kind==='croquis'?'Croquis':'Photo')+' indisponible">'+(kind==='croquis'?'Croquis non disponible':'Photo non disponible')+'</div>';
+ if(!src){
+  const pending=typeof bookMediaLoaded!=='undefined'&&typeof bookCatalogReady!=='undefined'&&bookCatalogReady&&!bookMediaLoaded.has(String(p.reference));
+  const message=pending?'Visuel chargé à l’affichage…':(kind==='croquis'?'Croquis non disponible':'Photo non disponible');
+  return '<div class="media-empty" role="img" aria-label="'+escapeHtml(message)+'">'+escapeHtml(message)+'</div>';
+ }
  const title=kind==='croquis'?'croquis coté':'photo du produit';
  return '<button type="button" class="media-zoom-trigger" data-view-image="'+escapeHtml(p.reference)+'" data-view-kind="'+kind+'" title="Agrandir le '+title+'" aria-label="Agrandir le '+title+' de la référence '+escapeHtml(p.reference)+'"><img src="'+escapeHtml(src)+'" loading="lazy" decoding="async" alt="'+escapeHtml(title+' '+p.designation)+'"><span class="media-zoom-label" aria-hidden="true">⤢ Agrandir</span></button>';
 }
@@ -138,9 +142,9 @@ function getShown(){
 }
 
 function productMarkup(p){let isArchived=p.archived?' archived':'';let barcode=barcodeDataURL(p.ean);
-return `<article class="product-card${isArchived}">
+return `<article class="product-card${isArchived}" data-catalog-ref="${escapeHtml(p.reference)}">
  <div class="product-top"><div class="product-title-line"><div class="reference">RÉF. ${escapeHtml(p.reference)}${p.archived?' · ARCHIVÉE':''}</div>${state.admin?`<button type="button" class="ref-trash" data-archive="${escapeHtml(p.reference)}" title="${p.archived?'Restaurer cette référence':'Retirer du catalogue et des prochains PDF'}" aria-label="${p.archived?'Restaurer':'Supprimer'} la référence ${escapeHtml(p.reference)}">${p.archived?'↶':'🗑'}</button>`:''}</div><h4 class="product-title">${escapeHtml(p.designation)}</h4><div class="catalogue-product-family">${escapeHtml(p.sousRayon)}</div></div>
- <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain">${imageZoomMarkup(p,'photo')}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain">${imageZoomMarkup(p,'croquis')}</div></figure></div>
+ <div class="product-media"><figure class="media-box"><figcaption>PHOTO DU PRODUIT</figcaption><div class="image-contain" data-catalog-media="photo">${imageZoomMarkup(p,'photo')}</div></figure><figure class="media-box"><figcaption>CROQUIS COTÉ</figcaption><div class="image-contain" data-catalog-media="croquis">${imageZoomMarkup(p,'croquis')}</div></figure></div>
  <figure class="barcode-box"><figcaption>EAN-13${!p.ean?' non renseigné':''}</figcaption>${barcode?`<img src="${escapeHtml(barcode)}" loading="lazy" alt="Code-barres ${escapeHtml(p.ean)}">`:`<span class="ean-numeric">EAN à saisir</span>`}</figure>
  ${p.notes?`<div class="product-notes">⚠ ${escapeHtml(p.notes)}</div>`:''}
  ${state.admin?`<div class="admin-actions"><button class="btn btn-simple" data-edit="${escapeHtml(p.reference)}">✎ Modifier</button><button class="btn ${p.archived?'btn-primary':'btn-danger'}" data-archive="${escapeHtml(p.reference)}">${p.archived?'↺ Restaurer':'🗑 Supprimer'}</button></div>`:''}</article>`;
@@ -255,6 +259,7 @@ function render(){
   }
  }
  $('catalogue').innerHTML=out;
+ if(typeof bookWatchMedia==='function')bookWatchMedia();
 }
 
 function selectFilter(rayon,group=''){
@@ -282,8 +287,12 @@ function updateDepartmentOptions(rayon,code='',preferredFamily=''){
  sel.value=officialSector(rayon,code)?code:'';
  updateDatalist(rayon,sel.value,preferredFamily);
 }
-function showForm(ref=null){
+async function showForm(ref=null){
  if(!state.admin||typeof bookCanEdit==='function'&&!bookCanEdit())return toast('Accès administrateur requis');
+ // Une édition ne doit jamais écraser une photo/croquis pas encore récupéré.
+ if(ref&&typeof bookEnsureMedia==='function'&&typeof bookMediaLoaded!=='undefined'&&!bookMediaLoaded.has(String(ref))){
+  try{await bookEnsureMedia([ref]);}catch(e){return toast('Impossible de charger les visuels de cette référence : '+e.message);}
+ }
  originalEditReference=ref;
  const p=ref?products.find(x=>x.reference===ref):null;
  if(ref&&!p){toast('Référence introuvable');return;}
@@ -326,10 +335,21 @@ async function submitProduct(event){event.preventDefault();if(!state.admin)retur
  }finally{saveBtn.disabled=false;saveBtn.textContent='Enregistrer le produit';}
 }
 async function setArchive(ref){if(!state.admin)return;const p=products.find(x=>x.reference===ref);if(!p)return;if(!p.archived&&!confirm(`Retirer la référence ${ref} des futurs PDF et exports Excel ? Elle pourra être restaurée.`))return;
- try{await bookSaveItem({...p,archived:!p.archived},ref);p.archived=!p.archived;render();if(typeof bookRefresh==='function')await bookRefresh();toast(p.archived?'Référence retirée des éditions futures (récupérable)':'Référence restaurée dans le catalogue et les prochains PDF');}catch(e){toast('Modification non enregistrée : '+e.message);}
+ try{
+  if(typeof bookEnsureMedia==='function')await bookEnsureMedia([ref]);
+  await bookSaveItem({...p,archived:!p.archived},ref);p.archived=!p.archived;render();if(typeof bookRefresh==='function')await bookRefresh();toast(p.archived?'Référence retirée des éditions futures (récupérable)':'Référence restaurée dans le catalogue et les prochains PDF');}catch(e){toast('Modification non enregistrée : '+e.message);}
 }
 function downloadBlob(content,name,mime){const blob=content instanceof Blob?content:new Blob([content],{type:mime||'application/octet-stream'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),8000);}
-function exportJSON(){downloadBlob(JSON.stringify({version:1,source:'Book de vente Leroy Merlin Calais',exportedAt:new Date().toISOString(),products},null,2),'Book_de_vente_Calais_SAUVEGARDE.json','application/json');toast('Sauvegarde JSON téléchargée');}
+async function exportJSON(){
+ // Les sauvegardes JSON doivent toujours contenir les véritables images.
+ if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
+  $('saveStatus').textContent='Préparation de la sauvegarde complète des images…';
+  try{await bookEnsureMedia(products.map(p=>p.reference));}
+  catch(error){toast('Sauvegarde annulée : images incomplètes ('+error.message+')');return;}
+ }
+ downloadBlob(JSON.stringify({version:1,source:'Book de vente Leroy Merlin Calais',exportedAt:new Date().toISOString(),products},null,2),'Book_de_vente_Calais_SAUVEGARDE.json','application/json');
+ toast('Sauvegarde JSON complète téléchargée');
+}
 function csvEsc(v){v=String(v??'');return '"'+v.replaceAll('"','""')+'"';}
 function crc32(bytes){let c=-1;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^(-1))>>>0;}
 function zipStore(files){const enc=new TextEncoder(),local=[],central=[];let offset=0;
