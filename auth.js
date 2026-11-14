@@ -15,39 +15,145 @@ function bookShowGate(on){$('authGate').hidden=!on;document.body.classList.toggl
 function bookCanEdit(){return !!bookClient&&bookRole==='admin'&&BOOK_ADMIN_EMAILS.has(bookEmail);}
 function toRemote(p){return {reference:String(p.reference),designation:String(p.designation),ean:String(p.ean),rayon:p.rayon,sous_rayon:p.sousRayon,sous_rayon_code:p.sousRayonCode||null,photo:p.photo||'',croquis:p.croquis||'',notes:p.notes||'',page_source:p.pageSource||null,archived:!!p.archived};}
 function fromRemote(p){return cleanItem({...p,sousRayon:p.sous_rayon,sousRayonCode:p.sous_rayon_code,pageSource:p.page_source});}
+// Le catalogue est chargé en 2 temps : références, familles et compteurs
+// immédiatement ; les images volumineuses sont récupérées à la demande.
+// Une session fermée ou renouvelée ne conserve aucune donnée métier en cache.
 let bookRefreshTask=null;
-// Instant de la dernière synchronisation complète réussie.
-// Évite de transférer plusieurs fois les mêmes images lourdes.
 let bookLastSyncAt=0;
+let bookMediaEpoch=0;
+let bookMediaLoaded=new Set();
+let bookMediaPending=new Map();
+let bookMediaQueues=[Promise.resolve(),Promise.resolve(),Promise.resolve()];
+let bookMediaQueueCursor=0;
+let bookMediaObserver=null;
+let bookCatalogReady=false;
+
+function bookResetMedia(){
+ bookMediaEpoch++;
+ bookMediaLoaded=new Set();
+ bookMediaPending=new Map();
+ bookMediaQueues=[Promise.resolve(),Promise.resolve(),Promise.resolve()];
+ if(bookMediaObserver)bookMediaObserver.disconnect();
+}
+function bookPatchLoadedMedia(refs){
+ const selected=new Set(refs.map(String));
+ // Modifier uniquement les visuels, sans reconstruire 600 cartes ni déplacer le défilement.
+ document.querySelectorAll('.product-card[data-catalog-ref]').forEach(card=>{
+  const ref=card.dataset.catalogRef;
+  if(!selected.has(ref))return;
+  const p=products.find(x=>x.reference===ref);
+  if(!p)return;
+  for(const kind of ['photo','croquis']){
+   const target=card.querySelector('[data-catalog-media="'+kind+'"]');
+   if(target)target.innerHTML=imageZoomMarkup(p,kind);
+  }
+ });
+ document.querySelectorAll('.nuancier-list-item[data-nuancier-refs]').forEach(item=>{
+  const refs=(item.dataset.nuancierRefs||'').split(',');
+  if(!refs.some(ref=>selected.has(ref)))return;
+  const p=refs.map(ref=>products.find(x=>x.reference===ref&&!x.archived)).find(p=>p?.photo);
+  const target=item.querySelector('.nuancier-list-photo');
+  if(target&&p)target.innerHTML=imageMarkup(safeImage(p.photo),p.designation);
+ });
+}
+
+// Récupération des images en groupes limités à 30 références, avec au plus
+// 3 requêtes simultanées ; doublons évités entre l'écran, le zoom et le PDF.
+async function bookEnsureMedia(refs){
+ if(!bookClient||!bookRole)throw Error('Catalogue non connecté.');
+ const wanted=[...new Set((refs||[]).map(String).filter(Boolean))];
+ const jobs=new Set(),fresh=[];
+ for(const ref of wanted){
+  if(bookMediaLoaded.has(ref))continue;
+  if(bookMediaPending.has(ref))jobs.add(bookMediaPending.get(ref));
+  else fresh.push(ref);
+ }
+ for(let i=0;i<fresh.length;i+=30){
+  const batch=fresh.slice(i,i+30),epoch=bookMediaEpoch;
+  const index=bookMediaQueueCursor++%bookMediaQueues.length;
+  const task=bookMediaQueues[index].then(async()=>{
+   if(epoch!==bookMediaEpoch)return;
+   const {data,error}=await bookClient.from('book_catalog_products')
+    .select('reference,photo,croquis').in('reference',batch);
+   if(error)throw error;
+   if(epoch!==bookMediaEpoch)return;
+   const found=new Map((data||[]).map(p=>[String(p.reference),p]));
+   for(const ref of batch){
+    const target=products.find(p=>p.reference===ref),row=found.get(ref);
+    if(target&&row){
+     target.photo=safeImage(row.photo);
+     target.croquis=safeImage(row.croquis);
+     bookMediaLoaded.add(ref);
+    }
+   }
+   bookPatchLoadedMedia(batch);
+  });
+  bookMediaQueues[index]=task.catch(()=>{});
+  for(const ref of batch)bookMediaPending.set(ref,task);
+  jobs.add(task);
+  void task.finally(()=>{for(const ref of batch)if(bookMediaPending.get(ref)===task)bookMediaPending.delete(ref);}).catch(()=>{});
+ }
+ await Promise.all([...jobs]);
+ return true;
+}
+function bookWatchMedia(){
+ if(bookMediaObserver)bookMediaObserver.disconnect();
+ const cards=[...document.querySelectorAll('.product-card[data-catalog-ref]')];
+ if(!cards.length||!bookClient||!bookRole)return;
+ if(typeof IntersectionObserver==='undefined'){
+  void bookEnsureMedia(cards.slice(0,20).map(el=>el.dataset.catalogRef)).catch(()=>{});
+  return;
+ }
+ bookMediaObserver=new IntersectionObserver(entries=>{
+  const refs=[];
+  for(const entry of entries){
+   if(!entry.isIntersecting)continue;
+   bookMediaObserver.unobserve(entry.target);
+   const ref=entry.target.dataset.catalogRef;
+   if(ref&&!bookMediaLoaded.has(ref))refs.push(ref);
+  }
+  if(refs.length)void bookEnsureMedia(refs).catch(err=>console.warn('Photo ou croquis indisponible :',err.message));
+ },{rootMargin:'350px 0px'});
+ for(const el of cards)if(!bookMediaLoaded.has(el.dataset.catalogRef))bookMediaObserver.observe(el);
+}
 async function bookRefresh(){
  if(!bookClient||!bookRole)return false;
  if(bookRefreshTask)return bookRefreshTask;
  bookRefreshTask=(async()=>{
-  loadingBook=true;$('saveStatus').textContent='Synchronisation du catalogue…';
+  loadingBook=true;
+  $('saveStatus').textContent='Chargement rapide des familles et références…';
   try{
-   const {data,error}=await bookClient.from('book_catalog_products')
-    .select('reference,designation,ean,rayon,sous_rayon,sous_rayon_code,photo,croquis,notes,page_source,archived')
-    .order('rayon').order('sous_rayon').order('reference');
-   if(error)throw error;
-   const {data:settings,error:settingsError}=await bookClient.from('book_catalog_sections')
-    .select('rayon,sector_code,display_code,color,display_name,is_hidden');
-   if(settingsError)throw settingsError;
+   // Ne plus transférer les ~31 Mo de photos/croquis lors de la connexion.
+   // Les deux lectures de données légères sont parallèles.
+   const [catalog,sections]=await Promise.all([
+    bookClient.from('book_catalog_products')
+     .select('reference,designation,ean,rayon,sous_rayon,sous_rayon_code,notes,page_source,archived')
+     .order('rayon').order('sous_rayon').order('reference'),
+    bookClient.from('book_catalog_sections')
+     .select('rayon,sector_code,display_code,color,display_name,is_hidden')
+   ]);
+   if(catalog.error)throw catalog.error;
+   if(sections.error)throw sections.error;
+   const loaded=(catalog.data||[]).map(fromRemote);
+   const settings=sections.data||[];
+   // N'afficher les nouvelles familles qu'après succès des deux requêtes.
+   bookResetMedia();
    sectorOverrides=Object.create(null);
-   for(const section of (settings||[]))sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
-   products=(data||[]).map(fromRemote);
+   for(const section of settings)sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
+   products=loaded;
+   bookCatalogReady=true;
    bookLastSyncAt=Date.now();
    render();
-   // Les compteurs du menu reflètent les profils réellement présents,
-   // y compris les nouvelles sections extraites du catalogue partagé.
    document.querySelectorAll('[data-nuancier]').forEach(btn=>{
     const counter=btn.querySelector('.nuancier-nav-count');
     if(counter&&typeof nuancierFor==='function')counter.textContent=nuancierFor(btn.dataset.nuancier).length;
    });
-   $('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
+   const count=products.filter(p=>!p.archived).length;
+   $('saveStatus').textContent=count+' références synchronisées · visuels à la demande';
    return true;
   }catch(error){
-   $('saveStatus').textContent='Erreur de synchronisation';
-   toast('Impossible de charger le catalogue : '+error.message);
+   $('saveStatus').textContent='Erreur de synchronisation : réessayer';
+   toast('Impossible de charger les références : '+(error?.message||error));
    return false;
   }finally{loadingBook=false;}
  })();
