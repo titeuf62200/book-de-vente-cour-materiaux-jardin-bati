@@ -36,7 +36,14 @@ async function bookRefresh(){
    for(const section of (settings||[]))sectorOverrides[sectorOverrideKey(section.rayon,section.sector_code)]=section;
    products=(data||[]).map(fromRemote);
    bookLastSyncAt=Date.now();
-   render();$('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
+   render();
+   // Les compteurs du menu reflètent les profils réellement présents,
+   // y compris les nouvelles sections extraites du catalogue partagé.
+   document.querySelectorAll('[data-nuancier]').forEach(btn=>{
+    const counter=btn.querySelector('.nuancier-nav-count');
+    if(counter&&typeof nuancierFor==='function')counter.textContent=nuancierFor(btn.dataset.nuancier).length;
+   });
+   $('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
    return true;
   }catch(error){
    $('saveStatus').textContent='Erreur de synchronisation';
