@@ -104,7 +104,7 @@ function sortProductsAlphabetically(items){return items.slice().sort(compareProd
 
 function safeImage(s){s=String(s||'');return /^(?:assets\/[a-z0-9_-]+_(?:photo|croquis|ean)\.(?:webp|png|jpe?g)|data:image\/(?:png|jpeg|webp|svg\+xml);base64,[a-z0-9+/=]+)$/i.test(s)?s:'';}
 function cleanItem(p){return {reference:String(p.reference??'').trim(),designation:String(p.designation??'').trim(),ean:String(p.ean??'').trim(),rayon:UNIVERSES.includes(p.rayon)?p.rayon:'Jardin',sousRayon:String(p.sousRayon??'Divers').trim(),sousRayonCode:officialSector(p.rayon,p.sousRayonCode)?p.sousRayonCode:inferOfficialCode(p.rayon,p.sousRayon),photo:safeImage(p.photo),croquis:safeImage(p.croquis),barcode:safeImage(p.barcode),notes:String(p.notes??'').trim(),pageSource:Number(p.pageSource)||null,archived:!!p.archived};}
-function loadProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)return INITIAL.map(cleanItem);try{const saved=JSON.parse(localStorage.getItem(STORAGE));if(Array.isArray(saved)&&saved.length)return saved.map(cleanItem);}catch(e){console.warn('Sauvegarde locale indisponible',e)}return INITIAL.map(cleanItem);}
+function loadProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)return [];try{const saved=JSON.parse(localStorage.getItem(STORAGE));if(Array.isArray(saved)&&saved.length)return saved.map(cleanItem);}catch(e){console.warn('Sauvegarde locale indisponible',e)}return INITIAL.map(cleanItem);}
 function saveProducts(){if(window.BOOK_SUPABASE_CONFIG?.url)throw Error('Enregistrement local désactivé : utiliser la sauvegarde distante');try{localStorage.setItem(STORAGE,JSON.stringify(products));$('saveStatus').textContent='Enregistré dans ce navigateur';if(typeof triggerBackendSave==='function')triggerBackendSave();return true;}catch(e){console.error(e);toast('Mémoire du navigateur saturée. Exportez une sauvegarde JSON.');return false;}}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
 function validEan(ean){if(!/^\d{13}$/.test(ean))return false;const d=[...ean].map(Number);const sum=d.slice(0,12).reduce((s,v,i)=>s+v*(i%2?3:1),0);return (10-sum%10)%10===d[12];}
@@ -234,10 +234,11 @@ function render(){
  buildSidebar();
  const shown=getShown();
  const shownActive=products.filter(p=>!p.archived);
- $('bookBatiCount').textContent=shownActive.filter(p=>p.rayon==='Matériaux').length;
- $('bookJardinCount').textContent=shownActive.filter(p=>p.rayon==='Jardin').length;
- $('bookBatiSectorCount').textContent=sectorList('Matériaux',shownActive,false,true).length;
- $('bookJardinSectorCount').textContent=sectorList('Jardin',shownActive,false,true).length;
+ const waitingForSharedCatalog=!!window.BOOK_SUPABASE_CONFIG?.url&&typeof bookCatalogReady!=='undefined'&&!bookCatalogReady;
+ $('bookBatiCount').textContent=waitingForSharedCatalog?'…':shownActive.filter(p=>p.rayon==='Matériaux').length;
+ $('bookJardinCount').textContent=waitingForSharedCatalog?'…':shownActive.filter(p=>p.rayon==='Jardin').length;
+ $('bookBatiSectorCount').textContent=waitingForSharedCatalog?'…':sectorList('Matériaux',shownActive,false,true).length;
+ $('bookJardinSectorCount').textContent=waitingForSharedCatalog?'…':sectorList('Jardin',shownActive,false,true).length;
  $('rayonSelect').value=state.rayon;
  $('resultCount').textContent=shown.length+' produit'+(shown.length>1?'s':'');
  const selectedSector=state.rayon==='all'?null:sectorList(state.rayon,products,true).find(d=>d.code===state.group);
