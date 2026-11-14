@@ -54,16 +54,19 @@
    const parsed=parseProduct(p);
    if(!parsed)continue;
    const key=[parsed.kind,parsed.w,parsed.h,parsed.length].join('-');
-   let entry=byKey.get(key);
-   if(!entry){
+   const bucket=(byKey.get(key)||[]);
+   let entry=bucket[bucket.length-1];
+   // Deux EAN maximum par fiche pour éviter toute coupure de code-barres en A4.
+   if(!entry||entry.refs.length>=2){
     const name=(parsed.kind==='charpente'?'SECTION BOIS':parsed.kind==='pas-japonais'?'PAS JAPONAIS':parsed.kind==='dalles'?'DALLE':'PAVÉ')+
        ' '+(parsed.w/10)+' × '+(parsed.h/10)+' cm'+(parsed.kind==='charpente'?' · COUPE':(' · ÉP. '+parsed.length/10+' cm'));
-    entry={id:'auto-'+key,kind:parsed.kind,name,w:parsed.w,h:parsed.h,length:parsed.length,refs:[],auto:true};
-    byKey.set(key,entry);
+    entry={id:'auto-'+key+'-'+(bucket.length+1),kind:parsed.kind,name,w:parsed.w,h:parsed.h,length:parsed.length,refs:[],auto:true};
+    bucket.push(entry);
+    byKey.set(key,bucket);
    }
    entry.refs.push(String(p.reference));
   }
-  return output.concat([...byKey.values()]);
+  return output.concat([...byKey.values()].flat());
  }
  window.BookSmartNuancier={expand,parseProduct};
 })();
