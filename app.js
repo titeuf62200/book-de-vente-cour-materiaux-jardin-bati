@@ -319,6 +319,10 @@ async function submitProduct(event){event.preventDefault();if(!state.admin)retur
  if(!ref||!des||!group||!UNIVERSES.includes(rayon)||!officialSector(rayon,deptCode)){toast('Renseignez la référence, la désignation et le sous-rayon officiel numéroté');return;}
  if(ean&&!validEan(ean)){toast('Code EAN-13 invalide : vérifiez les 13 chiffres et la clé de contrôle');return;}
  if(products.some(p=>p.reference===ref&&p.reference!==originalEditReference)){toast('Cette référence existe déjà');return;}
+ if(originalEditReference&&typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
+  try{await bookEnsureMedia([originalEditReference]);}
+  catch(error){toast('Enregistrement interrompu : visuels d’origine indisponibles ('+error.message+')');return;}
+ }
  let existing=originalEditReference?products.find(p=>p.reference===originalEditReference):null;
  const item={...(existing||{}),reference:ref,designation:des,ean,rayon,sousRayon:group,sousRayonCode:deptCode,notes:String(data.get('notes')||'').trim(),archived:!!existing?.archived,photo:existing?.photo||'',croquis:existing?.croquis||'',barcode:existing?.ean===ean?(existing?.barcode||''):''};
  try{if($('inputPhoto').files[0])item.photo=await asDataUrl($('inputPhoto').files[0]);if(window.BookSketchEditor)item.croquis=await window.BookSketchEditor.resolveCroquis();}catch(e){toast('Impossible de préparer les images : '+e.message);return;}
