@@ -476,10 +476,15 @@ async function showNuancier(rayon){
   const groupItems=list.filter(p=>p.kind===group.kind);
   return '<section class="nuancier-group"><h3>'+escapeHtml(group.label)+' <small>· '+groupItems.length+' profils</small></h3><div class="nuancier-profile-list">'+groupItems.map(p=>{
    const product=p.refs.map(ref=>products.find(item=>item.reference===ref&&!item.archived)).find(Boolean);
-   return '<article class="nuancier-list-item"><div class="nuancier-list-photo">'+(product?.photo?imageMarkup(safeImage(product.photo),p.name):'<span>1:1</span>')+'</div><div class="nuancier-list-info"><strong>'+escapeHtml(p.name)+'</strong><span>'+escapeHtml(nuancierDimentions(p))+'</span><small>Réf. '+escapeHtml(p.refs.join(', '))+'</small></div><button type="button" class="btn btn-outline nuancier-one-btn" data-nuancier-one="'+escapeHtml(p.id)+'">Imprimer cette fiche</button></article>';
+   return '<article class="nuancier-list-item" data-nuancier-refs="'+escapeHtml(p.refs.join(','))+'"><div class="nuancier-list-photo">'+(product?.photo?imageMarkup(safeImage(product.photo),p.name):'<span>1:1</span>')+'</div><div class="nuancier-list-info"><strong>'+escapeHtml(p.name)+'</strong><span>'+escapeHtml(nuancierDimentions(p))+'</span><small>Réf. '+escapeHtml(p.refs.join(', '))+'</small></div><button type="button" class="btn btn-outline nuancier-one-btn" data-nuancier-one="'+escapeHtml(p.id)+'">Imprimer cette fiche</button></article>';
   }).join('')+'</div></section>';
  }).join('');
  if(!$('nuancierDialog').open)$('nuancierDialog').showModal();
+ // Les miniatures se chargent en arrière-plan sans retarder l'ouverture.
+ if(typeof bookEnsureMedia==='function'){
+  const refs=[...new Set(list.flatMap(p=>p.refs))];
+  void bookEnsureMedia(refs).catch(err=>console.warn('Photos des nuanciers :',err.message));
+ }
 }
 async function refreshNuancierOnDemand(){
  const btn=$('nuancierRefresh');
@@ -542,6 +547,11 @@ async function printNuancier(rayon,profileId=''){
  }
  const profiles=nuancierFor(rayon).filter(p=>!profileId||p.id===profileId);
  if(!profiles.length)return toast('Profil non disponible.');
+ if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
+  $('saveStatus').textContent='Préparation des photos du nuancier…';
+  try{await bookEnsureMedia([...new Set(profiles.flatMap(p=>p.refs))]);}
+  catch(error){toast('Impression annulée : les photos ne sont pas toutes accessibles ('+error.message+')');return;}
+ }
  $('nuancierDialog').close();
  const area=$('printArea');
  area.innerHTML=profiles.map((p,i)=>nuancierPrintCard(p,i,profiles.length,rayon)).join('');
@@ -557,8 +567,14 @@ async function printBook(rayon){
   const synced=typeof bookRefresh==='function'&&await bookRefresh();
   if(!synced){toast('PDF non ouvert : impossible de vérifier les dernières références sur le serveur. Réessayez.');return;}
  }
- const total=products.filter(p=>!p.archived&&p.rayon===rayon).length;
+ const active=products.filter(p=>!p.archived&&p.rayon===rayon);
+ const total=active.length;
  if(!total){toast('Aucune référence active dans le rayon '+rayon+'.');return;}
+ if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
+  $('saveStatus').textContent='Chargement des photos et croquis pour le PDF '+rayon+'…';
+  try{await bookEnsureMedia(active.map(p=>p.reference));}
+  catch(error){toast('PDF annulé : visuels non récupérés ('+error.message+'). Réessayez.');return;}
+ }
  const area=$('printArea');area.innerHTML=makePrintHTML(rayon);
  const images=[...area.querySelectorAll('img')];
  try{await Promise.race([Promise.all(images.map(img=>img.decode().catch(()=>{}))),new Promise(resolve=>setTimeout(resolve,12000))]);}catch(e){}
