@@ -443,7 +443,11 @@ function nuancierDimentions(p){
  if(p.kind==='bordures')return 'H '+p.h+' × ép. '+p.w+' mm · longueur '+p.length+' mm';
  return p.w+' × '+p.h+' mm'+(p.kind==='charpente'&&p.length?' · longueur '+(p.length/1000).toLocaleString('fr-FR')+' m':'');
 }
-function showNuancier(rayon){
+async function showNuancier(rayon){
+ if(window.BOOK_SUPABASE_CONFIG?.url && typeof bookRefresh==='function'){
+  const ok=await bookRefresh();
+  if(!ok)return toast('Nuancier non ouvert : catalogue partagé indisponible.');
+ }
  const list=nuancierFor(rayon);if(!list.length)return toast('Les profils du nuancier sont indisponibles.');
  selectedNuancier=rayon;
  $('nuancierDialogTitle').textContent='Nuancier '+(rayon==='Matériaux'?'Bâti':'Jardin');
@@ -499,13 +503,13 @@ function nuancierPrintCard(p,index,count,rayon){
   +'</section>';
 }
 async function printNuancier(rayon,profileId=''){
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookRefresh==='function'){
+  const synced=await bookRefresh();
+  if(!synced)return toast('Impression annulée : catalogue partagé indisponible.');
+ }
  const profiles=nuancierFor(rayon).filter(p=>!profileId||p.id===profileId);
  if(!profiles.length)return toast('Profil non disponible.');
  $('nuancierDialog').close();
- if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookRefresh==='function'){
-  const synced=await bookRefresh();
-  if(!synced)toast('Catalogue non actualisé : photos et EAN potentiellement incomplets.');
- }
  const area=$('printArea');
  area.innerHTML=profiles.map((p,i)=>nuancierPrintCard(p,i,profiles.length,rayon)).join('');
  const images=[...area.querySelectorAll('img')];
