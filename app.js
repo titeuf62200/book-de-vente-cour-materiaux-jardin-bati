@@ -290,6 +290,7 @@ function updateDepartmentOptions(rayon,code='',preferredFamily=''){
 }
 async function showForm(ref=null){
  if(!state.admin||typeof bookCanEdit==='function'&&!bookCanEdit())return toast('Accès administrateur requis');
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookCatalogReady!=='undefined'&&!bookCatalogReady)return toast('Catalogue non chargé : actualisez avant de modifier.');
  // Une édition ne doit jamais écraser une photo/croquis pas encore récupéré.
  if(ref&&typeof bookEnsureMedia==='function'&&typeof bookMediaLoaded!=='undefined'&&!bookMediaLoaded.has(String(ref))){
   try{await bookEnsureMedia([ref]);}catch(e){return toast('Impossible de charger les visuels de cette référence : '+e.message);}
@@ -346,6 +347,7 @@ async function setArchive(ref){if(!state.admin)return;const p=products.find(x=>x
 }
 function downloadBlob(content,name,mime){const blob=content instanceof Blob?content:new Blob([content],{type:mime||'application/octet-stream'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),8000);}
 async function exportJSON(){
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookCatalogReady!=='undefined'&&!bookCatalogReady)return toast('Catalogue non chargé : actualisez avant d’exporter.');
  // Les sauvegardes JSON doivent toujours contenir les véritables images.
  if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
   $('saveStatus').textContent='Préparation de la sauvegarde complète des images…';
@@ -368,6 +370,7 @@ function zipStore(files){const enc=new TextEncoder(),local=[],central=[];let off
 function xml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
 function col(i){let s='';for(let k=i+1;k>0;k=Math.floor((k-1)/26))s=String.fromCharCode(65+(k-1)%26)+s;return s;}
 function exportXlsx(){
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookCatalogReady!=='undefined'&&!bookCatalogReady)return toast('Catalogue non chargé : actualisez avant d’exporter Excel.');
  const headers=['Rayon','Code sous-rayon','Nomenclature officielle','Famille / détail','Référence LM','Désignation','EAN-13','Notes'];
  const base='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
  const files={
