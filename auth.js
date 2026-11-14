@@ -294,6 +294,6 @@ $('authForgotBtn').addEventListener('click',bookForgotPassword);
 $('authRecoveryForm').addEventListener('submit',bookCompleteRecovery);
 $('logoutBtn').addEventListener('click',bookLogout);
 // Au retour sur l'onglet, ne relancer le transfert de ~31 Mo que si
-// une synchronisation précédente date de plus de 2 minutes.
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole&&Date.now()-bookLastSyncAt>120000)void bookRefresh();});
+// une synchronisation précédente date de plus de 10 minutes.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&bookRole&&Date.now()-bookLastSyncAt>600000)void bookRefresh();});
 void bookInit();
