@@ -1,7 +1,7 @@
 /* PWA Book de vente : seulement les ressources statiques publiques sont mises en cache.
    Le catalogue Supabase, les sessions et les réponses d'API ne sont jamais interceptés. */
 'use strict';
-const CACHE_NAME = 'book-vente-calais-shell-20261114-v17-accueil-banniere';
+const CACHE_NAME = 'book-vente-calais-shell-20261114-v18-actions-banniere';
 const CACHE_PREFIX = 'book-vente-calais-shell-';
 const ROOT = self.registration.scope;
 const STATIC_PATHS = [
