@@ -444,7 +444,9 @@ function nuancierDimentions(p){
  return p.w+' × '+p.h+' mm'+(p.kind==='charpente'&&p.length?' · longueur '+(p.length/1000).toLocaleString('fr-FR')+' m':'');
 }
 async function showNuancier(rayon){
- if(window.BOOK_SUPABASE_CONFIG?.url && typeof bookRefresh==='function'){
+ // L'ouverture réutilise le catalogue chargé à la connexion.
+ // Pas de nouveau téléchargement des photos et des croquis à chaque clic.
+ if(!products.length && window.BOOK_SUPABASE_CONFIG?.url && typeof bookRefresh==='function'){
   const ok=await bookRefresh();
   if(!ok)return toast('Nuancier non ouvert : catalogue partagé indisponible.');
  }
@@ -459,7 +461,17 @@ async function showNuancier(rayon){
    return '<article class="nuancier-list-item"><div class="nuancier-list-photo">'+(product?.photo?imageMarkup(safeImage(product.photo),p.name):'<span>1:1</span>')+'</div><div class="nuancier-list-info"><strong>'+escapeHtml(p.name)+'</strong><span>'+escapeHtml(nuancierDimentions(p))+'</span><small>Réf. '+escapeHtml(p.refs.join(', '))+'</small></div><button type="button" class="btn btn-outline nuancier-one-btn" data-nuancier-one="'+escapeHtml(p.id)+'">Imprimer cette fiche</button></article>';
   }).join('')+'</div></section>';
  }).join('');
- $('nuancierDialog').showModal();
+ if(!$('nuancierDialog').open)$('nuancierDialog').showModal();
+}
+async function refreshNuancierOnDemand(){
+ const btn=$('nuancierRefresh');
+ if(btn.disabled)return;
+ btn.disabled=true;btn.textContent='Actualisation…';
+ try{
+  if(typeof bookRefresh!=='function'||!await bookRefresh())return toast('Actualisation impossible : réessayez plus tard.');
+  await showNuancier(selectedNuancier);
+  toast('Nuancier actualisé avec les dernières références.');
+ }finally{btn.disabled=false;btn.textContent='↻ Actualiser';}
 }
 function nuancierPrintCard(p,index,count,rayon){
  const info=NUANCIER_SECTIONS.find(s=>s.kind===p.kind);
@@ -503,7 +515,10 @@ function nuancierPrintCard(p,index,count,rayon){
   +'</section>';
 }
 async function printNuancier(rayon,profileId=''){
- if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookRefresh==='function'){
+ // Réutiliser le catalogue récent : une deuxième impression ne
+ // retransfère plus automatiquement les 30 Mo d'images du book.
+ const syncAge=typeof bookLastSyncAt==='number'?Date.now()-bookLastSyncAt:Infinity;
+ if(window.BOOK_SUPABASE_CONFIG?.url&&typeof bookRefresh==='function'&&syncAge>10*60*1000){
   const synced=await bookRefresh();
   if(!synced)return toast('Impression annulée : catalogue partagé indisponible.');
  }
@@ -727,6 +742,7 @@ $('exportJsonBtn').addEventListener('click',exportJSON);
 $('exportExcelBtn').addEventListener('click',exportXlsx);
 document.querySelectorAll('[data-nuancier]').forEach(btn=>btn.addEventListener('click',()=>showNuancier(btn.dataset.nuancier)));
 $('nuancierClose').addEventListener('click',()=>$('nuancierDialog').close());
+$('nuancierRefresh').addEventListener('click',()=>void refreshNuancierOnDemand());
 $('nuancierPrintAll').addEventListener('click',()=>void printNuancier(selectedNuancier));
 $('nuancierDialogContent').addEventListener('click',e=>{
  const btn=e.target.closest('[data-nuancier-one]');
