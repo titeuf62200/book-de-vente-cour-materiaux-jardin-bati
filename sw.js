@@ -1,7 +1,7 @@
 /* PWA Book de vente : seulement les ressources statiques publiques sont mises en cache.
    Le catalogue Supabase, les sessions et les réponses d'API ne sont jamais interceptés. */
 'use strict';
-const CACHE_NAME = 'book-vente-calais-shell-20261114-v23-auth-diagnostic';
+const CACHE_NAME = 'book-vente-calais-shell-20261114-v24-auth-retry-network-first';
 const CACHE_PREFIX = 'book-vente-calais-shell-';
 const ROOT = self.registration.scope;
 const STATIC_PATHS = [
@@ -75,14 +75,17 @@ self.addEventListener('fetch', event => {
       }
       return response;
     });
+    // Les scripts de connexion et de synchronisation doivent être récents.
+    // Le cache reste un secours seulement si GitHub Pages est inaccessible.
+    if (url.pathname.endsWith('/auth.js') || url.pathname.endsWith('/app.js')) {
+      try { return await update; }
+      catch (_) { return cached || Response.error(); }
+    }
     if (cached) {
       event.waitUntil(update.catch(() => undefined));
       return cached;
     }
-    try {
-      return await update;
-    } catch (_) {
-      return Response.error();
-    }
+    try { return await update; }
+    catch (_) { return Response.error(); }
   })());
 });
