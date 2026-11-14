@@ -62,6 +62,7 @@ function bookPatchLoadedMedia(refs){
 async function bookEnsureMedia(refs){
  if(!bookClient||!bookRole)throw Error('Catalogue non connecté.');
  const wanted=[...new Set((refs||[]).map(String).filter(Boolean))];
+ const requestedEpoch=bookMediaEpoch;
  const jobs=new Set(),fresh=[];
  for(const ref of wanted){
   if(bookMediaLoaded.has(ref))continue;
@@ -79,6 +80,7 @@ async function bookEnsureMedia(refs){
    if(epoch!==bookMediaEpoch)return;
    const found=new Map((data||[]).map(p=>[String(p.reference),p]));
    for(const ref of batch){
+    if(!found.has(ref))throw Error('Visuels introuvables pour la réf. '+ref);
     const target=products.find(p=>p.reference===ref),row=found.get(ref);
     if(target&&row){
      target.photo=safeImage(row.photo);
@@ -94,6 +96,9 @@ async function bookEnsureMedia(refs){
   void task.finally(()=>{for(const ref of batch)if(bookMediaPending.get(ref)===task)bookMediaPending.delete(ref);}).catch(()=>{});
  }
  await Promise.all([...jobs]);
+ if(requestedEpoch!==bookMediaEpoch)throw Error('Le catalogue a été actualisé pendant le chargement des visuels. Réessayez.');
+ if(wanted.some(ref=>products.some(p=>p.reference===ref)&&!bookMediaLoaded.has(ref)))
+  throw Error('Certaines images ne sont pas accessibles ; opération interrompue.');
  return true;
 }
 function bookWatchMedia(){
