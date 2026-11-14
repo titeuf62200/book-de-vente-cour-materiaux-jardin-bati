@@ -157,9 +157,9 @@ async function bookRefresh(){
    $('saveStatus').textContent=count+' références synchronisées · visuels à la demande';
    return true;
   }catch(error){
-   $('saveStatus').textContent='Erreur de synchronisation : réessayer';
+   $('saveStatus').textContent='Catalogue indisponible — réessayer';
    if(!bookCatalogReady)render(); // « … » plutôt qu’un faux zéro si le serveur ne répond pas.
-   toast('Impossible de charger les références : '+(error?.message||error));
+   toast(bookAuthErrorMessage(error));
    return false;
   }finally{loadingBook=false;}
  })();
@@ -412,7 +412,7 @@ async function bookInit(){
   if(bookRecovery)bookShowRecovery();
   else if(session)await bookActivate();
   else bookSwitchAuthMode('signup');
- }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+e.message,true);}
+ }catch(e){uiAuthStatus('Connexion sécurisée indisponible : '+bookAuthErrorMessage(e),true);}
 }
 $('authForm').addEventListener('submit',bookLogin);
 $('authSwitchMode').addEventListener('click',()=>bookSwitchAuthMode(bookAuthMode==='login'?'signup':'login'));
