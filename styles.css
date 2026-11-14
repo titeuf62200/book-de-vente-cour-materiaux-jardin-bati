@@ -711,3 +711,103 @@
   .cover-design-v2 .cover-kpi-icon{font-size:19pt;padding-right:2mm}
   .cover-design-v2 .cover-kpi span:last-child{font-size:9pt}
 }
+
+
+/* Couverture PDF BÂTI validée : image JPEG figée + compteurs vivants.
+   Le visuel n'est jamais redessiné par des formes CSS ou SVG. */
+@media print {
+ .print-page.p-cover-photo-bati {
+   display:block!important;
+   position:relative!important;
+   width:210mm!important;
+   height:297mm!important;
+   max-height:297mm!important;
+   padding:0!important;
+   margin:0!important;
+   overflow:hidden!important;
+   background:#fff!important;
+   color:#004b19!important;
+   text-align:left!important;
+   break-after:page;
+   page-break-after:always;
+   print-color-adjust:exact!important;
+   -webkit-print-color-adjust:exact!important;
+ }
+ .p-cover-photo-bati .cover-photo-fixed {
+   display:block!important;
+   position:absolute;
+   inset:0;
+   width:100%!important;
+   height:100%!important;
+   max-width:none!important;
+   max-height:none!important;
+   object-fit:fill!important;
+ }
+ .p-cover-photo-bati .cover-photo-counter {
+   position:absolute;
+   z-index:1;
+   color:#004b19!important;
+   font-family:Arial,Helvetica,sans-serif;
+   font-weight:900!important;
+   line-height:1;
+   white-space:nowrap;
+   font-variant-numeric:tabular-nums;
+   text-shadow:none;
+ }
+ .p-cover-photo-bati .cover-photo-counter strong {
+   color:inherit!important;
+   font-weight:900!important;
+ }
+ .p-cover-photo-bati .cover-photo-counter-refs {
+   left:17.95%;
+   top:90.5%;
+   display:flex;
+   align-items:baseline;
+   gap:1.8mm;
+ }
+ .p-cover-photo-bati .cover-photo-counter-refs strong {
+   font-size:var(--counter-number-size,24pt)!important;
+   letter-spacing:-.4mm;
+ }
+ .p-cover-photo-bati .cover-photo-counter-refs span {
+   font-size:var(--counter-label-size,17.4pt)!important;
+   font-weight:900;
+   letter-spacing:-.12mm;
+ }
+ .p-cover-photo-bati .cover-photo-counter-sectors {
+   left:63.65%;
+   top:89.92%;
+   display:block;
+   text-align:left;
+ }
+ .p-cover-photo-bati .cover-counter-line {
+   display:flex;
+   align-items:baseline;
+   gap:1.8mm;
+ }
+ .p-cover-photo-bati .cover-counter-line strong {
+   font-size:23pt!important;
+   letter-spacing:-.2mm;
+ }
+ .p-cover-photo-bati .cover-counter-line span,
+ .p-cover-photo-bati .cover-counter-label {
+   font-size:18.6pt!important;
+   letter-spacing:-.23mm;
+   font-weight:900;
+ }
+ .p-cover-photo-bati .cover-counter-label {
+   display:block;
+   line-height:1.03;
+ }
+}
+.book-door.bati>.book-door-cover-image{
+ width:100%;
+ height:185px;
+ object-fit:cover;
+ object-position:center 53%;
+ background:#e8f4e7;
+ display:block;
+}
+@media(max-width:720px){
+ .book-door.bati>.book-door-cover-image{height:160px}
+}
