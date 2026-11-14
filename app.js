@@ -157,9 +157,10 @@ function catalogSectorId(rayon,code){
 }
 function buildSidebar(){
  const activeProducts=products.filter(p=>!p.archived);
+ const waiting=!!window.BOOK_SUPABASE_CONFIG?.url&&typeof bookCatalogReady!=='undefined'&&!bookCatalogReady;
  const counts={};
  for(const rayon of UNIVERSES)counts[rayon]=activeProducts.filter(p=>p.rayon===rayon).length;
- $('sideTotal').textContent=activeProducts.length;
+ $('sideTotal').textContent=waiting?'…':activeProducts.length;
  document.querySelector('.nav-home').classList.toggle('active',state.rayon==='all'&&!state.group);
  $('sidebarChapters').innerHTML=UNIVERSES.map((rayon,i)=>{
   const departments=sectorList(rayon,activeProducts,true,showHiddenSectors&&state.admin);
@@ -170,10 +171,10 @@ function buildSidebar(){
    const color=d.color,editable=state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()&&d.code!=='UNASSIGNED';
    const gear=editable?'<button type="button" class="sector-config-btn" data-config-rayon="'+escapeHtml(rayon)+'" data-config-code="'+escapeHtml(d.code)+'" title="Configurer cette sous-famille" aria-label="Modifier le titre, le numéro et la couleur de '+escapeHtml(d.name)+'">⚙</button>':'';
    const trash=editable?'<button type="button" class="sector-remove-btn'+(d.hidden?' restore':'')+'" '+(d.hidden?'data-restore-rayon':'data-delete-rayon')+'="'+escapeHtml(rayon)+'" '+(d.hidden?'data-restore-code':'data-delete-code')+'="'+escapeHtml(d.code)+'" title="'+(d.hidden?'Restaurer cette sous-famille':'Supprimer cette sous-famille après transfert de ses références')+'" aria-label="'+(d.hidden?'Restaurer':'Supprimer')+' '+escapeHtml(d.name)+'">'+(d.hidden?'↶':'🗑')+'</button>':'';
-   return '<div class="side-sector-row'+(d.hidden?' side-sector-hidden':'')+'"><button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</b> — '+escapeHtml(d.name)+(d.hidden?' · masqué':'')+'</span><span class="count">'+n+'</span></button>'+gear+trash+'</div>';
+   return '<div class="side-sector-row'+(d.hidden?' side-sector-hidden':'')+'"><button type="button" class="group-btn official-group-btn '+(state.rayon===rayon&&state.group===d.code?'active':'')+'" data-rayon="'+escapeHtml(rayon)+'" data-group="'+escapeHtml(d.code)+'" style="--department-color:'+color+'" aria-label="Voir les produits de '+escapeHtml(d.name)+'"><span class="group-color-dot" style="background:'+color+'"></span><span class="department-nav-name"><b>'+escapeHtml(d.code==='UNASSIGNED'?'?':d.displayCode)+'</b> — '+escapeHtml(d.name)+(d.hidden?' · masqué':'')+'</span><span class="count">'+(waiting?'…':n)+'</span></button>'+gear+trash+'</div>';
   }).join('');
   const chapterTitle=i?'009 — Jardin':'001 — Matériaux / Bâti';
-  return '<div class="side-chapter"><button type="button" class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon?'active':'')+'" data-chapter-rayon="'+escapeHtml(rayon)+'" aria-expanded="'+expanded+'" aria-controls="'+groupId+'" aria-label="'+(expanded?'Replier':'Déplier')+' les sous-rayons '+(i?'Jardin':'Matériaux et Bâti')+'"><span class="chap-name">'+chapterTitle+'</span><span class="count">'+counts[rayon]+'</span><span class="chapter-chevron" aria-hidden="true">⌄</span></button><div class="group-list" id="'+groupId+'"'+(expanded?'':' hidden')+'>'+buttons+'</div></div>';
+  return '<div class="side-chapter"><button type="button" class="chapter-btn '+(i?'jardin':'')+' '+(state.rayon===rayon?'active':'')+'" data-chapter-rayon="'+escapeHtml(rayon)+'" aria-expanded="'+expanded+'" aria-controls="'+groupId+'" aria-label="'+(expanded?'Replier':'Déplier')+' les sous-rayons '+(i?'Jardin':'Matériaux et Bâti')+'"><span class="chap-name">'+chapterTitle+'</span><span class="count">'+(waiting?'…':counts[rayon])+'</span><span class="chapter-chevron" aria-hidden="true">⌄</span></button><div class="group-list" id="'+groupId+'"'+(expanded?'':' hidden')+'>'+buttons+'</div></div>';
  }).join('')+(state.admin&&typeof bookCanEdit==='function'&&bookCanEdit()?'<button type="button" class="show-hidden-sector-btn" data-toggle-hidden="true">'+(showHiddenSectors?'Masquer les sous-familles supprimées':'Afficher les sous-familles supprimées')+'</button>':'');
 }
 
