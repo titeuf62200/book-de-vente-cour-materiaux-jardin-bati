@@ -536,3 +536,178 @@
 .sector-delete-inner .btn:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:520px){.sector-delete-inner{padding:15px;gap:11px}.sector-transfer-toolbar strong{margin-left:0}.sector-transfer-list{max-height:33dvh}.sector-delete-actions{flex-wrap:wrap}.sector-delete-actions .btn{flex:1;min-width:120px}.sector-config-preview .sector-preview-label{display:none}}
 @media print{.sector-delete-dialog{display:none!important}}
+
+
+/* Édition A4 compacte : cinq références lisibles par page, toutes les photos,
+   croquis et EAN13 sont conservés. Ne concerne que l'export du Book. */
+@media print {
+  .print-page.p-content {
+    padding:11mm 16mm 11mm 11mm!important;
+  }
+  .p-content .p-header{
+    border-top:2mm solid var(--tab-color,#1b7b4d);
+    padding-top:2mm;
+    font-size:7.5pt;
+    line-height:1.2;
+  }
+  .p-content .p-category-label,.p-content .p-category-label.continued{
+    font-size:11pt!important;
+    line-height:1.1;
+    margin:3mm 0 2.5mm!important;
+    padding:2.2mm 3mm!important;
+    border-radius:1mm;
+  }
+  .p-content .p-product{
+    display:flex;
+    flex-direction:column;
+    height:43mm!important;
+    min-height:43mm!important;
+    margin:0 0 2mm!important;
+    padding:2.1mm 3mm!important;
+    border:1px solid #dde6df;
+    border-radius:2mm!important;
+    box-shadow:none!important;
+    overflow:hidden;
+    background:#f6f8f6!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  .p-content .p-product .p-reference{
+    font-size:7.5pt!important;
+    line-height:1;
+    letter-spacing:.015em;
+  }
+  .p-content .p-product .p-family{
+    font-size:6.6pt!important;
+    color:#557566;
+    line-height:1;
+    margin-top:0.5mm;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .p-content .p-product .p-name{
+    font-size:8.4pt!important;
+    line-height:1.15!important;
+    margin:1mm 0 1mm!important;
+    max-height:7.1mm!important;
+    min-height:3.5mm;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .p-content .p-row{
+    display:grid;
+    grid-template-columns:minmax(0,35fr) minmax(0,39fr) minmax(0,26fr)!important;
+    gap:1.6mm!important;
+    flex:1 1 auto;
+    min-height:0;
+  }
+  .p-content .p-asset{
+    height:auto!important;
+    min-height:0;
+    min-width:0;
+    border-radius:1mm;
+    background:#fff!important;
+    padding:.7mm!important;
+  }
+  .p-content .p-asset img{height:100%!important;width:100%!important;object-fit:contain!important}
+  .p-content .p-asset.bar img{height:auto!important;max-height:100%!important}
+  .p-content .p-missing{font-size:6.4pt!important;text-align:center}
+  .p-content .p-note{font-size:6.4pt!important;line-height:1.1;padding-top:.6mm}
+  .p-content .p-footer{bottom:7mm;font-size:7.5pt}
+  .print-page.p-cover.cover-design-v2{
+    padding:0!important;
+    justify-content:flex-start!important;
+    text-align:center!important;
+    background:#fff!important;
+    color:#25372e!important;
+    overflow:hidden!important;
+    print-color-adjust:exact!important;
+    -webkit-print-color-adjust:exact!important;
+  }
+  .cover-design-v2 .cover-drawing{
+    position:absolute;top:0;left:0;right:0;height:64mm;
+    background:repeating-linear-gradient(30deg,transparent 0 18mm,#7e9a8a16 18.1mm 18.3mm,transparent 18.4mm 36mm),
+      linear-gradient(145deg,#f6f9f7,#fff 73%);
+    z-index:0;
+  }
+  .cover-design-v2 .cover-drawing:before{
+    content:"";position:absolute;top:0;left:0;
+    border-top:21mm solid #55b21d;border-right:21mm solid transparent;
+  }
+  .cover-design-v2 .cover-drawing:after{
+    content:"";position:absolute;right:7mm;top:0;width:42mm;height:42mm;
+    border:1px solid #c8d6ca;transform:skewY(-20deg) rotate(20deg);
+    opacity:.42;
+  }
+  .cover-design-v2 .cover-brand-logo{
+    position:absolute;top:6mm;left:0;right:0;height:32mm;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:15pt;font-weight:900;letter-spacing:-.025em;
+    color:#121b14;
+  }
+  .cover-design-v2 .cover-logo-roof{
+    display:grid;place-items:center;width:25mm;height:17mm;
+    background:#72c615;
+    clip-path:polygon(50% 0,100% 100%,0 100%);
+    color:#1c271c;font-weight:900;font-size:18pt;
+  }
+  .cover-design-v2 .cover-micro{
+    position:absolute;top:39mm;left:12mm;right:12mm;
+    font-size:13pt!important;font-weight:800;letter-spacing:.055em!important;
+    padding-top:2mm;border-top:1px solid #6ebf24;
+  }
+  .cover-design-v2 .cover-green-banner{
+    position:absolute;top:58mm;left:0;right:0;height:28mm;
+    background:linear-gradient(95deg,#6ab817 0%,#116523 40%,#287a21 100%)!important;
+    clip-path:polygon(6% 0,99% 0,92% 100%,0 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cover-design-v2 .cover-green-banner h1{
+    margin:0!important;color:#fff!important;
+    font:bold 34pt/1.05 Arial,sans-serif!important;
+    letter-spacing:-.02em;
+    white-space:nowrap;
+  }
+  .cover-design-v2 .cover-subtitle{
+    position:absolute;top:89mm;left:5mm;right:5mm;
+    font:11pt/1.2 Arial,sans-serif!important;color:#414a40!important;
+    margin:0!important;
+  }
+  .cover-design-v2 .cover-subtitle b{color:#3c9d19;font-weight:900}
+  .cover-design-v2 .cover-photo-region{
+    position:absolute;top:104mm;left:0;right:0;height:151mm;
+    overflow:hidden;background:linear-gradient(#d6e8ee,#d5d9d1)!important;
+  }
+  .cover-design-v2 .cover-construction-scene{
+    display:block;width:100%;height:100%;
+  }
+  .cover-design-v2 .cover-cour-tag{
+    position:absolute;left:7mm;bottom:8mm;
+    padding:3mm 5mm;background:#14733b!important;color:#fff!important;
+    font:bold 10pt Arial,sans-serif;letter-spacing:.03em;
+  }
+  .cover-design-v2 .cover-photo-jardin .cover-gallery{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:5mm;align-items:center;height:100%;padding:12mm;
+  }
+  .cover-design-v2 .cover-kpis{
+    position:absolute;top:255mm;left:0;right:0;bottom:0;
+    display:grid;grid-template-columns:1fr 1fr;align-items:center;
+    background:#fff!important;
+    border-top:2mm solid #6ec52f;
+    border-bottom:5mm solid #46ae24;
+    padding:4mm 8mm;
+    gap:4mm;
+  }
+  .cover-design-v2 .cover-kpi{
+    min-width:0;display:flex;align-items:center;
+    justify-content:center;gap:2mm;
+    color:#115324!important;text-align:left;
+    font:bold 12pt/1.16 Arial,sans-serif;
+  }
+  .cover-design-v2 .cover-kpi:first-child{border-right:1px solid #8eac91}
+  .cover-design-v2 .cover-kpi strong{font-size:25pt;line-height:1}
+  .cover-design-v2 .cover-kpi-icon{font-size:19pt;padding-right:2mm}
+  .cover-design-v2 .cover-kpi span:last-child{font-size:9pt}
+}
