@@ -441,7 +441,7 @@ function nuancierFor(rayon){
 function nuancierDimentions(p){
  if(p.kind==='paves'||p.kind==='dalles'||p.kind==='pas-japonais')return p.w+' × '+p.h+' mm · ép. '+p.length+' mm';
  if(p.kind==='bordures')return 'H '+p.h+' × ép. '+p.w+' mm · longueur '+p.length+' mm';
- return p.w+' × '+p.h+' mm';
+ return p.w+' × '+p.h+' mm'+(p.kind==='charpente'&&p.length?' · longueur '+(p.length/1000).toLocaleString('fr-FR')+' m':'');
 }
 function showNuancier(rayon){
  const list=nuancierFor(rayon);if(!list.length)return toast('Les profils du nuancier sont indisponibles.');
@@ -467,8 +467,8 @@ function nuancierPrintCard(p,index,count,rayon){
     +(barcode?'<img class="nuancier-barcode" alt="EAN '+escapeHtml(product.ean)+'" src="'+escapeHtml(barcode)+'">':(product?.ean?'<span>EAN '+escapeHtml(product.ean)+'</span>':''))
     +'</div>';
  }).join('');
- const isHorizontal=p.kind==='terrasses'||p.kind==='paves'||p.kind==='dalles'||p.kind==='pas-japonais';
- const kindText=(p.kind==='paves'||p.kind==='dalles'||p.kind==='pas-japonais')?'VUE DE DESSUS + VUE DE TRANCHE · COTES NOMINALES':p.kind==='bordures'?'COUPE NOMINALE · HAUTEUR × ÉPAISSEUR':'COUPE NOMINALE · ÉCHELLE 1:1';
+ const isHorizontal=p.kind==='terrasses'||p.kind==='paves'||p.kind==='dalles'||p.kind==='pas-japonais'||(p.kind==='charpente'&&p.w>100);
+ const kindText=(p.kind==='paves'||p.kind==='dalles'||p.kind==='pas-japonais')?(p.kind==='pas-japonais'?'ENVELOPPE RECTANGULAIRE NOMINALE + TRANCHE · CONTOUR NON REPRODUIT':'VUE DE DESSUS + VUE DE TRANCHE · COTES NOMINALES'):p.kind==='bordures'?'COUPE NOMINALE · HAUTEUR × ÉPAISSEUR':'COUPE NOMINALE · ÉCHELLE 1:1';
  const panel='<div class="nuancier-print-panel"><div class="nuancier-print-photo">'+(photo?'<img src="'+escapeHtml(safeImage(photo))+'" alt="Photo produit">':'<span>Photo du book indisponible</span>')+'</div><div class="nuancier-refs">'+detail+'</div></div>';
  const isFlat=['paves','dalles','pas-japonais'].includes(p.kind);
  const sidenote=p.kind==='bordures'?'Longueur de la bordure : '+p.length+' mm':'';
@@ -484,7 +484,8 @@ function nuancierPrintCard(p,index,count,rayon){
     +'<div class="nuancier-edge-dim" style="top:'+(edgeTop+edgeH+1)+'mm">Longueur '+escapeHtml(p.w)+' mm × épaisseur '+escapeHtml(p.length)+' mm</div>':'';
  const profileStyle='width:'+mainW+'mm;height:'+mainH+'mm;left:'+mainLeft+'mm;top:'+mainTop+'mm';
  const profileScaleNote=isFlat&&scale<1?'<div class="nuancier-scale-warning">Gabarit réduit (×'+scale.toFixed(2)+') · dimensions nominales ci-dessus</div>':'';
- const gridStyle=isFlat?'style="--nuancier-details-top:'+Math.max(174,mainTop+mainH+5)+'mm"':'';
+ const wideWood=p.kind==='charpente'&&p.w>100;
+ const gridStyle=isFlat?'style="--nuancier-details-top:'+Math.max(174,mainTop+mainH+5)+'mm"':wideWood?'style="top:'+Math.max(195,mainTop+mainH+8)+'mm;left:25mm;right:16mm"':'';
 
  return '<section class="print-page nuancier-print-page nuancier-'+escapeHtml(p.kind)+'">'
   +'<div class="nuancier-print-header"><strong>LEROY MERLIN · CALAIS</strong><span>NUANCIER '+(rayon==='Matériaux'?'BÂTI':'JARDIN')+' · '+(index+1)+'/'+count+'</span></div>'
