@@ -350,7 +350,8 @@ async function exportJSON(){
  if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
   $('saveStatus').textContent='Préparation de la sauvegarde complète des images…';
   try{await bookEnsureMedia(products.map(p=>p.reference));}
-  catch(error){toast('Sauvegarde annulée : images incomplètes ('+error.message+')');return;}
+  catch(error){$('saveStatus').textContent='Sauvegarde incomplète — réessayer';toast('Sauvegarde annulée : images incomplètes ('+error.message+')');return;}
+  $('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
  }
  downloadBlob(JSON.stringify({version:1,source:'Book de vente Leroy Merlin Calais',exportedAt:new Date().toISOString(),products},null,2),'Book_de_vente_Calais_SAUVEGARDE.json','application/json');
  toast('Sauvegarde JSON complète téléchargée');
@@ -555,7 +556,8 @@ async function printNuancier(rayon,profileId=''){
  if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
   $('saveStatus').textContent='Préparation des photos du nuancier…';
   try{await bookEnsureMedia([...new Set(profiles.flatMap(p=>p.refs))]);}
-  catch(error){toast('Impression annulée : les photos ne sont pas toutes accessibles ('+error.message+')');return;}
+  catch(error){$('saveStatus').textContent='Visuels du nuancier indisponibles';toast('Impression annulée : les photos ne sont pas toutes accessibles ('+error.message+')');return;}
+  $('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
  }
  $('nuancierDialog').close();
  const area=$('printArea');
@@ -578,7 +580,8 @@ async function printBook(rayon){
  if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
   $('saveStatus').textContent='Chargement des photos et croquis pour le PDF '+rayon+'…';
   try{await bookEnsureMedia(active.map(p=>p.reference));}
-  catch(error){toast('PDF annulé : visuels non récupérés ('+error.message+'). Réessayez.');return;}
+  catch(error){$('saveStatus').textContent='Visuels du PDF indisponibles';toast('PDF annulé : visuels non récupérés ('+error.message+'). Réessayez.');return;}
+  $('saveStatus').textContent=products.filter(p=>!p.archived).length+' références synchronisées';
  }
  const area=$('printArea');area.innerHTML=makePrintHTML(rayon);
  const images=[...area.querySelectorAll('img')];
