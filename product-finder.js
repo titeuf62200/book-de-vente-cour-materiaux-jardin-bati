@@ -46,6 +46,14 @@ function showExact(query){
  }
  results.innerHTML='<h3>Correspondance dans le catalogue</h3>'+matches.map(makeResult).join('');
  status(matches.length===1?'Référence trouvée grâce au code enregistré.':'Plusieurs fiches utilisent ce code : vérifiez le produit.');
+ // Le code EAN est immédiatement reconnu ; sa photo est ajoutée
+ // dès qu'elle a été récupérée, sans bloquer la réponse.
+ if(typeof bookEnsureMedia==='function'&&window.BOOK_SUPABASE_CONFIG?.url){
+  void bookEnsureMedia(matches.map(p=>p.reference)).then(()=>{
+   if(dialog.open&&String(el('finderEan').value||'').replace(/\s/g,'').trim()===input)
+    results.innerHTML='<h3>Correspondance dans le catalogue</h3>'+matches.map(makeResult).join('');
+  }).catch(()=>{});
+ }
  return true;
 }
 async function createDetector(){
